@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import { INTERESTS, SKILLS, type MatchingCard } from '@/lib/contracts';
+import {safeCustomLabel,type CustomLabels} from './custom-labels';
 
 // Contract between the founder's own-device classifier and the brief editor. Only
-// allowlisted labels cross this boundary, and every result is a suggestion: nothing here
+// preset or source-backed custom labels cross this boundary, and every result is a suggestion: nothing here
 // publishes a brief or stands in for the founder's approval. There is no cloud fallback:
 // anything that is not a valid answer from a loopback classifier becomes 'unavailable'.
 
@@ -14,9 +15,9 @@ export type LocalClassification = {
   status: 'ready' | 'needs_review' | 'unavailable';
   engine: 'laya-local';
   suggested: {
-    offers: Skill[];
-    seeks: Skill[];
-    interests: Interest[];
+    offers: string[];
+    seeks: string[];
+    interests: string[];
     /** null when the source does not state it; the founder enters it. */
     availability: MatchingCard['availability'] | null;
   };
@@ -60,10 +61,10 @@ const allowed = <T extends string>(values: string[] | undefined, allow: readonly
   [...new Set((values ?? []).filter((v): v is T => (allow as readonly string[]).includes(v)))].slice(0, max);
 
 /**
- * Validates a classifier answer. Drops any label outside the allowlist, caps list sizes
+ * Validates a classifier answer. Drops labels outside presets or trusted candidates, caps list sizes
  * to the brief limits and downgrades 'ready' to 'needs_review'. Never throws.
  */
-export function sanitizeClassification(raw: unknown): LocalClassification {
+export function sanitizeClassification(raw: unknown,custom:CustomLabels={offers:[],interests:[]}): LocalClassification {
   const parsed = response.safeParse(raw);
   if (!parsed.success) return unavailableClassification('invalid_response');
   if (parsed.data.status === 'unavailable') return unavailableClassification('not_ready');
@@ -74,9 +75,9 @@ export function sanitizeClassification(raw: unknown): LocalClassification {
     status: 'needs_review',
     engine: 'laya-local',
     suggested: {
-      offers: allowed(s.offers, SKILLS, LIMITS.offers),
+      offers: allowed(s.offers, [...SKILLS,...custom.offers.filter(safeCustomLabel)], LIMITS.offers),
       seeks: allowed(s.seeks, SKILLS, LIMITS.seeks),
-      interests: allowed(s.interests, INTERESTS, LIMITS.interests),
+      interests: allowed(s.interests, [...INTERESTS,...custom.interests.filter(safeCustomLabel)], LIMITS.interests),
       availability,
     },
     message: MESSAGES.needs_review,

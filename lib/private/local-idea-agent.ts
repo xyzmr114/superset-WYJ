@@ -7,9 +7,9 @@ let nextId = 1;
 const tasks = new Map<number, { resolve:(value:unknown)=>void; reject:(reason:Error)=>void; progress?:LocalIdeaProgress; cleanup:()=>void }>();
 
 /** Releases GPU memory and rejects pending work. Does not send anything to a server. */
-export function stopLocalIdeaAgent(): void {
+export function stopLocalIdeaAgent(message='Local idea assistance stopped. Your idea stayed on this device.'): void {
   worker?.terminate(); worker=null;
-  for (const task of tasks.values()) { task.cleanup(); task.reject(new Error('Local idea assistance stopped. Your idea stayed on this device.')); }
+  for (const task of tasks.values()) { task.cleanup(); task.reject(new Error(message)); }
   tasks.clear();
 }
 
@@ -26,7 +26,8 @@ function request(type:'warm'|'generate'|'name', idea:string|undefined, onProgres
   return new Promise((resolve,reject)=>{
     const id=nextId++;
     const cancel=()=>stopLocalIdeaAgent();
-    const cleanup=()=>signal?.removeEventListener('abort',cancel);
+    const timeout=setTimeout(()=>stopLocalIdeaAgent('Local model loading or generation timed out. Retry when your connection and GPU are available. Your idea stayed on this device.'),180000);
+    const cleanup=()=>{clearTimeout(timeout);signal?.removeEventListener('abort',cancel);};
     tasks.set(id,{resolve,reject,progress:onProgress,cleanup});
     signal?.addEventListener('abort',cancel,{once:true});
     try {
@@ -36,7 +37,7 @@ function request(type:'warm'|'generate'|'name', idea:string|undefined, onProgres
           const task=tasks.get(data?.id); if(!task)return;
           if(data.type==='progress'&&typeof data.message==='string'){task.progress?.(data.message);return;}
           if(data.type==='ready'||data.type==='result'){task.cleanup();tasks.delete(data.id);task.resolve(data.type==='ready'?undefined:{text:String(data.text??''),model:LOCAL_IDEA_MODEL});}
-          if(data.type==='error'){task.cleanup();tasks.delete(data.id);task.reject(new Error(data.code==='NO_WEBGPU'?'This browser does not expose WebGPU. Try recent Chrome or Edge for local idea assistance.':'The local idea model could not run. Your idea was not sent to a server.'));}
+          if(data.type==='error'){task.cleanup();tasks.delete(data.id);task.reject(new Error(data.code==='NO_WEBGPU'?'This browser does not expose WebGPU. Try recent Chrome or Edge for local idea assistance.':data.code==='ASSET_BLOCKED'?'Model downloads are blocked by the hosting service. Its storage or transfer allowance needs restoring. Your idea stayed on this device.':data.code==='ASSET_UNAVAILABLE'?'The model download is unavailable. Retry later; your idea stayed on this device.':'The local idea model could not run. Your idea was not sent to a server.'));}
         };
         worker.onerror=()=>{stopLocalIdeaAgent();};
       }

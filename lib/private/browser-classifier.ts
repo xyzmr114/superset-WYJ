@@ -1,4 +1,5 @@
 import { sanitizeClassification, unavailableClassification, type LocalClassification } from './classifier-contract';
+import {customLabelCandidates,type CustomLabels} from './custom-labels';
 
 export const BROWSER_MODEL_URL = '/models/laya/';
 export const BROWSER_RUNTIME_URL = '/laya-runtime/worker.mjs';
@@ -6,7 +7,7 @@ let active: Worker | null = null;
 let modelReady = false;
 type WarmTask={promise:Promise<boolean>;resolve:(ready:boolean)=>void;listeners:Set<(message:string)=>void>};
 let warming:WarmTask|null=null;
-let classification:{resolve:(result:LocalClassification)=>void;progress?:(message:string)=>void;cleanup:()=>void}|null=null;
+let classification:{resolve:(result:LocalClassification)=>void;progress?:(message:string)=>void;cleanup:()=>void;custom:CustomLabels}|null=null;
 const stopped=()=>({...unavailableClassification('not_running'),message:'Browser classification stopped. Your text was not sent to a server. You can fill in the brief yourself.'});
 function finishWarm(ready:boolean){const task=warming;warming=null;task?.resolve(ready);}
 function finishClassification(result:LocalClassification){const task=classification;classification=null;task?.cleanup();task?.resolve(result);}
@@ -22,7 +23,7 @@ function worker(){
   if(active!==current)return;
   if(data?.type==='progress'&&typeof data.message==='string'){for(const listener of warming?.listeners??[])listener(data.message);classification?.progress?.(data.message);}
   if(data?.type==='ready'){modelReady=true;finishWarm(true);}
-  if(data?.type==='result'){modelReady=true;finishWarm(true);finishClassification(sanitizeClassification(data.result));}
+  if(data?.type==='result'){modelReady=true;finishWarm(true);finishClassification(sanitizeClassification(data.result,classification?.custom));}
   if(data?.type==='error')fail();
  };
  const fail=()=>{if(active!==current)return;current.terminate();active=null;modelReady=false;finishWarm(false);finishClassification({...unavailableClassification('not_running'),message:'The browser model could not run on this device. Nothing was sent for remote inference. Fill in your brief yourself or try a shorter profile on a desktop browser.'});};
@@ -62,7 +63,7 @@ export async function classifyInBrowser(profile:string,idea:string,onProgress?:(
  if(classification)stopBrowserClassifier();
  return new Promise(resolve=>{
   const cancel=()=>stopBrowserClassifier();
-  const task={resolve,progress:onProgress,cleanup:()=>signal?.removeEventListener('abort',cancel)};
+  const task={resolve,progress:onProgress,cleanup:()=>signal?.removeEventListener('abort',cancel),custom:customLabelCandidates(text)};
   classification=task;signal?.addEventListener('abort',cancel,{once:true});
   const send=()=>{if(classification!==task)return;try{worker().postMessage({type:'classify',text});}catch{stopBrowserClassifier();}};
   // Share initialization; never replace warmup handlers or start a second model load.

@@ -32,6 +32,10 @@ Laya and Bonsai weights and WASM files are hosted in the public `wyj-browser-mod
 
 Only fixed model/runtime GETs are redirected to Blob. Private text remains inside each browser worker. Bonsai requires WebGPU; device memory and first-download time still matter. Manual entry remains available. Never send private intake text to a hosted classifier as a fallback.
 
+Bonsai loads its external weight file explicitly, reports blocked hosting, and times out after three minutes instead of waiting indefinitely. Public weights can be cached on the device. A suspended Blob store must be restored or replaced before uncached visitors can load either model; an API key for DeepSeek does not restore Blob access.
+
+Laya can score short custom candidates supplied explicitly in background text, such as `Skills: horse training, stable operations. Niche: equestrian matchmaking.` Only bounded source-backed labels can populate the review fields; contacts and URLs are rejected, and existing manual selections are kept. Laya does not freely generate arbitrary new labels.
+
 Optional DeepSeek enhancement is not configured. To enable it, set the server-only `DEEPSEEK_API_KEY` and redeploy; preserve the existing exact-brief consent flow. Premium remains an unpaid preview.
 
 ## Browser models outside GitHub

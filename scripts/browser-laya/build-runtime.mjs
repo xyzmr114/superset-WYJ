@@ -9,5 +9,5 @@ const ort=path.resolve('node_modules/onnxruntime-web/dist');
 for(const file of ['ort.webgpu.bundle.min.mjs','ort-wasm-simd-threaded.asyncify.mjs','ort-wasm-simd-threaded.asyncify.wasm','ort-wasm-simd-threaded.jsep.mjs','ort-wasm-simd-threaded.jsep.wasm']) await cp(path.join(ort,file),path.join(output,file));
 await cp('.wyj-local/laya-source/LICENSE',path.join(output,'LAYA-LICENSE'));
 await cp('scripts/browser-laya/ORT-LICENSE',path.join(output,'ORT-LICENSE'));
-await cp('scripts/browser-laya/worker.mjs',path.join(output,'worker.mjs'));
+await build({entryPoints:['scripts/browser-laya/worker.mjs'],outfile:path.join(output,'worker.mjs'),bundle:true,platform:'browser',format:'esm',external:['/model-assets.mjs','/laya-runtime/*'],target:'es2022'});
 console.log('Browser runtime built from pinned Laya source.');

@@ -27,3 +27,26 @@ for(const [model,file] of [['laya','scripts/browser-laya/worker.mjs'],['bonsai',
   assert.equal(calls[1].url,'https://example.public.blob.vercel-storage.com/wyj-v1'+runtimePath);
  });
 }
+
+test('Bonsai reports blocked weights before entering the library loader',async()=>{
+ const messages:any[]=[];let libraryCalled=false;
+ const self:any={location:{origin:'https://wyj.example',href:'https://wyj.example/worker.mjs'},postMessage:(m:any)=>messages.push(m),fetch:async()=>new Response('Your store is blocked',{status:403})};
+ const source=readFileSync('scripts/browser-bonsai/worker.mjs','utf8').replace(/^import .*;\r?\n/gm,'');
+ vm.runInNewContext(source,{self,URL,Response,Uint8Array,AbortSignal,navigator:{gpu:{requestAdapter:async()=>({})}},env:{backends:{onnx:{wasm:{}}}},pipeline:async()=>{libraryCalled=true;throw Error('library loader');},MODEL_ASSET_BASE_URL:'https://example.public.blob.vercel-storage.com/v1'});
+ await self.onmessage({data:{id:1,type:'warm'}});
+ assert.equal(libraryCalled,false);
+ assert.equal(messages.at(-1).code,'ASSET_BLOCKED');
+});
+
+test('Bonsai supplies external weights explicitly so failed library downloads cannot hang',async()=>{
+ let options:any;const messages:any[]=[];
+ const pipe:any=()=>{};pipe.tokenizer=()=>({});pipe.model={generate:async()=>{}};
+ const self:any={location:{origin:'https://wyj.example',href:'https://wyj.example/worker.mjs'},postMessage:(m:any)=>messages.push(m),fetch:async()=>new Response(new Uint8Array([1,2,3]))};
+ const source=readFileSync('scripts/browser-bonsai/worker.mjs','utf8').replace(/^import .*;\r?\n/gm,'');
+ vm.runInNewContext(source,{self,URL,Response,Uint8Array,AbortSignal,navigator:{gpu:{requestAdapter:async()=>({})}},env:{backends:{onnx:{wasm:{}}}},pipeline:async(_task:any,_model:any,o:any)=>{options=o;return pipe;},MODEL_ASSET_BASE_URL:''});
+ await self.onmessage({data:{id:1,type:'warm'}});
+ assert.equal(options.use_external_data_format,false);
+ assert.equal(options.session_options.externalData[0].path,'model_q1.onnx_data');
+ assert.deepEqual([...options.session_options.externalData[0].data],[1,2,3]);
+ assert.equal(messages.at(-1).type,'ready');
+});
