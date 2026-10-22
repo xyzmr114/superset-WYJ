@@ -1,3 +1,4 @@
+import {mutuallyApproved} from './intro-consent';
 import type { PitchView } from '@/lib/contracts';
 import { buildPitchMarkdown } from '@/lib/generation';
 import { db, type Match, type Pitch } from './store';
@@ -5,7 +6,7 @@ import { HttpError, notFound } from './http';
 
 export type Ctx = { params: Promise<{ id: string }> };
 
-export const isRevealed = (m: Match) => m.declinedBy === null && m.approvals.has(m.a) && m.approvals.has(m.b);
+export const isRevealed=mutuallyApproved;
 export const otherOf = (m: Match, me: string) => (m.a === me ? m.b : m.a);
 export const conflict = (code: string, message: string) => new HttpError(409, code, message);
 

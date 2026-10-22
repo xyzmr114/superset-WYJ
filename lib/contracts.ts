@@ -1,7 +1,9 @@
 export type MatchingCard = { id: string; eventId: string; alias: string; offers: string[]; seeks: string[]; interests: string[]; availability: 'exploring' | 'weekends' | 'full_time'; approvedBlurb: string; version: number };
 export type Evidence = { id: string; provider: 'github'; title: string; url: string; excerpt: string; fetchedAt: string; cached: boolean };
 export type Opportunity = { title: string; problemHypothesis: string; targetUser: string; whyThisPair: string[]; evidenceIds: string[]; unknowns: string[]; nextExperiment: string; generationMode: 'model' | 'template' };
-export type MatchView = { id: string; candidate: MatchingCard; score: number; opportunity: Opportunity; evidence: Evidence[]; status: 'suggested' | 'pending' | 'revealed' | 'declined'; myIntroApproval: boolean; revealedContact?: { displayName: string; contact: string } };
+export type IntroductionIdentity={displayName:string;contact:string};
+export type IntroConsentReceipt={approvedAt:string;briefVersion:number;fields:readonly ['displayName','contact']};
+export type MatchView = { id: string; candidate: MatchingCard; score: number; opportunity: Opportunity; evidence: Evidence[]; status: 'suggested' | 'pending' | 'revealed' | 'declined'; myIntroApproval: boolean; theirIntroApproval?:boolean; myConsent?:IntroConsentReceipt; revealedContact?: { displayName: string; contact: string } };
 export type PitchView = { id: string; matchId: string; version: number; markdown: string; proposedIdentityFields: Record<string,string[]>; myApproval: boolean; bothApproved: boolean; exportable: boolean };
 export type ApiError = { error: { code: string; message: string } };
 export const SKILLS = ['engineering','sales','product','design','data'] as const;

@@ -1,3 +1,4 @@
+import {mutuallyApproved} from './intro-consent';
 import type { Evidence, MatchView } from '@/lib/contracts';
 import { searchPublicProjects } from '@/lib/evidence/github';
 import { db, type Match } from './store';
@@ -39,13 +40,15 @@ export function getMyMatch(id: string, me: string): Match {
 export function toView(m: Match, me: string): MatchView {
   const other = m.a === me ? m.b : m.a;
   const candidate = db.cards.get(other)!;
-  const revealed = !m.declinedBy && m.approvals.has(m.a) && m.approvals.has(m.b);
+  const revealed = mutuallyApproved(m);
   const view: MatchView = {
     id: m.id, candidate, score: m.score, opportunity: m.opportunity, evidence: m.evidence,
     status: m.declinedBy ? 'declined' : revealed ? 'revealed' : m.approvals.size > 0 ? 'pending' : 'suggested',
-    myIntroApproval: m.approvals.has(me),
+    myIntroApproval: !!m.introConsents?.[me]&&m.approvals.has(me),
+    theirIntroApproval: !!m.introConsents?.[other]&&m.approvals.has(other),
+    ...(m.introConsents?.[me]?{myConsent:{approvedAt:m.introConsents[me].approvedAt,briefVersion:m.introConsents[me].briefVersion,fields:['displayName','contact'] as const}}:{}),
   };
   // Identity is read only here, only on mutual approval.
-  if (revealed) view.revealedContact = { ...(db.identities.get(other) ?? { displayName: candidate.alias, contact: 'not provided' }) };
+  if (revealed) view.revealedContact = { ...m.introConsents![other].identity };
   return view;
 }

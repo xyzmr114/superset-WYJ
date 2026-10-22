@@ -67,3 +67,9 @@ Sources:
 - `app/pitch/` and `components/pitch/`: shared pitch, versioned approvals and export.
 
 Current `/agent` still exposes the previous outreach workspace. Routing the new private workspace there is assigned to Anusha. Existing shared backend state is process memory: it survives hot reload, not server restarts or multiple server instances. Earlier unpushed evidence/privacy experiments were saved in a named Git stash and are outside this pivot.
+
+## Match/reveal integration landed
+
+`/matches` now offers Interested / Pass, an exact identity preview and pair-specific approval. Pending consent can be withdrawn. Both independent approvals are required by the server before any counterpart contact appears in JSON. Approval snapshots cannot be silently replaced, and edits to the older global identity record do not change them. Joint pitch creation uses the same mutual-consent gate.
+
+Verified with two independent browsers and `scripts/acceptance-pivot.ts` (21 checks). This does not complete the private workspace or local Laya adapter assigned above. Storage remains process memory.

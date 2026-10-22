@@ -1,13 +1,10 @@
-> **Current pivot · 22 October 2026:** Read [PIVOT.md](../../PIVOT.md) and the [four-person handoff](../../WOULD_YOU_JUMP_HANDOFF.md). Private founder matchmaking is the current product. Older module notes below are implementation references; the current pivot and ownership take precedence.
+# Match and reveal UI — You + Codex
 
-Anusha's match / reveal components.
+Read [PIVOT.md](../../PIVOT.md) and the [handoff](../../WOULD_YOU_JUMP_HANDOFF.md).
 
-- `MatchCard.tsx` — one candidate: complementary skills, source-linked
-  opportunity, uncertainties, local checklist, and consent/reveal controls.
-  Reveal reads `match.revealedContact` only; a simulated reveal is badged
-  SYNTHETIC DEMO.
-- `JumpChecklist.tsx` — renders the purely local "Would I jump?" checklist.
-- `EvidenceList.tsx` — public evidence with an explicit empty/fallback state.
-- `matches.module.css` — scoped styles.
+- `MatchCard.tsx`: approved brief, reasons to meet, consent progress, exact name/contact preview, explicit approval, pass and pending withdrawal. Counterpart details render only from server-gated `revealedContact`; there is no simulated approval control.
+- `JumpChecklist.tsx`: local reflection checklist.
+- `EvidenceList.tsx`: optional public evidence with an empty state.
+- `matches.module.css`: scoped styles, consent preview and responsive layout.
 
-Composed in `app/matches/page.tsx`.
+`app/matches/page.tsx` generates pairings, polls status, filters waiting/introduced/passed cards and links a mutually revealed pair to its joint pitch. Shared requests and response types live in `lib/client/api.ts` and `lib/contracts.ts`.

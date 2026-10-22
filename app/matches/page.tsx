@@ -1,96 +1,28 @@
 "use client";
+import {useState} from 'react';
 import Link from 'next/link';
-import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {usePrivateProfile, evaluateJump} from '@/lib/client/private-profile';
-import {api, ApiFailure, fetchMatches, matchQueryKey} from '@/lib/client/api';
+import {useMutation,useQuery,useQueryClient} from '@tanstack/react-query';
+import {usePrivateProfile,evaluateJump} from '@/lib/client/private-profile';
+import {api,ApiFailure,fetchMatches,matchQueryKey} from '@/lib/client/api';
+import type {IntroductionIdentity,MatchView} from '@/lib/contracts';
 import MatchCard from '@/components/matches/MatchCard';
-
-export default function Matches() {
-  const {profile} = usePrivateProfile();
-  const client = useQueryClient();
-  // Generate once (idempotent on the server), then poll so the other person's approval shows up.
-  const generated = useQuery({queryKey: ['matches-generate'], queryFn: api.generateMatches, retry: false, staleTime: Infinity});
-  const matches = useQuery({queryKey: matchQueryKey, queryFn: fetchMatches, enabled: generated.isSuccess, refetchInterval: 3000});
-  const decide = useMutation({
-    mutationFn: ({id, decision}: {id: string; decision: 'approve' | 'decline'}) => api.consent(id, decision),
-    onSuccess: () => client.invalidateQueries({queryKey: matchQueryKey}),
-  });
-
-  const err = generated.error;
-  if (err instanceof ApiFailure && err.status === 401) {
-    return (
-      <section className="narrow">
-        <p className="eyebrow">STEP 02 / POSSIBLE COUNTERPARTS</p>
-        <h1>Join first.</h1>
-        <p className="lead">Your session isn&apos;t active on this device.</p>
-        <Link className="button" href="/join">Join the event →</Link>
-      </section>
-    );
-  }
-  if (err instanceof ApiFailure && err.code === 'NO_CARD') {
-    return (
-      <section className="narrow">
-        <p className="eyebrow">STEP 02 / POSSIBLE COUNTERPARTS</p>
-        <h1>Start with your card.</h1>
-        <p className="lead">There is no approved card for this session yet.</p>
-        <Link className="button" href="/onboarding">Create a card →</Link>
-      </section>
-    );
-  }
-  if (err) {
-    return (
-      <section className="narrow">
-        <h1>Matching hit a snag.</h1>
-        <p className="muted">{err.message}</p>
-        <button onClick={() => generated.refetch()}>Try again</button>
-      </section>
-    );
-  }
-
-  const list = matches.data ?? generated.data?.matches ?? [];
-
-  return (
-    <section>
-      <p className="eyebrow">STEP 02 / POSSIBLE COUNTERPARTS</p>
-      <h1>
-        A different skill set.<br />
-        <em>A shared direction.</em>
-      </h1>
-      <p className="lead">
-        Heuristic matching · identities stay hidden until both sides approve an introduction.
-        Profiles marked &ldquo;Synthetic&rdquo; are fictional examples and never respond.
-      </p>
-
-      {generated.isPending ? (
-        <p className="muted">Finding counterparts…</p>
-      ) : list.length === 0 ? (
-        <article>
-          <h2>No suitable counterparts yet.</h2>
-          <p>That is a valid result — we won&apos;t invent a match. Check back as more people join.</p>
-          <div className="actions">
-            <button onClick={() => generated.refetch()}>Check again</button>
-          </div>
-        </article>
-      ) : (
-        <div className="grid three">
-          {list.map(m => (
-            <MatchCard
-              key={m.id}
-              match={m}
-              synthetic={false}
-              checklist={evaluateJump(profile, m.opportunity)}
-              onRequestIntro={() => decide.mutate({id: m.id, decision: 'approve'})}
-              onDecline={() => decide.mutate({id: m.id, decision: 'decline'})}
-              pitchHref={`/pitch?matchId=${encodeURIComponent(m.id)}`}
-            />
-          ))}
-        </div>
-      )}
-      {decide.error && <p className="muted" role="alert">{decide.error.message}</p>}
-
-      <div className="actions">
-        <Link className="secondary" href="/onboarding">Back to your card</Link>
-      </div>
-    </section>
-  );
+import styles from '@/components/matches/matches.module.css';
+type Filter='all'|'waiting'|'revealed'|'declined';
+export default function Matches(){
+ const {profile}=usePrivateProfile();const client=useQueryClient();const [filter,setFilter]=useState<Filter>('all');
+ const generated=useQuery({queryKey:['matches-generate'],queryFn:api.generateMatches,retry:false,staleTime:10000,refetchInterval:15000});
+ const matches=useQuery({queryKey:matchQueryKey,queryFn:fetchMatches,enabled:generated.isSuccess,refetchInterval:3000});
+ const decide=useMutation({mutationFn:({id,decision,identity}:{id:string;decision:'approve'|'decline'|'withdraw';identity?:IntroductionIdentity})=>api.consent(id,decision,identity),onSuccess:(updated)=>{client.setQueryData<MatchView[]>(matchQueryKey,old=>(old??[]).map(m=>m.id===updated.id?updated:m));void client.invalidateQueries({queryKey:matchQueryKey});}});
+ const err=generated.error;
+ if(err instanceof ApiFailure&&(err.status===401||err.code==='NO_CARD'))return <section className="narrow"><p className="eyebrow">YOUR FOUNDER MATCHES</p><h1>{err.status===401?'Join your room.':'Start with your brief.'}</h1><p className="lead">Only your approved brief is used to find people worth meeting.</p><Link className="button" href={err.status===401?'/join':'/onboarding'}>{err.status===401?'Join the room':'Review my brief'} →</Link></section>;
+ if(err&&!generated.data)return <section><h1>Couldn’t load your matches.</h1><p role="alert">{err.message}</p><button onClick={()=>void generated.refetch()}>Try again</button></section>;
+ const list=(matches.data??generated.data?.matches??[]).filter(m=>!m.candidate.alias.startsWith('Synthetic · '));
+ const shown=list.filter(m=>filter==='all'?m.status!=='declined':filter==='waiting'?m.status==='pending':m.status===filter);
+ return <section><p className="eyebrow">PRIVATE FOUNDER MATCHMAKING</p><h1>A shared idea.<br/><em>A separate yes.</em></h1><p className="lead">Your agent found a reason to meet. Explore their approved brief, then decide what you want to share.</p>
+  <div className={styles.boundary}><strong>Shared here: approved briefs.</strong><span>Private profile text and personal constraints stay on their owner’s device. Contacts unlock only after two approvals.</span></div>
+  <div className={styles.toolbar}><div className={styles.filters}>{([['all','For you'],['waiting','Waiting'],['revealed','Introduced'],['declined','Passed']] as const).map(([value,label])=><button className={filter===value?styles.selected:styles.quiet} key={value} onClick={()=>setFilter(value)} aria-pressed={filter===value}>{label} · {list.filter(m=>value==='all'?m.status!=='declined':value==='waiting'?m.status==='pending':m.status===value).length}</button>)}</div><button className={styles.quiet} disabled={generated.isFetching} onClick={()=>{void generated.refetch();void matches.refetch();}}>{generated.isFetching?'Checking…':'Refresh matches'}</button></div>
+  {(matches.isError||decide.isError)&&<p role="alert" className={styles.error}>{decide.error?.message??matches.error?.message}</p>}
+  {generated.isPending?<p role="status">Finding complementary briefs…</p>:!shown.length?<article><h2>{filter==='all'?'Your next person may still be joining.':'Nothing here yet.'}</h2><p>Matches update as people publish their briefs. Invite your teammates into the same room.</p><Link href="/onboarding">Review my brief →</Link></article>:<div className={styles.matchGrid}>{shown.map(match=><MatchCard key={match.id} match={match} checklist={evaluateJump(profile,match.opportunity)} busy={decide.isPending&&decide.variables?.id===match.id} onRequestIntro={identity=>decide.mutate({id:match.id,decision:'approve',identity})} onDecline={()=>decide.mutate({id:match.id,decision:'decline'})} onWithdraw={()=>decide.mutate({id:match.id,decision:'withdraw'})} pitchHref={'/pitch?matchId='+encodeURIComponent(match.id)}/>)}</div>}
+  <div className="actions"><Link className="secondary" href="/agent">My private workspace →</Link><Link className="secondary" href="/onboarding">My approved brief →</Link></div>
+ </section>;
 }
