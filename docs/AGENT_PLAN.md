@@ -1,26 +1,26 @@
-# Agent and messaging decision
+# Current agent plan: private founder matchmaking
 
-Decision for the hackathon: keep the Next.js application and add one bounded agent workflow in TypeScript. This is a plan, not implemented agent functionality.
+Authoritative scope: [PIVOT.md](../PIVOT.md). Assignments: [four-person handoff](../WOULD_YOU_JUMP_HANDOFF.md).
 
-## Workflow
+## Agent responsibilities
 
-Accept a goal → inspect the approved matching card → ask one important missing question or choose a tool → observe tool results → draft an evidence-backed recommendation. Stop with a result or a question; limit a run to 5 model steps and a total timeout. Resume on the next message. Stream real progress events to the web UI.
+- Read the owner's self-submitted profile and goals locally.
+- Suggest a bounded set of skill/interest labels through Laya when available; uncertain fields remain editable.
+- Prepare an exact brief preview from user-approved fields.
+- Compare approved counterpart briefs and explain complementarity.
+- Keep the owner's private constraints local when deciding whether to explore a proposal.
+- Ask for explicit application-level consent before publication or identity reveal.
 
-Initial tool contracts: `find_candidates`, `search_public_projects`, `get_founder_framework`, `draft_solution_memo`. Reuse existing matching, evidence, and framework modules. Tool results need source URLs and errors. Server binds the participant identity; the model cannot select another participant's credentials. Introduction approvals remain explicit application actions. Never have the model infer consent from prose.
+Consent is a server-enforced action, not a model decision. Models cannot select another participant's identity or approve on their behalf.
 
-Do not send browser-only private intake to a hosted model without changing the product disclosure and getting the user's choice. Agent input starts with approved card fields. Telegram messages are channel messages processed by that service, not browser-local private notes.
+## Information flow
 
-## Telegram
+Private input → local classifier → suggested labels → user's edited approved brief → shared deterministic matcher → in-app proposal → each participant's consent → scoped reveal.
 
-After the web workflow works, add Telegram as a second interface to the same runner. Needed: a bot token, model provider key, participant/account linking, and either a persistent polling worker or a deployed webhook. For a local hackathon demo a separate polling worker avoids configuring an inbound webhook. Deduplicate update IDs and isolate each participant's conversation. No other social networks in the first iteration.
+A cloud model is optional and outside the first working demo. If later used, it receives approved brief fields only. It never receives raw profiles, local private goals or identity records. LinkedIn browser automation, reply monitoring, Telegram, OpenTUI and external messaging are not part of this pivot's critical path.
 
-Suggested commands: `/start` to link participant, `/match` to find counterparts, `/pitch` to prepare the current draft. Initial send scope is replies in the requesting participant's chat. Do not add unsolicited outbound messaging.
+## Runtime
 
-## Hermes / MCP
+Laya is https://github.com/NandhaKishorM/laya, a classifier rather than a generative chat model. Browser-local ONNX is preferred; an own-device loopback companion is acceptable if clearly identified. A central server running a model locally does not establish per-user on-device privacy.
 
-Hermes offers a messaging gateway and MCP integration. If adopted later, run it alongside the web app and expose the four application tools; avoid a fork unless changing Hermes itself is necessary. A multi-user shared gateway still needs application-level identity binding and isolated sessions. MCP provides the tool interface, not the agent's decisions or the application database.
-
-- Official repo: https://github.com/NousResearch/hermes-agent
-- Telegram setup: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/telegram
-
-Owner coordination: Vernika owns model/evidence generation; Abhinav owns authenticated tool execution/session linking. Integration lead owns chat UI and channel adapter after the main demo path works. Do not implement a parallel second matching or consent backend.
+Validate narrow labels and missing/negated statements before making quality claims. Keep the manual reviewed brief path working if classification is unavailable. Never escalate private text to a hosted model to hide a local failure.

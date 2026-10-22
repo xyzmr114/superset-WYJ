@@ -1,3 +1,5 @@
+> **Current pivot · 22 October 2026:** Read [PIVOT.md](../../PIVOT.md) and the [four-person handoff](../../WOULD_YOU_JUMP_HANDOFF.md). Private founder matchmaking is the current product. Older module notes below are implementation references; the current pivot and ownership take precedence.
+
 # Pitch workspace integration
 
 Owned by the integration lead. `/pitch` runs a local review-flow example. `/pitch?from=agent` opens the personal solution memo editor from WYJ chat, with tab persistence, preview, copy, and download. `/pitch?pitchId=ID` reads a real draft; `/pitch?matchId=ID` offers a button to create/reuse one. All live calls use the shared cookie-authenticated API contract. There is no automatic fallback from live mode to simulated approvals.
