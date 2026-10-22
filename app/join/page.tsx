@@ -1,31 +1,47 @@
 "use client";
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {usePrivateProfile} from '@/lib/client/private-profile';
+import {api} from '@/lib/client/api';
 
 export default function Join() {
   const router = useRouter();
   const {clear} = usePrivateProfile();
-  const [eventCode, setEventCode] = useState('SUPERSET-DEMO');
+  const [eventCode, setEventCode] = useState('SUPERSET');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  // A real deployment creates an anonymous server session here (POST /api/session).
-  // This build starts a local demo session: wipe any lingering private notes, then
-  // move to intake.
-  const start = (e: React.FormEvent) => {
+  // QR codes point at /join?code=EVENT; prefill from it after mount.
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get('code');
+    if (code) setEventCode(code);
+  }, []);
+
+  // Creates an anonymous server session (HttpOnly cookie), wipes any lingering
+  // private notes, then moves to intake.
+  const start = async (e: React.FormEvent) => {
     e.preventDefault();
-    clear();
-    router.push('/onboarding');
+    setBusy(true);
+    setError('');
+    try {
+      await api.createSession(eventCode);
+      clear();
+      router.push('/onboarding');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not join.');
+      setBusy(false);
+    }
   };
 
   return (
     <section className="narrow">
-      <p className="eyebrow">THE ROOM / DEMO</p>
+      <p className="eyebrow">THE ROOM</p>
       <h1>
         Meet your<br />next possibility.
       </h1>
       <p className="lead">
-        Scan the event code to join anonymously. This build uses fictional attendees and does not
-        reveal any real identities yet.
+        Scan the event code to join anonymously. Names stay hidden until two people both approve an
+        introduction.
       </p>
       <article>
         <h3>Start an anonymous session</h3>
@@ -38,7 +54,8 @@ export default function Join() {
             Event code
             <input value={eventCode} onChange={e => setEventCode(e.target.value)} required />
           </label>
-          <button type="submit">Join this event →</button>
+          <button type="submit" disabled={busy}>{busy ? 'Joining…' : 'Join this event →'}</button>
+          {error && <p className="muted" role="alert">{error}</p>}
         </form>
       </article>
     </section>

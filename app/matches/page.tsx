@@ -1,36 +1,53 @@
 "use client";
-import {useState} from 'react';
 import Link from 'next/link';
-import {useDemo} from '@/app/providers';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {usePrivateProfile, evaluateJump} from '@/lib/client/private-profile';
-import {rankCandidates} from '@/lib/matching';
-import {proposeOpportunity} from '@/lib/generation';
-import {profiles} from '@/fixtures/profiles';
-import type {MatchView} from '@/lib/contracts';
+import {api, ApiFailure, fetchMatches, matchQueryKey} from '@/lib/client/api';
 import MatchCard from '@/components/matches/MatchCard';
 
-type Status = MatchView['status'];
-
 export default function Matches() {
-  const {card} = useDemo();
   const {profile} = usePrivateProfile();
-  // Local-only consent state. Resets on refresh — matching the demo contract.
-  const [statuses, setStatuses] = useState<Record<string, Status>>({});
+  const client = useQueryClient();
+  // Generate once (idempotent on the server), then poll so the other person's approval shows up.
+  const generated = useQuery({queryKey: ['matches-generate'], queryFn: api.generateMatches, retry: false, staleTime: Infinity});
+  const matches = useQuery({queryKey: matchQueryKey, queryFn: fetchMatches, enabled: generated.isSuccess, refetchInterval: 3000});
+  const decide = useMutation({
+    mutationFn: ({id, decision}: {id: string; decision: 'approve' | 'decline'}) => api.consent(id, decision),
+    onSuccess: () => client.invalidateQueries({queryKey: matchQueryKey}),
+  });
 
-  if (!card) {
+  const err = generated.error;
+  if (err instanceof ApiFailure && err.status === 401) {
+    return (
+      <section className="narrow">
+        <p className="eyebrow">STEP 02 / POSSIBLE COUNTERPARTS</p>
+        <h1>Join first.</h1>
+        <p className="lead">Your session isn&apos;t active on this device.</p>
+        <Link className="button" href="/join">Join the event →</Link>
+      </section>
+    );
+  }
+  if (err instanceof ApiFailure && err.code === 'NO_CARD') {
     return (
       <section className="narrow">
         <p className="eyebrow">STEP 02 / POSSIBLE COUNTERPARTS</p>
         <h1>Start with your card.</h1>
-        <p className="lead">Demo state resets on refresh, so there is no approved card yet.</p>
+        <p className="lead">There is no approved card for this session yet.</p>
         <Link className="button" href="/onboarding">Create a card →</Link>
       </section>
     );
   }
+  if (err) {
+    return (
+      <section className="narrow">
+        <h1>Matching hit a snag.</h1>
+        <p className="muted">{err.message}</p>
+        <button onClick={() => generated.refetch()}>Try again</button>
+      </section>
+    );
+  }
 
-  const ranked = rankCandidates(card, profiles);
-
-  const setStatus = (id: string, status: Status) => setStatuses(prev => ({...prev, [id]: status}));
+  const list = matches.data ?? generated.data?.matches ?? [];
 
   return (
     <section>
@@ -40,67 +57,39 @@ export default function Matches() {
         <em>A shared direction.</em>
       </h1>
       <p className="lead">
-        Synthetic attendees · local heuristic matching · identities stay hidden until both sides
-        approve an introduction.
+        Heuristic matching · identities stay hidden until both sides approve an introduction.
+        Profiles marked &ldquo;Synthetic&rdquo; are fictional examples and never respond.
       </p>
 
-      {ranked.length === 0 ? (
+      {generated.isPending ? (
+        <p className="muted">Finding counterparts…</p>
+      ) : list.length === 0 ? (
         <article>
           <h2>No suitable counterparts yet.</h2>
-          <p>
-            That is a valid result — we won&apos;t invent a match. Try editing your card toward the
-            seeded scenario (offer <em>engineering</em>, seek <em>sales</em>, interest{' '}
-            <em>developer-tools</em>).
-          </p>
+          <p>That is a valid result — we won&apos;t invent a match. Check back as more people join.</p>
           <div className="actions">
-            <Link className="secondary" href="/onboarding">Edit demo card</Link>
+            <button onClick={() => generated.refetch()}>Check again</button>
           </div>
         </article>
       ) : (
         <div className="grid three">
-          {ranked.map(({candidate, score}) => {
-            const opportunity = proposeOpportunity(card, candidate);
-            const status: Status = statuses[candidate.id] ?? 'suggested';
-            const synthetic = status === 'revealed';
-
-            // Identity is synthesised ONLY for the simulated-approval demo path and
-            // clearly badged. A real reveal arrives on the authorized backend response.
-            const match: MatchView = {
-              id: candidate.id,
-              candidate,
-              score,
-              opportunity,
-              evidence: [],
-              status,
-              myIntroApproval: status === 'pending' || status === 'revealed',
-              ...(synthetic
-                ? {
-                    revealedContact: {
-                      displayName: `Synthetic founder · ${candidate.alias}`,
-                      contact: `${candidate.alias.toLowerCase()}@synthetic.demo`,
-                    },
-                  }
-                : {}),
-            };
-
-            return (
-              <MatchCard
-                key={candidate.id}
-                match={match}
-                synthetic={synthetic}
-                checklist={evaluateJump(profile, opportunity)}
-                onRequestIntro={() => setStatus(candidate.id, 'pending')}
-                onDecline={() => setStatus(candidate.id, 'declined')}
-                onSimulateApproval={() => setStatus(candidate.id, 'revealed')}
-              />
-            );
-          })}
+          {list.map(m => (
+            <MatchCard
+              key={m.id}
+              match={m}
+              synthetic={false}
+              checklist={evaluateJump(profile, m.opportunity)}
+              onRequestIntro={() => decide.mutate({id: m.id, decision: 'approve'})}
+              onDecline={() => decide.mutate({id: m.id, decision: 'decline'})}
+              pitchHref={`/pitch?matchId=${encodeURIComponent(m.id)}`}
+            />
+          ))}
         </div>
       )}
+      {decide.error && <p className="muted" role="alert">{decide.error.message}</p>}
 
       <div className="actions">
-        <Link className="secondary" href="/onboarding">Edit demo card</Link>
-        <Link className="secondary" href="/pitch">Preview pitch workspace →</Link>
+        <Link className="secondary" href="/onboarding">Back to your card</Link>
       </div>
     </section>
   );

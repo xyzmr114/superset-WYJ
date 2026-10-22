@@ -1,4 +1,5 @@
 "use client";
+import Link from 'next/link';
 import type {MatchView} from '@/lib/contracts';
 import type {CheckItem} from '@/lib/client/private-profile';
 import JumpChecklist from './JumpChecklist';
@@ -10,8 +11,8 @@ import styles from './matches.module.css';
 //
 // Reveal rule: `match.revealedContact` is shown ONLY when it is present on the
 // authorized match response. We never fetch identity early and hide it with CSS.
-// In this frontend build there is no backend, so a reveal can be *simulated*;
-// that path is clearly badged SYNTHETIC and passed down via `synthetic`.
+// A reveal can still be *simulated* for offline demos when `onSimulateApproval`
+// is passed; that path is clearly badged SYNTHETIC via `synthetic`.
 export default function MatchCard({
   match,
   checklist,
@@ -19,13 +20,15 @@ export default function MatchCard({
   onRequestIntro,
   onDecline,
   onSimulateApproval,
+  pitchHref,
 }: {
   match: MatchView;
   checklist: CheckItem[];
   synthetic: boolean;
   onRequestIntro: () => void;
   onDecline: () => void;
-  onSimulateApproval: () => void;
+  onSimulateApproval?: () => void;
+  pitchHref?: string;
 }) {
   const {candidate, score, opportunity, evidence, status, revealedContact} = match;
 
@@ -81,7 +84,21 @@ export default function MatchCard({
         </div>
       )}
 
-      {status === 'pending' && (
+      {status === 'pending' && !match.myIntroApproval && (
+        <>
+          <div className={styles.waiting}>
+            <strong>They&apos;d like an introduction.</strong>
+            <br />
+            Names and contact details are revealed to both of you only if you approve too.
+          </div>
+          <div className={styles.cardActions}>
+            <button onClick={onRequestIntro}>Approve introduction</button>
+            <button className={styles.declineBtn} onClick={onDecline}>Decline</button>
+          </div>
+        </>
+      )}
+
+      {status === 'pending' && match.myIntroApproval && (
         <>
           <div className={styles.waiting}>
             <strong>Waiting for the other person…</strong>
@@ -90,9 +107,11 @@ export default function MatchCard({
             too. Either of you can still decline before that happens.
           </div>
           <div className={styles.cardActions}>
-            <button type="button" className={styles.synthBtn} onClick={onSimulateApproval}>
-              ▷ Simulate their approval (synthetic demo)
-            </button>
+            {onSimulateApproval && (
+              <button type="button" className={styles.synthBtn} onClick={onSimulateApproval}>
+                ▷ Simulate their approval (synthetic demo)
+              </button>
+            )}
             <button className={styles.declineBtn} onClick={onDecline}>Withdraw</button>
           </div>
         </>
@@ -110,6 +129,7 @@ export default function MatchCard({
             Once seen, an introduction can&apos;t be un-seen — we don&apos;t promise to erase it from
             anyone&apos;s memory.
           </p>
+          {pitchHref && !synthetic && <Link className="button" href={pitchHref}>Shape a joint pitch →</Link>}
         </div>
       )}
 
