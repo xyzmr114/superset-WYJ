@@ -11,7 +11,7 @@ export default function FounderReview({onInsert,disabled}:{onInsert:(text:string
     <summary><span>Prepare a solution memo</span><span className="badge">9 EVIDENCE QUESTIONS</span></summary>
     <p>A working guide inspired by public super&#123;set&#125; writing and practical startup lessons.</p>
     <p className="muted">Build conviction with evidence: customer behavior matters more than a polished pitch.</p>
-    <p className={styles.notice}>Work through the questions, then choose which notes to bring into your shared draft.</p>
+    <p className={styles.notice}>Work through the questions, then choose which notes to bring into your draft.</p>
     <div className={styles.promptGrid}>
       {reviewPrompts.map(prompt=>{const answer=answers[prompt.id]??{note:'',status:'unknown'};return <article key={prompt.id}>
         <span className="badge">{prompt.origin==='published'?'PUBLIC SUPER{SET} APPROACH':'GENERAL STARTUP PRACTICE'}</span>

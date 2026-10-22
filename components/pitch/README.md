@@ -1,6 +1,6 @@
 # Pitch workspace integration
 
-Owned by the integration lead. `/pitch` runs an explicitly labeled synthetic local demo. `/pitch?pitchId=ID` reads a real draft; `/pitch?matchId=ID` offers a button to create/reuse one. All live calls use the shared cookie-authenticated API contract. There is no automatic fallback from live mode to simulated approvals.
+Owned by the integration lead. `/pitch` runs a local review-flow example. `/pitch?from=agent` opens the personal solution memo editor from WYJ chat, with tab persistence, preview, copy, and download. `/pitch?pitchId=ID` reads a real draft; `/pitch?matchId=ID` offers a button to create/reuse one. All live calls use the shared cookie-authenticated API contract. There is no automatic fallback from live mode to simulated approvals.
 
 ## Abhinav handoff
 
@@ -12,7 +12,7 @@ Polling runs every 3 seconds. A new server version does not overwrite unsaved ed
 
 ## Anusha handoff
 
-After real mutual reveal, link to `/pitch?matchId=${encodeURIComponent(match.id)}`. Do not use the bare `/pitch` route for real matches; that route is always demo mode.
+After real mutual reveal, link to `/pitch?matchId=${encodeURIComponent(match.id)}`. Do not use the bare `/pitch` route for real matches; that route is the local review example.
 
 ## Vernika handoff
 
@@ -21,3 +21,7 @@ Draft content should include problem hypothesis, target customer, team complemen
 ## Verification
 
 `pnpm test` includes demo approval-invalidation checks. UI integration must additionally verify stale PUT/approval rejection, unauthorized reads/exports, and two independent browser sessions against the real backend. Frontend simulation does not establish those guarantees.
+
+## Personal memo flow
+
+`WorkingDraft.tsx` owns the personal editor. `lib/agent/workspace.ts` validates tab state and keeps edits when the same generated memo is reopened. It never creates a shared server pitch or manufactures participant approvals. Do not use `from=agent` for an actual two-founder pitch; use `pitchId` or `matchId`. The shared route takes precedence if either ID is present. Agent chat and working drafts stay in sessionStorage, not the matching-card or private-intake stores.

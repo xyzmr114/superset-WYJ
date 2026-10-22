@@ -1,2 +1,5 @@
 allowBuilds:
+  bun: true
   esbuild: true
+  msgpackr-extract: true
+  opencode-ai: true
