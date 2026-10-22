@@ -39,10 +39,10 @@ export function getMyMatch(id: string, me: string): Match {
 
 export function toView(m: Match, me: string): MatchView {
   const other = m.a === me ? m.b : m.a;
-  const candidate = db.cards.get(other)!;
+  const candidate = (other===m.a?m.aCard:m.bCard)??db.cards.get(other)!;
   const revealed = mutuallyApproved(m);
   const view: MatchView = {
-    id: m.id, candidate, score: m.score, opportunity: m.opportunity, evidence: m.evidence,
+    id: m.id, myBrief:(me===m.a?m.aCard:m.bCard)??db.cards.get(me), candidate, score: m.score, opportunity: m.opportunity, evidence: m.evidence,
     status: m.declinedBy ? 'declined' : revealed ? 'revealed' : m.approvals.size > 0 ? 'pending' : 'suggested',
     myIntroApproval: !!m.introConsents?.[me]&&m.approvals.has(me),
     theirIntroApproval: !!m.introConsents?.[other]&&m.approvals.has(other),

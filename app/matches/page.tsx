@@ -11,7 +11,7 @@ type Filter='all'|'waiting'|'revealed'|'declined';
 export default function Matches(){
  const {profile}=usePrivateProfile();const client=useQueryClient();const [filter,setFilter]=useState<Filter>('all');
  const generated=useQuery({queryKey:['matches-generate'],queryFn:api.generateMatches,retry:false,staleTime:10000,refetchInterval:15000});
- const matches=useQuery({queryKey:matchQueryKey,queryFn:fetchMatches,enabled:generated.isSuccess,refetchInterval:3000});
+ const matches=useQuery({queryKey:matchQueryKey,queryFn:fetchMatches,enabled:generated.isSuccess,refetchInterval:3000,refetchIntervalInBackground:true});
  const decide=useMutation({mutationFn:({id,decision,identity}:{id:string;decision:'approve'|'decline'|'withdraw';identity?:IntroductionIdentity})=>api.consent(id,decision,identity),onSuccess:(updated)=>{client.setQueryData<MatchView[]>(matchQueryKey,old=>(old??[]).map(m=>m.id===updated.id?updated:m));void client.invalidateQueries({queryKey:matchQueryKey});}});
  const err=generated.error;
  if(err instanceof ApiFailure&&(err.status===401||err.code==='NO_CARD'))return <section className="narrow"><p className="eyebrow">YOUR FOUNDER MATCHES</p><h1>{err.status===401?'Join your room.':'Start with your brief.'}</h1><p className="lead">Only your approved brief is used to find people worth meeting.</p><Link className="button" href={err.status===401?'/join':'/onboarding'}>{err.status===401?'Join the room':'Review my brief'} →</Link></section>;

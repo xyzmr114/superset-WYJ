@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { Evidence, MatchingCard, Opportunity } from '@/lib/contracts';
 import { EVIDENCE_CAVEAT } from '@/lib/evidence/caveat';
 import { mapTags, tagSet } from '@/lib/matching/tags';
+import { preferenceCompatibility } from '@/lib/matching';
 
 // Pure and safe to import from client components. The hosted-model path lives in
 // ./model.ts (server-only) and falls back to proposeOpportunity below.
@@ -34,7 +35,30 @@ const DOMAINS: Record<string, Domain> = {
     targetUser: 'Operations leads at small companies that must report energy use to customers or regulators',
     interviewees: 'operations leads who have recently prepared an energy or emissions report',
   },
+  travel: {
+    label: 'Travel operations',
+    problem: 'Small travel agencies and tour operators may re-enter the same booking by hand across supplier systems and their own tools.',
+    targetUser: 'Operations leads at small travel agencies or tour operators',
+    interviewees: 'operations leads at small travel agencies or tour operators',
+  },
+  'ai-agents': {
+    label: 'Agent reliability',
+    problem: 'Teams putting agents in front of real users may struggle to see why an agent failed or to test a change before users hit it.',
+    targetUser: 'Engineers who ship agents to real users at small software companies',
+    interviewees: 'engineers who have shipped an agent to real users',
+  },
 };
+
+// A pair who share both travel and ai-agents gets the combined hypothesis.
+const AGENT_TRAVEL: Domain = {
+  label: 'Agent travel booking',
+  problem: 'Teams building agents that plan trips may have no simple, reliable way for the agent to search, hold and book flights or hotels, so they stitch together consumer sites or stop before booking.',
+  targetUser: 'Developers building agents or assistants that need to search and book travel',
+  interviewees: 'developers building agents that plan or book travel',
+};
+
+/** Opens nextExperiment: the call to have before deciding on the experiment together. */
+export const INTRO_STEP = 'Start with a 15-minute introduction: what each of you wants to build, how much time you can put in over the next two weeks, and whether you want to run the experiment below together.';
 
 // Display keeps what people typed; domain choice and pair reasons use the mapped tags.
 const uniq = (xs: string[]) => [...new Set(xs.map(x => x.trim()).filter(Boolean))];
@@ -44,15 +68,19 @@ const covers = (offers: string[], seeks: string[]) => {
   return uniq(mapTags(offers, 'skill').filter(m => wanted.has(m.tag)).map(m => m.original));
 };
 
-export function sharedDomain(a: MatchingCard, b: MatchingCard): string | null {
+export function sharedDomains(a: MatchingCard, b: MatchingCard): string[] {
   const bs = new Set(tagSet(mapTags(b.interests, 'interest')));
-  return tagSet(mapTags(a.interests, 'interest')).find(x => bs.has(x)) ?? null;
+  return tagSet(mapTags(a.interests, 'interest')).filter(x => bs.has(x));
 }
+
+export const sharedDomain = (a: MatchingCard, b: MatchingCard): string | null => sharedDomains(a, b)[0] ?? null;
 
 /** Deterministic opportunity from approved card fields. Always generationMode 'template'. */
 export function proposeOpportunity(a: MatchingCard, b: MatchingCard, evidence: Evidence[] = []): Opportunity {
-  const tag = sharedDomain(a, b) ?? tagSet(mapTags([...a.interests, ...b.interests], 'interest'))[0] ?? null;
-  const d = (tag && DOMAINS[tag]) || {
+  const shared = sharedDomains(a, b);
+  const agentTravel = shared.includes('travel') && shared.includes('ai-agents');
+  const tag = agentTravel ? 'travel and ai-agents' : shared[0] ?? tagSet(mapTags([...a.interests, ...b.interests], 'interest'))[0] ?? null;
+  const d = (agentTravel && AGENT_TRAVEL) || (tag && DOMAINS[tag]) || {
     label: tag ? `${tag} workflow` : 'Shared workflow',
     problem: `There may be a repeated, costly workflow in ${tag ?? 'a shared problem area'} that a two-person team could improve.`,
     targetUser: 'To be chosen after the first interviews',
@@ -63,12 +91,19 @@ export function proposeOpportunity(a: MatchingCard, b: MatchingCard, evidence: E
     aGives.length ? `${a.alias} offers ${list(aGives)}, which ${b.alias} is looking for.` : `${a.alias} offers ${list(uniq(a.offers)) || 'skills not yet listed'}.`,
     bGives.length ? `${b.alias} offers ${list(bGives)}, which ${a.alias} is looking for.` : `${b.alias} offers ${list(uniq(b.offers)) || 'skills not yet listed'}.`,
   ];
-  if (sharedDomain(a, b)) whyThisPair.push(`Both listed ${tag} as a problem area they want to work on.`);
+  if (shared.length) whyThisPair.push(`Both listed ${tag} as ${agentTravel ? 'problem areas' : 'a problem area'} they want to work on.`);
+  const preferenceReasons = preferenceCompatibility(a, b).reasons;
+  if (preferenceReasons.length) whyThisPair.push(preferenceReasons.join(' '));
+  const approvedIdeas = [a, b].filter(card => card.approvedBlurb.trim());
+  const ideaSummary = approvedIdeas.map(card => `${card.alias}'s approved idea: “${card.approvedBlurb.trim()}”`).join(' ');
+  const experiment = approvedIdeas.length
+    ? 'within 48 hours, agree on one overlap between the two approved ideas, choose a specific user, and interview five people who fit. Split discovery and a small prototype between your stated strengths. Compare findings and independently decide whether to keep building together.'
+    : `within 48 hours, interview five ${d.interviewees}. Ask for a recent example, the current workaround, how often it happens and what it costs. Continue only if at least three describe the same problem without prompting.`;
   const evidenceIds = evidence.slice(0, MAX_EVIDENCE).map(e => e.id);
   return {
-    title: `${d.label} discovery`,
-    problemHypothesis: `${d.problem} This is a hypothesis, not validated demand.`,
-    targetUser: d.targetUser,
+    title: approvedIdeas.length ? 'Shared idea discovery' : `${d.label} discovery`,
+    problemHypothesis: `${ideaSummary || d.problem} This is a hypothesis, not validated demand.`,
+    targetUser: approvedIdeas.length ? 'Agree on a specific user from the two approved ideas during the first conversation' : d.targetUser,
     whyThisPair,
     evidenceIds,
     unknowns: [
@@ -77,7 +112,7 @@ export function proposeOpportunity(a: MatchingCard, b: MatchingCard, evidence: E
       `What time and money can each founder commit? Cards list ${a.availability.replace('_', ' ')} and ${b.availability.replace('_', ' ')}.`,
       'Willingness to pay is untested.',
     ],
-    nextExperiment: `Within 48 hours, interview five ${d.interviewees}. Ask for a recent example, the current workaround, how often it happens and what it costs. Continue only if at least three describe the same problem without prompting.`,
+    nextExperiment: `${INTRO_STEP} Then, ${experiment}`,
     generationMode: 'template',
   };
 }
@@ -144,7 +179,8 @@ export function buildPitchMarkdown(match: PitchMatch, opportunity: Opportunity, 
     md(opportunity.problemHypothesis),
     '',
     '## Proposed product',
-    `A narrowly scoped first version for the target customer below, focused only on the problem above. ${md(opportunity.title)} is a working name. Decide the product shape after the first experiment, not before.`,
+    `Start with the overlap in these approved ideas; agree on a narrowly scoped first version after your first conversation.`,
+    ...[a, b].filter(card => card.approvedBlurb.trim()).map(card => `- ${md(card.alias)}: ${md(card.approvedBlurb)}`),
     '',
     '## Target customer',
     `${md(opportunity.targetUser)}. The first buyer and budget are not yet validated.`,
@@ -159,7 +195,7 @@ export function buildPitchMarkdown(match: PitchMatch, opportunity: Opportunity, 
     ...(sources.length ? sources : ['- No public sources attached yet.']),
     '',
     '## First 48-hour experiment',
-    md(opportunity.nextExperiment),
+    md(opportunity.nextExperiment.replace(`${INTRO_STEP} Then, w`, 'W')), // the introduction has happened by now
     '',
     '## Why explore this with super{set}?',
     'Our hypothesis, not a statement from super{set}: a complementary founding team working on one specific business problem may fit its company-building approach. We have not confirmed this with super{set}.',

@@ -14,7 +14,7 @@ export function decideIntroduction(m:Match,me:string,input:z.infer<typeof introD
   if(m.declinedBy)throw new HttpError(409,'DECLINED','This pairing was passed on.');
   const existing=m.introConsents?.[me];
   if(existing){if(existing.identity.displayName!==input.identity.displayName||existing.identity.contact!==input.identity.contact)throw new HttpError(409,'CONSENT_FIXED','Withdraw your approval before choosing different contact details.');return;}
-  const mine=db.cards.get(me);if(!mine)throw new HttpError(409,'NO_CARD','Publish your brief first.');
+  const mine=(me===m.a?m.aCard:m.bCard)??db.cards.get(me);if(!mine)throw new HttpError(409,'NO_CARD','Publish your brief first.');
   m.introConsents??={};
   m.introConsents[me]={identity:{...input.identity},briefVersion:mine.version,approvedAt:new Date().toISOString()};
   m.approvals.add(me);

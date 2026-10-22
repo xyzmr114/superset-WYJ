@@ -32,7 +32,7 @@ A service running on the organizer's laptop is not processing on every visitor's
 3. Run local classification; correct suggested labels. Unknown/unsupported labels remain unresolved.
 4. Preview a brief: alias, skills offered/sought, problem areas, coarse availability and an edited short idea blurb.
 5. Explicitly approve publishing that exact brief. Editing it invalidates an earlier unchecked/checked approval state.
-6. Get up to three proposed pairings using approved briefs, with reasons and a first experiment.
+6. Get proposed pairings without a founder-count cap using approved briefs, with reasons and a first experiment.
 7. Each side independently selects Interested / Pass. Interest is not permission to send a message or book a meeting externally.
 8. Select the name/contact fields to reveal for this specific pair and approve. Before both approve, API responses must contain no counterpart identity fields.
 9. After mutual approval, show contact details and a 15-minute introduction / 48-hour experiment suggestion. Reuse the joint pitch editor afterward; exact-version export approvals stay separate.
@@ -49,7 +49,7 @@ A service running on the organizer's laptop is not processing on every visitor's
 
 Laya means https://github.com/NandhaKishorM/laya — not Llama. It is a typed classification/decision engine, not a generative chat model. Use narrow questions about explicit skills and interests. It must never infer permission to publish or reveal an identity.
 
-At handoff, `laya==0.4.13` and its dependencies are installed in `.wyj-local/venv` on the integration laptop. **No checkpoint inference or founder-domain accuracy has been verified yet.** The virtual environment and any model weights are ignored, not pushed.
+`laya==0.4.13` and the English checkpoint now run on the integration laptop through the own-device companion. The teammate ten-snippet smoke exposed low precision/recall and only one fully correct profile; offers/interests are suggestions, while sought skills and availability remain manual. This is not founder-domain accuracy validation. All labels require review. Dependencies/weights are ignored, not pushed. See `scripts/local-classifier/README.md`.
 
 The project's published benchmarks show substantial domain dependence and overconfidence; do not claim a generic benchmark is founder-matching accuracy. Test the actual questions on a small labeled set, including negation and profiles with missing information. Do not block the consent demo on a model download or training run.
 
@@ -66,10 +66,18 @@ Sources:
 - `lib/server/` and `app/api/matches/`: participant sessions, reciprocal matches and mutual reveal.
 - `app/pitch/` and `components/pitch/`: shared pitch, versioned approvals and export.
 
-Current `/agent` still exposes the previous outreach workspace. Routing the new private workspace there is assigned to Anusha. Existing shared backend state is process memory: it survives hot reload, not server restarts or multiple server instances. Earlier unpushed evidence/privacy experiments were saved in a named Git stash and are outside this pivot.
+Current `/agent` and `/onboarding` both route to `components/private/PrivateWorkspace.tsx`; the previous outreach UI is no longer the main product. Existing shared backend state is process memory: it survives hot reload, not server restarts or multiple server instances. Earlier unpushed evidence/privacy experiments were saved in a named Git stash and are outside this pivot.
 
 ## Match/reveal integration landed
 
 `/matches` now offers Interested / Pass, an exact identity preview and pair-specific approval. Pending consent can be withdrawn. Both independent approvals are required by the server before any counterpart contact appears in JSON. Approval snapshots cannot be silently replaced, and edits to the older global identity record do not change them. Joint pitch creation uses the same mutual-consent gate.
 
-Verified with two independent browsers and `scripts/acceptance-pivot.ts` (21 checks). This does not complete the private workspace or local Laya adapter assigned above. Storage remains process memory.
+Verified with two independent browsers and `scripts/acceptance-pivot.ts` (21 checks). The private workspace and direct own-device Laya adapter have now also landed; see the integration update below. Storage remains process memory.
+
+## Intake, trials and plans integration
+
+Private intake includes self-submitted profile/idea and a separate constraints field that is not sent even to Laya. Fixed classification labels are reviewed; broad template prose and user edits form the approved idea. Self-described strengths, desired partner strengths, stack, availability and working styles are optional approved matching fields. No model personality assessment. The outgoing payload is visible before publishing; edits reset consent. Name/contact collection happens only inside pair-specific introduction review.
+
+Each session can publish separate immutable idea briefs. Free: five ideas, unlimited eligible founder matches. Premium: uncapped idea slots in development preview, structured idea refinement, solution memo and pitch planning. No billing integration or payment is claimed. Limits are per ephemeral room session, not durable paid accounts.
+
+Matches store both exact idea snapshots; a later idea cannot change an earlier pairing or consent. Working trials have a versioned shared goal, deliverable, each person's contribution and future deadline. Both approvals activate the plan. Private continuation feedback reveals only mutual yes; pass and pending are indistinguishable to the counterpart.
