@@ -1,0 +1,2 @@
+import Link from 'next/link';
+export default function Join(){return <section className="narrow"><p className="eyebrow">THE ROOM / DEMO</p><h1>Meet your<br/>next possibility.</h1><p className="lead">This starter uses fictional attendees. Nothing is published, and there is no live identity reveal yet.</p><article><h3>Before you start</h3><p>Use fictional details while the team connects authentication and consent. Your private notes disappear when you leave the intake screen.</p><Link className="button" href="/onboarding">Create a demo card →</Link></article></section>;}

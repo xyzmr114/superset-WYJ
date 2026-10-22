@@ -1,5 +1,7 @@
 # Would You Jump? — four-person implementation handoff
 
+> Scaffold update: use Next.js + TypeScript + TanStack Query, with Supabase Postgres behind server routes. The live deadline is 4:30 PM; follow the five-hour schedule in README.md instead of the original six-hour estimate below.
+
 ## Product decision
 
 Build a confidential founder-formation agent for people at this hackathon: discover a complementary teammate, explore an evidence-backed startup hypothesis, mutually reveal identities, and create a joint pitch draft for super{set}.
