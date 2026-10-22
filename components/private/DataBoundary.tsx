@@ -4,7 +4,7 @@ import styles from './private.module.css';
 const TIERS = [
   {where: 'This device', who: 'Only you', what: 'Your profile text, goals, conditions and suggested labels', tone: styles.tierDevice},
   {where: 'The room', who: 'Matching and a proposed counterpart', what: 'The exact brief you approve, under an alias', tone: ''},
-  {where: 'Sealed', who: 'Your match, after you both say yes', what: 'The name and contact you choose to reveal', tone: styles.tierSealed},
+  {where: 'Sealed', who: 'Your match, after you both say yes', what: 'The name and contact you choose for one specific pairing', tone: styles.tierSealed},
 ];
 
 export default function DataBoundary() {

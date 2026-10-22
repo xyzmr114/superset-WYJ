@@ -142,7 +142,7 @@ export default function CardEditor({
         {MODEL_PROVIDER
           ? ` These approved fields (never your private notes) may also be sent to the configured model provider: ${MODEL_PROVIDER}.`
           : ' Opportunities are generated from deterministic templates — no external model receives your card in this build.'}
-        {' '}Your name and contact are stored separately and revealed only after you both approve an introduction.
+        {' '}No name or contact is part of this card. You choose those for a specific pairing later, and they unlock only after you both approve.
       </div>
 
       <label className="check">

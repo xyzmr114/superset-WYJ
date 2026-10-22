@@ -1,16 +1,16 @@
 "use client";
 import {useState} from 'react';
 import {usePrivateProfile} from '@/lib/client/private-profile';
-import {classifyLocally, localEndpoint, type LocalClassification} from './localClassifier';
+import {classifyLocally, LOCAL_CLASSIFIER_URL, type LocalClassification} from '@/lib/private/classifier-contract';
 import styles from './private.module.css';
 
-// Your own profile text, held in tab memory. "Suggest labels" sends it only to a
-// classifier on this laptop's loopback address; results are allowlisted labels.
+// Your own profile text, held in tab memory. "Suggest labels" sends it only to the
+// classifier on this laptop's loopback address (see lib/private/classifier-contract.ts).
 export default function ProfilePanel({onApply}: {onApply: (result: LocalClassification) => void}) {
   const {profile, update} = usePrivateProfile();
   const [result, setResult] = useState<LocalClassification | null>(null);
   const [busy, setBusy] = useState(false);
-  const endpoint = localEndpoint();
+  const host = new URL(LOCAL_CLASSIFIER_URL).host;
 
   const suggest = async () => {
     setBusy(true);
@@ -44,8 +44,8 @@ export default function ProfilePanel({onApply}: {onApply: (result: LocalClassifi
           {busy ? 'Reading on this device…' : 'Suggest labels'}
         </button>
         <span className={styles.engine}>
-          <span className={endpoint ? styles.dotOn : styles.dotOff} aria-hidden="true" />
-          {endpoint ? `Laya on ${endpoint.host}` : 'No local classifier configured'}
+          <span className={result?.status === 'needs_review' ? styles.dotOn : styles.dotOff} aria-hidden="true" />
+          Laya on this laptop ({host})
         </span>
       </div>
 
