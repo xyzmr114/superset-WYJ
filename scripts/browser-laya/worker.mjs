@@ -2,6 +2,7 @@
 const scope = globalThis;
 scope.window = scope; // upstream Agent.load selects its browser provider using window presence.
 let agent;
+let loading;
 const progress = (message) => scope.postMessage({type:'progress',message});
 const modelBase = new URL('/models/laya/',scope.location.origin).href;
 const originalFetch=scope.fetch.bind(scope);
@@ -19,17 +20,24 @@ scope.fetch=async(input,options)=>{
 const skills={engineering:'software engineering or writing code',sales:'sales, business development or go-to-market',product:'product management, product strategy or customer research',design:'product, UX or visual design',data:'data science, machine learning or analytics'};
 const interests={'developer-tools':'tools for software developers or engineering workflows',payments:'payments, billing or fintech',healthcare:'healthcare, clinics or medical work',climate:'climate, energy or sustainability',travel:'travel, trips or booking','ai-agents':'AI agents or infrastructure for agents'};
 const questions=Object.fromEntries([...Object.entries(skills).map(([label,description])=>[`offers:${label}`,{type:'noul',instructions:`The person says they themselves have experience in ${description}.`}]),...Object.entries(interests).map(([label,description])=>[`interests:${label}`,{type:'noul',instructions:`The person says they want to work on ${description}.`}])]);
-scope.onmessage=async({data})=>{
- if(data.type!=='classify') return;
- let phase='load';
- try{
-   if(!agent){
+async function ensureAgent(){
+ if(agent)return agent;
+ if(!loading)loading=(async()=>{
      progress('Loading the browser model. Your text stays on this device.');
      const ort=await import('/laya-runtime/ort.webgpu.bundle.min.mjs');
      ort.env.wasm.wasmPaths=new URL('/laya-runtime/',scope.location.origin).href; ort.env.wasm.numThreads=1; ort.env.wasm.proxy=false;
      const {Agent}=await import('/laya-runtime/laya.js');
      agent=await Agent.load(modelBase,{numThreads:1,onProgress:(_done,_total,file)=>progress(`Preparing ${file} on your device…`)});
-   }
+     return agent;
+   })().finally(()=>{loading=null;});
+ return loading;
+}
+scope.onmessage=async({data})=>{
+ if(data.type!=='classify'&&data.type!=='warmup')return;
+ let phase='load';
+ try{
+   await ensureAgent();
+   if(data.type==='warmup'){scope.postMessage({type:'ready'});return;}
    phase='inference';
    const suggested={offers:[],seeks:[],interests:[],availability:null};
    let index=0;

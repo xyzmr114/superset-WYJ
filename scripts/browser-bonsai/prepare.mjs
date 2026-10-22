@@ -1,0 +1,21 @@
+import {build} from 'esbuild';
+import {mkdir,readFile,writeFile,cp,readdir,stat,realpath} from 'node:fs/promises';
+import {createWriteStream} from 'node:fs';
+import {Readable} from 'node:stream';
+import {pipeline} from 'node:stream/promises';
+import {createRequire} from 'node:module';
+import path from 'node:path';
+const revision='3f3cf1759daf66342d26610488b9931f2fafcb29';
+const dir='public/models/bonsai/Bonsai-1.7B-ONNX';
+await mkdir(`${dir}/onnx`,{recursive:true});await mkdir('public/bonsai-runtime',{recursive:true});
+const files=['config.json','generation_config.json','tokenizer.json','tokenizer_config.json','chat_template.jinja','onnx/model_q1.onnx','onnx/model_q1.onnx_data'];
+await Promise.all(files.map(async(file)=>{const dest=`${dir}/${file}`;if(await stat(dest).catch(()=>null)) return;const response=await fetch(`https://huggingface.co/onnx-community/Bonsai-1.7B-ONNX/resolve/${revision}/${file}`);if(!response.ok)throw new Error(`Model asset ${file}: ${response.status}`);await pipeline(Readable.fromWeb(response.body),createWriteStream(`${dest}.part`));await (await import('node:fs/promises')).rename(`${dest}.part`,dest);console.log(`Downloaded ${file}`);}));
+const require=createRequire(await realpath('node_modules/@huggingface/transformers/package.json'));
+const ortDir=path.dirname(require.resolve('onnxruntime-web/webgpu'));
+for(const filename of await readdir(ortDir)){if(filename.endsWith('.wasm')||/^ort-wasm.*\.mjs$/.test(filename)) await cp(path.join(ortDir,filename),path.join('public/bonsai-runtime',filename));}
+await build({entryPoints:['scripts/browser-bonsai/worker.mjs'],outfile:'public/bonsai-runtime/worker.mjs',bundle:true,platform:'browser',format:'esm',conditions:['browser'],target:'es2022',minify:false});
+await cp('node_modules/@huggingface/transformers/LICENSE','public/bonsai-runtime/TRANSFORMERS-LICENSE');
+await cp('scripts/browser-laya/ORT-LICENSE','public/bonsai-runtime/ORT-LICENSE');
+const info=await Promise.all(files.map(async(file)=>({file,bytes:(await stat(`${dir}/${file}`)).size})));
+await writeFile(`${dir}/manifest.json`,JSON.stringify({model:'onnx-community/Bonsai-1.7B-ONNX',revision,files:info,totalBytes:info.reduce((n,f)=>n+f.bytes,0)},null,2));
+console.log('Bonsai browser runtime ready:',info.reduce((n,f)=>n+f.bytes,0),'model bytes');

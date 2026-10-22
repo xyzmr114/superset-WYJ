@@ -3,13 +3,12 @@
 Checks whether Laya (https://github.com/NandhaKishorM/laya) can suggest brief labels from a founder's own profile text. Everything runs on this laptop. Snippets in `cases.json` are synthetic, and results print case ids only.
 
 ```sh
-python3.12 -m venv .wyj-local/venv
-.wyj-local/venv/bin/python -m pip install 'laya==0.4.13'
+pnpm classifier:setup
 cd scripts/local-classifier
 HF_HUB_CACHE=../../.wyj-local/hf ../../.wyj-local/venv/bin/python smoke.py --model english
 ```
 
-The first run downloads the checkpoint into ignored `.wyj-local/hf` (about 1.4 GB for `english` and `multilingual` together).
+Setup installs the `english` checkpoint. `--model multilingual` downloads another 650 MB or so on first use.
 
 ## Questions
 
@@ -51,8 +50,22 @@ Confidence is uncalibrated: the checkpoint warns that some temperatures are inva
 ## Companion for the brief editor
 
 ```sh
-HF_HUB_CACHE=.wyj-local/hf .wyj-local/venv/bin/python scripts/local-classifier/server.py
+pnpm classifier:setup   # once per machine
+pnpm classifier         # each time; leave it running
 ```
+
+**Setup:**
+- Needs Python 3.10 or newer, and works on macOS and Linux.
+- Uses `python3.12`, `python3.11`, `python3.10` or `python3`, whichever it finds first. Set `PYTHON=/path/to/python3` to choose one.
+- Creates `.wyj-local/venv`, installs `requirements.txt`, then downloads the `english` checkpoint into `.wyj-local/hf` and loads it once.
+- Expect about 1.7 GB on disk: about 900 MB of packages (mostly PyTorch) and about 850 MB for the checkpoint. A first run took about 4.5 minutes here.
+- Rerunning skips every finished step (about 6 seconds). Everything stays under the ignored `.wyj-local/`.
+
+**Start:**
+- `pnpm classifier` refuses to start with "run pnpm classifier:setup first" if the environment or checkpoint is missing.
+- Otherwise it prints `listening on http://127.0.0.1:11435 …` and, about 5 seconds later, `classifier ready`.
+- To check from another terminal: `curl -H 'Origin: http://localhost:3000' http://127.0.0.1:11435/health` returns `{"status": "ready", …}`.
+- If the app runs on another port, set `WYJ_ORIGINS`, for example `WYJ_ORIGINS=http://localhost:3002 pnpm classifier`.
 
 Each founder runs this on their own laptop. The browser calls it directly through `classifyLocally()` in `lib/private/classifier-contract.ts`, so profile text never reaches the shared Next server.
 

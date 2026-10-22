@@ -10,7 +10,7 @@ async function loadPlan(plan?:Plan):Promise<AccountPlan>{
  const response=await fetch('/api/me/plan',{method:plan?'POST':'GET',cache:'no-store',...(plan?{headers:{'Content-Type':'application/json'},body:JSON.stringify({plan})}:{})});
  const body=await response.json();if(!response.ok)throw new PlanError(body.error?.message??'Could not update your plan.',response.status);return body;
 }
-const freeFeatures=['Up to 5 published ideas','Unlimited founder matches','Reviewed pseudonymous briefs','Mutual approval before identity reveal','Working trials with independent approvals'];
+const freeFeatures=['Up to 5 published ideas','Unlimited founder matches','On-device idea improvements','Reviewed pseudonymous briefs','Mutual approval before identity reveal','Working trials with independent approvals'];
 const premiumFeatures=['Unlimited published ideas','Idea refinement tools','Structured solution memos','Pitch planning and a clearer next step','All Free matching and consent features'];
 export default function Plans(){
  const client=useQueryClient();const query=useQuery({queryKey:['account-plan'],queryFn:()=>loadPlan(),retry:false});
@@ -21,7 +21,7 @@ export default function Plans(){
   {account&&<div className={styles.account}><span><strong>{account.plan==='premium'?'Premium preview':'Free plan'}</strong> · {account.ideaCount} published {account.ideaCount===1?'idea':'ideas'}{account.ideaLimit!==null?` of ${account.ideaLimit}`:''}</span><Link href={account.plan==='premium'?'/premium':'/ideas'}>{account.plan==='premium'?'Open planning tools':'Manage my ideas'} ↗</Link></div>}
   {query.isPending&&<p role="status" className="muted">Checking your current plan…</p>}
   {error&&!needsJoin&&<p role="alert" className={styles.notice}>{error.message} {query.isError&&<button className={styles.retry} onClick={()=>void query.refetch()}>Try again</button>}</p>}
-  {needsJoin&&<div className={styles.notice}><p>Join your room to choose a plan and keep your ideas together.</p><Link className="button" href="/join">Join the room →</Link></div>}
+  {needsJoin&&<div className={styles.notice}><p>Create your founder profile to choose a plan and keep your ideas together.</p><Link className="button" href="/join">Create my profile →</Link></div>}
   {mutation.isSuccess&&<p role="status" className={styles.success}>{mutation.data.plan==='premium'?'Premium preview is enabled. Your planning tools are ready.':'You’re on Free. Your founder matches and introductions remain available.'}</p>}
   <div className={styles.cards}>
    <article className={styles.free}><div className={styles.cardTop}><span className="eyebrow">A PLACE TO BEGIN</span>{account?.plan==='free'&&<span className="badge">Current plan</span>}</div><h2>Free</h2><p className={styles.description}>Explore what you want to build—and who could build it with you.</p><p className={styles.allowance}>5 <span>published ideas</span></p><ul className={styles.features}>{freeFeatures.map(feature=><li key={feature}><span aria-hidden="true">✓</span>{feature}</li>)}</ul><div className={styles.bottom}>{needsJoin?<Link className="button" href="/join">Start with Free →</Link>:<button disabled={!account||mutation.isPending||account.plan==='free'} onClick={()=>mutation.mutate('free')}>{mutation.isPending&&mutation.variables==='free'?'Updating…':account?.plan==='free'?'You’re on Free':'Choose Free'}</button>}<p className="muted">Matching and mutual consent are included.</p></div></article>

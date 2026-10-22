@@ -15,3 +15,6 @@ out/
 public/models/laya/
 public/laya-runtime/
 .vercel
+
+public/models/bonsai/
+public/bonsai-runtime/

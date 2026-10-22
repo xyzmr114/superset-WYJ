@@ -9,7 +9,7 @@ Current product: see `PIVOT.md`. Roles and implementation ownership: see `WOULD_
 ## Five-minute walkthrough
 
 1. Open two independent browser sessions as Founder A and Founder B. Join the same event; do not use two tabs sharing one session cookie.
-2. A privately describes engineering experience and an agent travel-booking idea. Add a recognizable private constraint to demonstrate the boundary.
+2. A privately describes engineering experience and an agent travel-booking idea. Use the optional background field to demonstrate local skill suggestions.
 3. Run local classification if the checkpoint has been verified. Show the runtime and editable labels. If unavailable, enter the same brief fields manually and say that classification is unavailable; do not present a template as model inference.
 4. Show exactly what leaves the device: alias, selected skill/problem tags, coarse availability and approved blurb. Publish only after the preview approval.
 5. B approves a complementary product/distribution brief in the same direction.
@@ -41,7 +41,7 @@ The match/reveal browser walkthrough passed. The current `/agent` now runs the p
 
 ## Extended demo
 
-1. On `/agent`, enter your own profile/idea and a private constraints canary. Run Laya on your own laptop, correct its suggested labels, choose strengths/desired partner strengths/stack/work styles, then review the exact outgoing payload. Change a tag and show publication approval resetting. Publish without entering a name/contact.
+1. On `/agent`, enter your own profile/idea and optional background. Run Laya on your own laptop, correct its suggested labels, choose strengths/desired partner strengths/stack/work styles, then review the exact outgoing payload. Change a tag and show publication approval resetting. Publish without entering a name/contact.
 2. `/ideas` shows separate approved briefs and Free usage out of five. `/plans` states unlimited eligible founder matches and Premium preview. API acceptance verifies sixth free idea blocked and more than five founder matches returned.
 3. After mutual reveal, propose a 48-hour working trial. Show the other founder sees their own contribution correctly, then approve independently in both browsers. Only two approvals activate it. Reflection is for after the trial; don't pretend an actual project was completed in the demo.
 4. Preview Premium (no payment), open `/premium`, select an approved idea and fill customer/problem/wedge/test answers. Generate an editable solution memo and review/copy/download. This uses local structured templates, not hosted generative inference.
@@ -50,8 +50,12 @@ Start the local runtime using `scripts/local-classifier/README.md`. The teammate
 
 ## Browser model and real DeepSeek refinement
 
-Prepare assets on the hosting laptop once (`pnpm browser:prepare`); visitors only open the app URL. Click Load browser Laya, show first-load progress and review required labels. No companion should be required or called. Public files may be browser-cached; cancel stops the worker. Manual brief fields remain usable on devices that cannot run the model.
+Prepare assets on the hosting laptop once (`pnpm browser:prepare`); visitors only open the app URL. Models prepare automatically while the form stays usable; show loading progress and reviewed labels. No companion should be required or called. Public files may be browser-cached; cancel stops the worker. Manual brief fields remain usable on devices that cannot run the model.
 
 In Premium, pick an already approved idea, inspect the exact DeepSeek payload, then explicitly approve sending it. Local questionnaire answers are excluded. Show the real DeepSeek Flash output with provider/model/brief-version attribution, edit it, and optionally export it. Do not describe local template generation as a cloud model run.
 
 Browser walkthrough passed: public model loading, completed local labels, cancellation and restart. DeepSeek browser walkthrough returned a real attributed draft from the approved brief while a local questionnaire canary remained excluded.
+
+## Current three-step rehearsal
+
+Open `/agent`; both local models prepare while you type. Enter a short idea, try **Sharpen my idea**, inspect the actual browser-generated Bonsai sentence, then **Use this version**. Show that the live profile updates but nothing publishes. Choose skills/topics, then partner strengths once. Preview and approve. The success screen explains finding a founder and mutual contact approval. Prepare both model asset sets before rehearsal; first use downloads about 950 MB. No room code or companion install.
