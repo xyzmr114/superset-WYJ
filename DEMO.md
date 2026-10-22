@@ -15,6 +15,7 @@ Still open:
 
 - [ ] **Run it once on two real devices.** Everything above was checked through the API, not by tapping through the screens on a laptop and a phone.
 - [ ] **Don't run `pnpm seed` against this server.** It already pre-loads the four distractors, so seeding adds a second copy of each (Canvas showed up twice in testing). The seed script is for a server that doesn't pre-load them.
+- [ ] **Recognizability warning on the card preview.** The preview shows exactly what will be shared, but it doesn't yet warn that specific free-text tags can identify someone or suggest keeping them general. The anonymity answer below relies on that advice, so add the warning to the preview or say it aloud during the demo.
 - [ ] **One server process.** State is in memory, so it resets on restart and does not work across multiple instances (for example serverless hosting).
 - [ ] **Privacy acceptance check.** Type `PRIVATE-RUNWAY-7731` into intake and confirm it appears in no request, log, pitch draft or export (DevTools → Network → search).
 
@@ -67,7 +68,7 @@ Our user is an experienced builder, usually employed, who is quietly considering
 Private intake (ambition, money and runway conditions) stays in that browser tab's memory. It is never sent in a request, stored, logged or given to the model, and refreshing erases it. Only the separately approved matching card is published. Name and contact are stored apart from the card and released only when both people approve that specific match. Sessions use an HttpOnly cookie, and the server never trusts an ID sent by the browser. This protects you from other participants, not from the people running the app, and we say that plainly.
 
 **Isn't the room too small to stay anonymous?**
-Partly, yes. In a room of 40, "backend engineer, developer tools, weekends" may be guessable, and we don't claim otherwise. What stays protected is the private condition, which never leaves your device, and your name, which waits for mutual consent. Cards use coarse tags rather than free text, and anonymity improves as the pool spans several events or communities.
+Partly, yes, and more so now that cards accept free-text skills and interests. An entry like "Rust, payments reconciliation, weekends" can point to one person in a room of 40, so we don't claim cards are anonymous. Before publishing, the card preview shows exactly what will be shared, and our advice is to keep tags general: "engineering" rather than a niche stack, "payments" rather than a specific product. What stays protected either way is the private condition, which never leaves your device, and your name and contact, which wait for mutual consent. Anonymity improves as the pool spans several events or communities.
 
 **Why would super{set} care?**
 Our hypothesis is that it gets complementary teams already formed around a specific problem, with a first experiment chosen, earlier than they would otherwise apply. That fits a studio that builds companies with founders. We haven't validated this with super{set}.
