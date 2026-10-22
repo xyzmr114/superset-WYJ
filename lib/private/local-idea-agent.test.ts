@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateLocalIdea,warmLocalIdeaAgent,improveIdeaLocally,nameProjectLocally,stopLocalIdeaAgent} from './local-idea-agent';
+
+test('a silent model times out, terminates, and can be retried',{timeout:1000},async(t)=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ const g=globalThis as any,w=g.window,W=g.Worker;let terminated=0;
+ class SilentWorker{onmessage:any;onerror:any;postMessage(){}terminate(){terminated++;}}
+ g.window={};g.Worker=SilentWorker;
+ try{let error:Error|undefined;void warmLocalIdeaAgent().catch(e=>{error=e;});t.mock.timers.tick(180001);await Promise.resolve();await Promise.resolve();assert.match(error?.message??'still pending',/timed out/i);assert.equal(terminated,1);}finally{stopLocalIdeaAgent();if(w===undefined)delete g.window;else g.window=w;if(W===undefined)delete g.Worker;else g.Worker=W;}
+});
 test('local idea agent bounds the explicitly chosen idea',()=>{
  assert.equal(validateLocalIdea(' travel booking tool '),'travel booking tool');
  assert.throws(()=>validateLocalIdea('x'));assert.throws(()=>validateLocalIdea('x'.repeat(4001)));

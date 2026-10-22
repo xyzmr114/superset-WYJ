@@ -1,4 +1,5 @@
 import {MODEL_ASSET_BASE_URL} from '/model-assets.mjs';
+import {customLabelCandidates} from '../../lib/private/custom-labels.ts';
 // Only fixed public model/runtime GETs leave this worker. Profile text is never fetched or logged.
 const scope = globalThis;
 scope.window = scope; // upstream Agent.load selects its browser provider using window presence.
@@ -42,10 +43,13 @@ scope.onmessage=async({data})=>{
    if(data.type==='warmup'){scope.postMessage({type:'ready'});return;}
    phase='inference';
    const suggested={offers:[],seeks:[],interests:[],availability:null};
+   const custom=customLabelCandidates(data.text);
+   const customQuestions=Object.fromEntries(Object.entries(custom).flatMap(([field,labels])=>labels.map(label=>[`${field}:${label}`,{type:'noul',instructions:field==='offers'?`The person explicitly states experience in ${label}.`:`The person explicitly names ${label} as their project niche or interest.`}])));
+   const allQuestions={...customQuestions,...questions};
    let index=0;
    // One narrow question per forward pass keeps browser memory bounded.
-   for(const [key,question] of Object.entries(questions)){
-     progress(`Classifying on your device: ${++index} / ${Object.keys(questions).length}`);
+   for(const [key,question] of Object.entries(allQuestions)){
+     progress(`Classifying on your device: ${++index} / ${Object.keys(allQuestions).length}`);
      const result=await agent.predict(data.text,{[key]:question});
      const answer=result.answers[key];
      if(answer?.type==='noul' && Number(answer.noul)>=0.7){const [field,label]=key.split(':');suggested[field].push(label);}

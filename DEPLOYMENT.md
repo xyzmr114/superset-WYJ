@@ -31,6 +31,12 @@ The previously selected public Blob store currently returns HTTP 403 (“Your st
 
 `pnpm build` runs `scripts/prepare-hosted-models.mjs`, which **always rebuilds both workers from current repository source**, in local or hosted mode. With an empty base it downloads nothing and does not require weights/WASM to complete the build. Restore or prepare the four asset directories before demonstrating inference. With a nonempty verified Blob base, the script downloads/checksum-verifies the small JavaScript runtimes and licenses from the checked manifest; models and WASM remain hosted. Worker scripts are served by the app in both modes. Blob write credentials never reach browsers.
 
+For deployment, `MODEL_ASSET_BASE_URL` can override the laptop default during the build. Set it only to an accessible, verified public Blob prefix. The build reuses checksum-verified local runtimes when available and emits the selected public base for the workers.
+
+Bonsai loads its external weight file explicitly, reports blocked hosting, and times out after three minutes instead of waiting indefinitely. Public weights can be cached on the device. A suspended Blob store must be restored or replaced before uncached visitors can load either model; an API key for DeepSeek does not restore Blob access.
+
+Laya can score short custom candidates supplied explicitly in background text, such as `Skills: horse training, stable operations. Niche: equestrian matchmaking.` Only bounded source-backed labels can populate the review fields; contacts and URLs are rejected, and existing manual selections are kept. Laya does not freely generate arbitrary new labels.
+
 Only fixed public asset GETs may use the hosted base. Private text remains in browser workers. Bonsai requires WebGPU; device memory and first-download time still matter. Manual entry remains available if assets or browser capabilities are missing. There is no hosted private-intake fallback.
 
 Optional Premium DeepSeek enhancement and public research require the server-only `DEEPSEEK_API_KEY` in the deployment environment. Their separate exact-brief/topic-query consent flows remain required; a local key does not configure a hosted deployment. Premium remains an unpaid preview.
