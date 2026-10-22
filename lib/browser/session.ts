@@ -126,7 +126,10 @@ export async function prepareBrowserAction(id:string|undefined,input:BrowserActi
     }else{
       await page.goto(cleanProfile(action.profileUrl),{waitUntil:'domcontentloaded'});await requireSignedIn(page);
       if(action.kind==='linkedin_connection'){
-        recipientName=(await page.title()).split('|')[0].trim();
+        recipientName=(await page.title()).split('|')[0].replace(/\(\d+\)/g,'').trim();
+        const pendingInvitation=page.getByRole('link',{name:/^Pending.*withdraw invitation/i}).or(page.getByRole('button',{name:/^Pending/i})).filter({visible:true}).first();
+        await pendingInvitation.waitFor({state:'visible',timeout:2000}).catch(()=>{});
+        if(await pendingInvitation.isVisible().catch(()=>false))throw new Error('LinkedIn shows an invitation already pending for this person. Your draft is saved here; wait for them to accept before sending a message.');
         await page.getByRole('link',{name:'Invite '+recipientName+' to connect',exact:true}).or(page.getByRole('button',{name:'Connect',exact:true})).filter({visible:true}).first().click();
         const addNote=page.getByRole('button',{name:/^Add a note$/i}).filter({visible:true});
         await addNote.first().waitFor({state:'visible'});await addNote.first().click();
