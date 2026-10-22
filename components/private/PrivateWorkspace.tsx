@@ -9,6 +9,7 @@ import {STRENGTHS,TECH_STACK,WORK_STYLES,type FounderPreferences} from '@/lib/co
 import {classifyInBrowser,stopBrowserClassifier,warmBrowserClassifier} from '@/lib/private/browser-classifier';
 import {approvedBrief,identifyingDetails} from '@/lib/private/brief';
 import {withLocalSuggestions,withPartnerNeeds} from '@/lib/private/profile-draft';
+import {DRAFT_KEY,encodeDraft,decodeDraft} from '@/lib/private/local-draft';
 import LocalIdeaHelp from './LocalIdeaHelp';
 import FounderProfile,{label} from '@/components/founders/FounderProfile';
 import styles from './private.module.css';
@@ -24,6 +25,7 @@ function Choices({title,options,value,onChange,max=5,id,hint,invalid=false}:{tit
 }
 export default function PrivateWorkspace(){
  const router=useRouter(),client=useQueryClient();const {setCard}=useDemo();
+ const [draftReady,setDraftReady]=useState(false),[draftStatus,setDraftStatus]=useState(''),[publishedId,setPublishedId]=useState<string|undefined>();
  const [classifierReady,setClassifierReady]=useState(false);
  const [attempted,setAttempted]=useState(false),[aliasEdited,setAliasEdited]=useState(false);
  const root=useRef<HTMLElement|null>(null);
@@ -31,9 +33,11 @@ export default function PrivateWorkspace(){
  const [brief,setBrief]=useState<CardInput>({alias:'',approvedBlurb:'',offers:[],seeks:[],interests:[],availability:'weekends',preferences:empty});
  const [consent,setConsent]=useState(false),[busy,setBusy]=useState(false),[running,setRunning]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');
  const run=useRef(0),request=useRef<AbortController|null>(null);
- useEffect(()=>{const preload=new AbortController();void warmBrowserClassifier(text=>setMessage(text),preload.signal).then(ok=>{if(!preload.signal.aborted){setClassifierReady(ok);setMessage(ok?'Skills assistant ready.':'Choose your skills and topics manually, or retry suggestions.');}});setBrief(b=>({...b,alias:b.alias||`Founder ${crypto.getRandomValues(new Uint32Array(1))[0]%9000+1000}`}));return()=>{preload.abort();run.current++;request.current?.abort();stopBrowserClassifier();};},[]);
+ useEffect(()=>{const preload=new AbortController();void warmBrowserClassifier(text=>setMessage(text),preload.signal).then(ok=>{if(!preload.signal.aborted){setClassifierReady(ok);setMessage(ok?'Skills assistant ready.':'Choose your skills and topics manually, or retry suggestions.');}});try{const saved=decodeDraft(localStorage.getItem(DRAFT_KEY));if(saved){setBrief(saved.brief);setStep(saved.step);setPublishedId(saved.publishedId);setAliasEdited(true);setDraftStatus(saved.publishedId?'Your published profile is saved.':'Your draft is restored.');}else setBrief(b=>({...b,alias:b.alias||`Founder ${crypto.getRandomValues(new Uint32Array(1))[0]%9000+1000}`}));}catch{setDraftStatus('Draft saving is unavailable in this browser.');}setDraftReady(true);return()=>{preload.abort();run.current++;request.current?.abort();stopBrowserClassifier();};},[]);
+ useEffect(()=>{if(!draftReady)return;try{localStorage.setItem(DRAFT_KEY,encodeDraft(brief,step,publishedId));}catch{setDraftStatus('Draft saving is unavailable in this browser.');}},[brief,step,publishedId,draftReady]);
+ function startFresh(){setBrief({alias:`Founder ${crypto.getRandomValues(new Uint32Array(1))[0]%9000+1000}`,approvedBlurb:'',offers:[],seeks:[],interests:[],availability:'weekends',preferences:empty});setBackground('');setConsent(false);setPublishedId(undefined);setStep(0);setAliasEdited(false);setAttempted(false);setError('');setDraftStatus('New draft started.');}
  const prefs=brief.preferences!;
- function edit(patch:Partial<CardInput>){setBrief(b=>({...b,...patch}));setConsent(false);setError('');}
+ function edit(patch:Partial<CardInput>){setPublishedId(undefined);setBrief(b=>({...b,...patch}));setConsent(false);setError('');}
  function pref(key:keyof FounderPreferences,value:string[]){edit({preferences:{...prefs,[key]:value}});}
  function cancel(){run.current++;request.current?.abort();stopBrowserClassifier();setRunning(false);setMessage('Stopped. You can select your skills and topics below.');}
  async function suggest(){const id=++run.current;const controller=new AbortController();request.current=controller;setRunning(true);setMessage('Loading the model in your browser…');try{
@@ -61,11 +65,12 @@ export default function PrivateWorkspace(){
  async function publish(){if(busy||showMissing(3))return;setBusy(true);setError('');try{
   const payload=approvedBrief(brief);let saved;
   try{saved=await api.publishIdea(payload);}catch(err){if(!(err instanceof ApiFailure)||err.status!==401)throw err;await api.createSession();client.removeQueries({queryKey:['matches']});client.removeQueries({queryKey:['matches-generate']});saved=await api.publishIdea(payload);}
-  setCard(saved);setBackground('');await Promise.all([client.invalidateQueries({queryKey:['ideas']}),client.invalidateQueries({queryKey:['published-ideas-for-matches']}),client.invalidateQueries({queryKey:['matches']}),client.invalidateQueries({queryKey:['matches-generate']})]);
+  setCard(saved);setBackground('');setPublishedId(saved.ideaId??saved.id);try{localStorage.setItem(DRAFT_KEY,encodeDraft(brief,2,saved.ideaId??saved.id));}catch{}await Promise.all([client.invalidateQueries({queryKey:['ideas']}),client.invalidateQueries({queryKey:['published-ideas-for-matches']}),client.invalidateQueries({queryKey:['matches']}),client.invalidateQueries({queryKey:['matches-generate']})]);
   router.push('/matches?published='+encodeURIComponent(saved.ideaId??saved.id));
  }catch(err){setError(err instanceof ApiFailure&&err.code==='IDEA_LIMIT'?'You’ve used your five free idea slots. Open Plans to add more.':err instanceof Error?err.message:'Couldn’t publish. Try again.');}finally{setBusy(false);}}
  return <section ref={root} className={styles.workspace}>
   <div className={styles.pageHeader}><div><p className="eyebrow">FIND YOUR COFOUNDER</p><h1>Who do you want to build with?</h1><p>A clear idea. The skills you bring. The partner you need.</p></div><Link href="/ideas">My ideas →</Link></div>
+  {draftReady&&<div className={styles.draftNotice}><span>{draftStatus||'Matching fields are saved on this device. Background text is not saved.'}{publishedId&&<> <Link href="/ideas">View saved profiles →</Link></>}</span><button type="button" onClick={startFresh}>Start a new idea</button></div>}
   <nav className={styles.steps} aria-label="Create your profile">{['Your idea','Your partner','Preview & publish'].map((title,i)=><button key={title} aria-current={step===i?'step':undefined} onClick={()=>advance(i)}><span>{i<step?'✓':i+1}</span>{title}</button>)}</nav>
   <div className={`${styles.layout} ${step===2?styles.reviewLayout:''}`}><div className={styles.editor}>
    {step===0&&<article className={styles.panel}><h2>What are you building?</h2><p className={styles.hint}>Describe the product and who it helps. This is the idea people will see.</p>
@@ -83,7 +88,7 @@ export default function PrivateWorkspace(){
     <Choices title="How do you like to work? (optional)" options={WORK_STYLES} max={4} value={prefs.workStyles} onChange={v=>pref('workStyles',v)}/>
     <div className={styles.bottom}><button className={styles.secondary} onClick={()=>advance(0)}>← Your idea</button><button onClick={()=>advance(2)}>Preview my profile →</button></div>
    </article>}
-   {step===2&&<article className={styles.panel}><h2>Meet your next cofounder.</h2><p className={styles.hint}>This profile is exactly what other founders see. Your name and contact stay hidden until you both want an introduction.</p><label className={styles.field}>Your public profile name<input id="alias-field" maxLength={40} value={brief.alias} onFocus={e=>{if(!aliasEdited)e.currentTarget.select();}} onChange={e=>{setAliasEdited(true);edit({alias:e.target.value});}}/><span>Pick a nickname. The suggested name is selected when you click, so typing replaces it.</span></label>
+   {step===2&&<article className={styles.panel}><h2>Meet your next cofounder.</h2><p className={styles.hint}>This profile is exactly what other founders see. Your name and contact stay hidden until you both want an introduction.</p><label className={styles.field}>Your public profile name<input id="alias-field" maxLength={40} value={brief.alias} onFocus={e=>{if(!aliasEdited||/^Founder \d+$/.test(brief.alias))e.currentTarget.select();}} onChange={e=>{setAliasEdited(true);edit({alias:e.target.value});}}/><span>Pick a nickname. The suggested name is selected when you click, so typing replaces it.</span></label>
     <div className={styles.nextSteps}><div><b>1</b><span>Publish your profile</span></div><div><b>2</b><span>Explore compatible founders</span></div><div><b>3</b><span>Both say yes to connect</span></div></div>
     <label className={styles.approve}><input id="consent-field" type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>I’m happy to share this profile for founder matching.</span></label>
     <div className={styles.bottom}><button className={styles.secondary} onClick={()=>advance(1)}>← Edit partner preferences</button><button disabled={busy} onClick={()=>void publish()}>{busy?'Publishing…':'Publish & find founders →'}</button></div>

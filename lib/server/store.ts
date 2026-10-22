@@ -1,12 +1,12 @@
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, chmodSync } from 'node:fs';
 import path from 'node:path';
 import pg from 'pg';
+import {lockLocalData} from './local-storage';
 import type { Evidence, MatchingCard, Opportunity } from '@/lib/contracts';
 import { profiles } from '@/fixtures/profiles';
 
 // Postgres when DATABASE_URL is set (Supabase in production, see db/README.md).
-// ponytail: without DATABASE_URL we boot an in-process PGlite (real Postgres in WASM) so local dev
-// and the synthetic demo still need zero setup. It resets on restart, same as the old Map store.
+// Local development uses disk-backed PGlite; shared/serverless deployments require Postgres.
 
 // ponytail: one event per deployment; add an events table if you ever run two rooms at once.
 export const EVENT_CODE = (process.env.EVENT_CODE || 'SUPERSET').trim().toUpperCase();
@@ -61,17 +61,15 @@ export function connect(url: string): Db {
   };
 }
 
-async function memory(): Promise<Db> {
-  console.warn('[wyj] DATABASE_URL not set: using in-memory PGlite. Data resets on restart.');
+export async function openLocalDatabase(directory?:string): Promise<Db> {
+  const release=directory?lockLocalData(directory):()=>{};
   const { PGlite } = await import('@electric-sql/pglite');
-  const lite = new PGlite();
+  const lite = new PGlite(directory);
   const db: Db = {
-    q: async (t, p) => (await lite.query<Row>(t, p)).rows, exec: (sql) => lite.exec(sql), end: () => lite.close(),
+    q: async (t, p) => (await lite.query<Row>(t, p)).rows, exec: (sql) => lite.exec(sql), end: async () => {await lite.close();release();},
     transaction: fn => lite.transaction(tx => fn(async (t, p) => (await tx.query<Row>(t, p)).rows)),
   };
-  await migrate(db);
-  await seed(db);
-  return db;
+  try{await migrate(db);await seed(db);if(directory)chmodSync(directory,0o700);return db;}catch(error){await lite.close().catch(()=>{});release();throw error;}
 }
 
 /** Applies db/migrations/*.sql in name order, each once, each in its own transaction. */
@@ -98,9 +96,27 @@ export async function seed(db: Db) {
   }
 }
 
-// Survive Next dev hot reloads.
-const g = globalThis as unknown as { __wyjDb?: Promise<Db> };
-const getDb = () => (g.__wyjDb ??= process.env.DATABASE_URL ? Promise.resolve(connect(process.env.DATABASE_URL)) : memory());
+// Tests deliberately remain isolated in memory. Normal dev survives hot reload AND restarts.
+const g = globalThis as unknown as { __wyjDb?: Promise<Db>;__wyjDurableDb?:Promise<Db> };
+function getDb(){
+ if(process.env.DATABASE_URL)return g.__wyjDb??=Promise.resolve(connect(process.env.DATABASE_URL));
+ if(process.env.NODE_TEST_CONTEXT||process.env.WYJ_DB_MEMORY==='1')return g.__wyjDb??=openLocalDatabase();
+ if(process.env.NODE_ENV==='production')throw new Error('DATABASE_URL is required in production; refusing ephemeral profile storage.');
+ return g.__wyjDurableDb??=(async()=>{
+  const db=await openLocalDatabase(path.resolve(process.env.WYJ_DATA_DIR||'.wyj-local/data'));
+  // Preserve a running pre-upgrade dev database if it still exists in this process.
+  if(g.__wyjDb){const old=await g.__wyjDb;await db.transaction(async query=>{
+   for(const table of ['participants','identities','cards','ideas','participant_plans','matches','pitches','trials']){
+    const columns=await old.q('select column_name,data_type from information_schema.columns where table_name=$1 order by ordinal_position',[table]);
+    for(const row of await old.q(`select * from ${table}`)){
+     const names=columns.map(c=>c.column_name);const values=columns.map(c=>c.data_type==='jsonb'&&row[c.column_name]!==null?JSON.stringify(row[c.column_name]):row[c.column_name]);
+     await query(`insert into ${table} (${names.join(',')}) values (${names.map((_,i)=>'$'+(i+1)).join(',')}) on conflict do nothing`,values);
+    }
+   }
+  });}
+  return db;
+ })();
+}
 export const q: Q = async (text, params) => (await getDb()).q(text, params);
 export const transaction = async <T>(fn: (query: Q) => Promise<T>): Promise<T> => (await getDb()).transaction(fn);
 
