@@ -31,9 +31,9 @@ Copy `.env.example` to `.env.local` for optional provider keys. Core matching an
 
 Production deployment and environment setup: [DEPLOYMENT.md](DEPLOYMENT.md).
 
-Production browser models are served from Vercel Blob. `pnpm build` prepares checksum-verified runtimes; model weights stay outside Git and inference stays on the visitor's device. See [deployment setup](DEPLOYMENT.md).
+The laptop demo serves prepared browser model files locally from `public/`; the previously configured Blob store is blocked. `pnpm build` refreshes both browser workers. Optional hosted assets remain supported after their public downloads are verified. Weights stay outside Git and inference stays on the visitor's device. See [deployment setup](DEPLOYMENT.md).
 
-Next.js App Router + TypeScript, React, TanStack Query v5, plain CSS, Zod. Persistence: Supabase Postgres via `DATABASE_URL` (setup: [db/README.md](db/README.md)); disk-backed local PGlite when unset. One optional model provider. No TanStack Start migration during the hackathon. QueryClient is wired; live query hooks are an integration task. Private intake stays outside Query cache.
+Next.js App Router + TypeScript, React, TanStack Query v5, plain CSS, Zod. Persistence: Supabase Postgres via `DATABASE_URL` (setup: [db/README.md](db/README.md)); disk-backed local PGlite when unset. One optional model provider. No TanStack Start migration during the hackathon. QueryClient supplies live matching and saved-idea query state. Private intake stays outside Query cache.
 
 Laya is a narrow local classifier, not a generative model or a validated founder assessment. Bonsai 1.7B supplies free browser-local idea wording. Details and limits are in [PIVOT.md](PIVOT.md).
 
@@ -41,7 +41,7 @@ Laya is a narrow local classifier, not a generative model or a validated founder
 
 `/agent` and `/onboarding` use three steps: Your idea → Your partner → Preview & publish. The founder writes the actual shareable idea, optionally imports their own background for local Laya skill/topic suggestions, and chooses partner needs once. A live professional profile shows exactly what will be shared. No room code or private-constraints field. Model suggestions never publish automatically.
 
-`/ideas` keeps separate approved ideas. Free permits five published ideas per room session and unlimited eligible founder matches. `/plans` selects Free or Premium preview; billing is not connected and no payment is taken. `/premium` reuses WYJ's solution memo and founder-review tools for a structured idea-refinement workspace using approved ideas and explicitly entered answers. Premium preview has no idea-count cap. These are session-level demo allowances, not paid or persistent account entitlements.
+`/ideas` keeps separate approved ideas. Free permits five currently published ideas per browser session and unlimited eligible founder matches. `/plans` selects Free or Premium preview; billing is not connected and no payment is taken. `/premium` reuses WYJ's solution memo and founder-review tools for a structured idea-refinement workspace using approved ideas and explicitly entered answers. Premium preview has no idea-count cap. These are session-level demo allowances, not paid or persistent account entitlements.
 
 `/matches` supports independent contact previews/approvals, live status, withdrawal, immutable per-pair snapshots, and a versioned working trial after reveal. Both founders approve a trial before it activates. Continuation answers remain private; only mutual yes is shared. Joint pitch uses approved idea snapshots, with separate exact-version export approval.
 
@@ -58,3 +58,12 @@ Legacy browser outreach/OpenCode tools are outside the current product path.
 Opening the intake prepares Laya and Bonsai in separate browser workers without sending either model any user input. The form remains usable during loading. Free users can ask Bonsai 1.7B to sharpen their idea, review/edit the result, and explicitly apply it; publication approval is still separate. Unsupported WebGPU devices retain manual entry. Prepare assets on the deployment machine with `pnpm browser:prepare` and `pnpm bonsai:prepare`; generated public weights are ignored by Git. First use downloads roughly 950 MB combined, then public assets may be browser cached. See [Bonsai setup](scripts/browser-bonsai/README.md).
 
 Suggested matches now need a shared topic and at least one direction of explicit partner skill/strength fit. Existing pending/revealed introductions remain visible.
+
+
+## Publication controls and public research
+
+Use **My ideas** to confirm unpublish or review and republish an exact saved brief. Unpublishing stops new matching and cancels pending introductions, freeing an active Free slot. Owner history, consent receipts, shared pitches and already disclosed contacts remain; republishing does not restore cancelled introductions. Apply migrations through `006_idea_publication.sql` (`pnpm db:migrate`); migration 006 is already applied to shared Supabase.
+
+A published brief is visible to matching and proposed counterparts. Private background stays on-device; the chosen identity/contact requires separate mutual approval. `/try` guides two real independent browser sessions through matching, reveal and a working trial. **New idea** starts fresh; ordinary `/agent` restores the active local draft.
+
+Premium public research uses `/api/premium/research` with separate explicit consent for a displayed query built from approved topics. It searches public web sources, may read the first result, and reuses broad-category GitHub evidence. Cached results and saved snapshots are labeled; failed live searches are not invented. Background, identity/contact and private questionnaire answers are excluded. DeepSeek enhancement remains a separate exact-brief request. Legacy `/api/agent` is disabled by default.

@@ -110,7 +110,7 @@ Pulled main before starting; no teammate commits were present. User explicitly r
 - **Working trial:** `GET/POST /api/matches/:id/trial` requires mutual introduction. POST propose `{plan,version}`, approve `{version}`, feedback `{version,decision}`. Proposals do not auto-approve; edits invalidate both approvals; stale version rejected; active plan fixed. Contributions are caller-relative. Only mutual continuation is shared; no counterpart feedback/completion bit exposes a pass.
 - **Plans/tools:** `/ideas`, `/plans`, `/premium` are live. Premium is explicitly a no-charge development preview. Idea refinement reuses the memo renderer/Markdown/founder review and runs locally from approved idea plus user-entered answers, without cloud calls.
 
-Ideas, preview plans, frozen idea pairs and trials now use Postgres through migration 005. Participant-row locks serialize quota changes/publication; trial version checks and consent snapshots use conditional SQL updates. Run `pnpm db:migrate` before deployment. The PGlite fallback still resets on restart and supports one process. Quotas remain per session, not durable person accounts; preview plan selection is not paid billing. Laya visitors need their own local runtime or manual entry.
+Ideas, preview plans, frozen idea pairs and trials now use Postgres through migration 005. Participant-row locks serialize quota changes/publication; trial version checks and consent snapshots use conditional SQL updates. Run `pnpm db:migrate` before deployment. The PGlite fallback persists in ignored `.wyj-local/data` and supports one process. Quotas remain per session, not durable person accounts; preview plan selection is not paid billing. Laya visitors use the browser runtime or manual entry.
 
 ### Upstream reconciliation
 
@@ -123,11 +123,11 @@ Merged teammate travel/ai-agents taxonomy, public evidence queries, travel fixtu
 - **DeepSeek boundary:** `lib/premium/enhancement-contract.ts` is shared by UI preview/server projection. `POST /api/premium/enhance` strictly accepts `{ideaId,briefVersion,consent:true}`. Premium plan + cookie owner + exact saved version required. Server reads only that published idea and sends projected approved fields to DeepSeek Flash. No private free text, alias/ID/contact or local questionnaire answers is accepted. Server-only key, timeout and visible provider errors; no silent model/template substitution.
 - **Premium UI:** separate preview/checkbox, pending/error/cancel states, reset on idea/version change, response provenance and editable Markdown. Local memo answers remain local. Selecting a model result does not publish it or send it to another founder.
 
-The API and actual DeepSeek browser walkthrough returned a real refinement from a separately approved brief. Raw private-questionnaire canary remained outside the provider request. Existing in-memory plans/storage limits still apply.
+The API and actual DeepSeek browser walkthrough returned a real refinement from a separately approved brief. Raw private-questionnaire canary remained outside the provider request. Plans remain session-scoped preview allowances; configured Postgres and local PGlite persist them.
 
 Verified in the actual in-app browser: cold model download, completed local classification, warm-model classification, cancellation and a successful restart. Model/runtime file loading uses fixed same-origin GETs only. The WebGPU ORT bundle needs its asyncify WASM pair; preserve those files in the preparation script. Both real browser inference and real DeepSeek output were demonstrated before push.
 
-Latest persistence merge: the backend now uses async `requireSession`, `planFor`, `ideasFor` and SQL-backed stores. DeepSeek enhancement awaits these gates before reading the approved projection. Postgres persists configured deployments; zero-setup PGlite still resets on restart. Preserve migrations through 005 and run the deployment migration step.
+Latest persistence merge: the backend now uses async `requireSession`, `planFor`, `ideasFor` and SQL-backed stores. DeepSeek enhancement awaits these gates before reading the approved projection. Postgres persists configured deployments; zero-setup PGlite persists on disk in ignored `.wyj-local/data`. Preserve migrations through 005 and run the deployment migration step.
 
 ## Current intake and free agent update — pull before editing
 
@@ -153,7 +153,7 @@ The shared footer now lives in `app/SiteFooter.tsx` + `app/footer.module.css`: g
 
 ## External model assets and legacy API gate
 
-See DEPLOYMENT.md for Drive archive → public Blob upload → MODEL_ASSET_BASE_URL. All four asset folders and SHA-256 manifest travel together. No weights/runtime binaries are committed. `pnpm models:upload` is dry-run; `--upload` requires the Blob write token in ignored local env. Public asset rewrites preserve same-origin worker execution. Hosted execution must be checked after actual Blob provisioning. `/api/agent` is disabled by default (410); explicit enabling additionally requires an authenticated Premium session. Free browser assistance and exact-brief Premium enhancement remain separate. Footer is now a light, translucent WYJ treatment with the existing reduced-motion-aware springs.
+The laptop demo uses local public model files; the previous Blob store returns 403. See DEPLOYMENT.md for Drive archive restoration and optional verified Blob hosting. All four asset folders and SHA-256 manifest travel together. No weights/runtime binaries are committed. `pnpm models:upload` is dry-run; `--upload` requires the Blob write token in ignored local env. Workers stay same-origin; their fixed GET-only downloader supports local files or a configured public asset base. Both workers rebuild from source on build. Hosted execution must be checked after actual Blob provisioning. `/api/agent` is disabled by default (410); explicit enabling additionally requires an authenticated Premium session. Free browser assistance and exact-brief Premium enhancement remain separate. Footer is now a light, translucent WYJ treatment with the existing reduced-motion-aware springs.
 
 ## Persistence fix
 
@@ -166,3 +166,13 @@ Localhost sessions now use port-specific cookie names (with legacy-cookie migrat
 ## Project nicknames
 
 Browser Bonsai now has a dedicated local nickname task. The preview step automatically replaces untouched Founder-number placeholders, while Give me a fun name rerolls explicitly. It sees only the entered project idea; results stay editable and reset publication consent. Manual names edited during generation are preserved. The warm Bonsai worker stays alive across intake steps and is released when leaving intake. Rebuild with `pnpm bonsai:prepare` after restoring the original model archive to refresh worker code; existing weights are reused without downloading again.
+
+
+## Independent-review fixes — pull before resuming
+
+- **Abhinav:** preserve migration `006_idea_publication.sql`, active-only `ideasFor`, owner history `savedIdeasFor`, quota-safe `setIdeaPublished` and pair cancellation/gates. My ideas has confirmed unpublish/republish. Free quota is five currently published ideas; withdrawing frees a slot. Pending introductions stay cancelled after republishing, and already disclosed contacts/receipts/pitches remain. Migration 006 is applied to shared Supabase; other deployments must migrate.
+- **Anusha:** retain precise landing/privacy-diagram language, only-you unpublished preview labels and exact publication scope. Approved briefs are visible to matching and proposed counterparts; real identity/contact require mutual pair-specific approval. Preserve `/agent?new=1` handling and Suspense wrappers: New idea starts fresh once, strips the query and cancels stale local suggestions; direct `/agent` restores drafts. Light glass footer remains, with readable annotations.
+- **Vernika:** preserve shared-topic plus actual partner-fit matching. `/try` explains independent real participant onboarding, custom-topic limits, live match refresh, two approvals and two-approved working trials. Do not solve empty rooms by fabricating consent or silently broadening private disclosures.
+- **You + Codex:** preserve the Premium `IdeaResearch` flow and `/api/premium/research`: own active brief/version, Premium gate, explicit exact topic-query approval, public web search/first-page read and recognized-category GitHub evidence. Report unavailable/cached/saved-snapshot provenance. Enhancement remains a separate approved-brief DeepSeek call; questionnaire answers stay local. `/api/agent` is disabled by default and is not needed by either feature.
+
+Rehearse with [DEMO.md](DEMO.md), including unpublish, active-slot recovery, one-sided hidden contact, second independent reveal and a jointly approved trial. No model suggestion or research result automatically publishes or contacts anyone.

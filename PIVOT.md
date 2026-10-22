@@ -72,13 +72,13 @@ Current `/agent` and `/onboarding` both route to `components/private/PrivateWork
 
 `/matches` now offers Interested / Pass, an exact identity preview and pair-specific approval. Pending consent can be withdrawn. Both independent approvals are required by the server before any counterpart contact appears in JSON. Approval snapshots cannot be silently replaced, and edits to the older global identity record do not change them. Joint pitch creation uses the same mutual-consent gate.
 
-Verified with two independent browsers and `scripts/acceptance-pivot.ts` (21 checks). The private workspace and direct own-device Laya adapter have now also landed; see the integration update below. Storage uses configured Postgres, with an in-memory PGlite fallback.
+Verified with two independent browsers and `scripts/acceptance-pivot.ts` (21 checks). The private workspace and direct own-device Laya adapter have now also landed; see the integration update below. Storage uses configured Postgres, with a disk-backed local PGlite fallback.
 
 ## Intake, trials and plans integration
 
 Private intake includes an authored shareable idea and optional self-submitted background for local suggestions. There is no separate constraints field or category-template paragraph. Classification labels are reviewed. Self-described strengths, desired partner strengths, stack, availability and working styles are optional approved matching fields. No model personality assessment. The outgoing payload is visible before publishing; edits reset consent. Name/contact collection happens only inside pair-specific introduction review.
 
-Each session can publish separate immutable idea briefs. Free: five ideas, unlimited eligible founder matches. Premium: uncapped idea slots in development preview, structured idea refinement, solution memo and pitch planning. No billing integration or payment is claimed. Limits are per ephemeral room session, not durable paid accounts.
+Each session can publish separate immutable idea briefs. Free: five ideas, unlimited eligible founder matches. Premium: uncapped idea slots in development preview, structured idea refinement, solution memo and pitch planning. No billing integration or payment is claimed. Limits are per browser session identity, not durable paid accounts; active publication controls free-slot usage.
 
 Matches store both exact idea snapshots; a later idea cannot change an earlier pairing or consent. Working trials have a versioned shared goal, deliverable, each person's contribution and future deadline. Both approvals activate the plan. Private continuation feedback reveals only mutual yes; pass and pending are indistinguishable to the counterpart.
 
@@ -97,3 +97,14 @@ Laya and Bonsai automatically warm in isolated browser workers while the founder
 Partner choices populate both seeks and partnerStrengths. New suggestions require a shared topic plus at least one requested skill/strength actually fulfilled by the other founder. Two engineers both requesting sales no longer qualify through similarity alone. Pending/revealed introductions are preserved.
 
 Next owner work: **Anusha** polish the three-step workspace/shared profile, preserving local-only input and separate approval; **Vernika** evaluate classifier quality and ranking against real reviewed examples; **Abhinav** preserve default code-free session creation, async Postgres and immutable pair snapshots; **You + Codex** verify local generation, automatic warmup and complete publication/mutual reveal.
+
+
+## Consent and usefulness update — current behavior
+
+Publishing sends the exact reviewed pseudonymous brief (nickname, idea, skills, niche, availability and optional preferences) to WYJ matching and proposed counterparts. Only private background stays on-device; do not claim that no profile words reach the server or that a published brief waits for mutual approval. The identity/contact selected for one pairing is a separate scope, released only after both independent approvals. Distinctive briefs may identify someone despite a nickname.
+
+`/ideas` supports explicit unpublish and exact-brief republish. Unpublishing removes new-match eligibility and cancels pending introductions. It retains owner history, receipts, shared pitches and already revealed contacts; it is not erasure or recall. Free permits five simultaneously published ideas, with unlimited eligible matches. Republish checks the same active quota and never restores cancelled consent. Migration 006 persists publication state; it is applied to shared Supabase and required elsewhere.
+
+`/try` explains a real two-person flow using independent devices/browser profiles, a shared topic and complementary offered/sought strengths. No pre-approved counterpart is created. **New idea** starts fresh through `/agent?new=1`, removes the query, and ordinary `/agent` continues to restore local drafts.
+
+Premium `/api/premium/research` reuses public web search, first-source reading and broad-category GitHub evidence with a separate exact topic-query approval. The server resolves an owned currently published brief/version and requires Premium. Raw background, identities and local studio answers remain excluded. Web failures and GitHub live/cached/saved-snapshot modes are shown honestly. Legacy free-form `/api/agent` stays disabled by default; restoring public research does not reactivate outreach or a general cloud harness.

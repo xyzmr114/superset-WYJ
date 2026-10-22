@@ -5,9 +5,9 @@ import styles from './landing.module.css';
 // Section 03: drag (or arrow-key) through the three places your information can be,
 // and one brief card shows exactly what is visible there. Illustrative data.
 const STOPS = [
-  {name: 'Your laptop', who: 'Seen by you'},
-  {name: 'The room', who: 'Seen by matching and a proposed counterpart'},
-  {name: 'Sealed after two yeses', who: 'Seen by your match, after you both approve'},
+  {name: 'Your device', who: 'Draft seen only by you'},
+  {name: 'Published brief', who: 'Approved brief seen by matching and proposed counterparts'},
+  {name: 'Mutual introduction', who: 'Chosen contact seen by this match, after you both approve'},
 ];
 const BETWEEN = ['only what you approve', 'only after two yeses'];
 
@@ -68,10 +68,10 @@ export default function WhoSeesWhat() {
 
       <article className={styles.seeCard} aria-live="polite">
         <p className={styles.seeWho}>{STOPS[stop].who}</p>
-        <h4>Private notes</h4>
+        <h4>Private background</h4>
         {stop === 0
           ? <p>&ldquo;Want to build booking rails for AI agents. Need six months of runway first.&rdquo;</p>
-          : <Hidden>Never leaves your laptop</Hidden>}
+          : <Hidden>Stays on your device</Hidden>}
         <h4>Brief</h4>
         {stop === 0
           ? <p className={styles.draft}>Draft: Nova · offers engineering · seeks product. Not published until you approve it.</p>
@@ -79,7 +79,7 @@ export default function WhoSeesWhat() {
         <h4>Name and contact</h4>
         {stop === 2
           ? <p><b>Priya R.</b> · priya@example.com<br /><span className={styles.receipt}>Consent receipt · this pairing only · brief v1</span></p>
-          : <Hidden>{stop === 0 ? 'Not shared. You choose it per pairing, later' : 'Sealed until you both say yes'}</Hidden>}
+          : <Hidden>{stop === 0 ? 'Not shared. You choose it per pairing, later' : 'Hidden until you both approve this introduction'}</Hidden>}
       </article>
     </div>
   );

@@ -7,7 +7,7 @@ export default function SiteNav() {
   const home = usePathname() === '/';
   return (
     <nav className="site-nav">
-      {!home && <Link href="/agent">New idea</Link>}
+      {!home && <Link href="/agent?new=1">New idea</Link>}
       {!home && <Link href="/matches">Founders</Link>}
       {!home && <Link href="/ideas">My ideas</Link>}
       {!home && <Link href="/plans">Plans</Link>}

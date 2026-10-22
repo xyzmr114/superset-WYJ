@@ -72,6 +72,7 @@ test('concurrent different approvals cannot replace the winning snapshot',async(
 test('frozen idea briefs drive the match view and approval receipt after a new publication',async()=>{
  const {a,b,m}=await pair();
  const frozenA={...a,ideaId:'frozen-idea-a',alias:'Original A'},frozenB={...b,ideaId:'frozen-idea-b',alias:'Original B'};
+ for(const card of [frozenA,frozenB])await q('insert into ideas(participant_id,idea_id,card) values ($1,$2,$3::jsonb)',[card.id,card.ideaId,JSON.stringify(card)]);
  await q('update matches set a_card=$2::jsonb,b_card=$3::jsonb where id=$1',[m.id,JSON.stringify(frozenA),JSON.stringify(frozenB)]);
  await q('update cards set version=99,alias=$2 where participant_id=$1',[a.id,'Replacement A']);
  await q('update cards set version=100,alias=$2 where participant_id=$1',[b.id,'Replacement B']);
@@ -82,4 +83,24 @@ test('frozen idea briefs drive the match view and approval receipt after a new p
  const approved=await decideIntroduction(frozen,a.id,{decision:'approve',identity:identityA});
  assert.equal(approved.introConsents![a.id].briefVersion,a.version);
  assert.equal((await toView(approved,a.id)).myConsent?.briefVersion,a.version);
+});
+
+test('unpublished brief blocks a second approval and disappears from match reads',async()=>{
+ const {a,b,m}=await pair();
+ for(const card of [a,b])await q('insert into ideas(participant_id,idea_id,card) values ($1,$2,$3::jsonb)',[card.id,'legacy-'+card.id,JSON.stringify(card)]);
+ const first=await decideIntroduction(m,a.id,{decision:'approve',identity:identityA});
+ await q('update ideas set published=false where participant_id=$1',[a.id]);
+ await assert.rejects(()=>decideIntroduction(first,b.id,{decision:'approve',identity:identityB}),/unpublished/);
+ await assert.rejects(()=>getMyMatch(m.id,b.id),/Not found/);
+ const {views}=await import('./matches');
+ assert.deepEqual(await views([first],b.id),[]);
+});
+test('already disclosed receipts remain readable after a brief is unpublished',async()=>{
+ const {a,b,m}=await pair();
+ for(const card of [a,b])await q('insert into ideas(participant_id,idea_id,card) values ($1,$2,$3::jsonb)',[card.id,'legacy-'+card.id,JSON.stringify(card)]);
+ const first=await decideIntroduction(m,a.id,{decision:'approve',identity:identityA});
+ await decideIntroduction(first,b.id,{decision:'approve',identity:identityB});
+ await q('update ideas set published=false where participant_id=$1',[a.id]);
+ const saved=await getMyMatch(m.id,b.id);
+ assert.deepEqual((await toView(saved,b.id)).revealedContact,identityA);
 });

@@ -1,5 +1,6 @@
 import {z} from 'zod';
-import {q,matchRow,type Match} from './store';
+import {transaction,matchRow,type Match} from './store';
+import {isIdeaPublished} from './ideas';
 import {HttpError,notFound} from './http';
 export const introIdentity=z.object({displayName:z.string().trim().min(1).max(80),contact:z.string().trim().min(1).max(200)}).strict();
 export const introDecision=z.discriminatedUnion('decision',[
@@ -11,10 +12,19 @@ export const mutuallyApproved=(m:Match)=>!m.declinedBy&&!!m.introConsents?.[m.a]
 
 export async function decideIntroduction(m:Match,me:string,input:z.infer<typeof introDecision>):Promise<Match>{
  if(me!==m.a&&me!==m.b)throw notFound();
+ return transaction(async query=>{
+ // Same participant locks as publication changes, in a stable order, prevent a
+ // second approval racing an unpublish from revealing a withdrawn brief.
+ await query('select id from participants where id=any($1) order by id for update',[[m.a,m.b].sort()]);
+ const [current]=await query('select * from matches where id=$1',[m.id]);
+ if(!current)throw notFound();
+ m=matchRow(current);
  const side=me===m.a?'a':'b';
  if(input.decision==='approve'){
+  if(!mutuallyApproved(m)&&(!await isIdeaPublished(m.a,m.aCard?.ideaId,query)||!await isIdeaPublished(m.b,m.bCard?.ideaId,query)))
+   throw new HttpError(409,'BRIEF_UNPUBLISHED','One founder has unpublished this brief. This introduction is no longer available.');
   // The conditional update freezes the first complete snapshot, even for concurrent requests.
-  const [row]=await q(
+  const [row]=await query(
    `update matches set ${side}_approved=true, ${side}_identity=$2::jsonb, ${side}_approved_at=now(),
       ${side}_card_version=coalesce((${side}_card->>'version')::integer,(select version from cards where participant_id=$3))
     where id=$1 and declined_by is null
@@ -22,7 +32,7 @@ export async function decideIntroduction(m:Match,me:string,input:z.infer<typeof 
       and (${side}_card is not null or exists (select 1 from cards where participant_id=$3)) returning *`,
    [m.id,JSON.stringify(input.identity),me]);
   if(row)return matchRow(row);
-  const [stored]=await q('select * from matches where id=$1',[m.id]);
+  const [stored]=await query('select * from matches where id=$1',[m.id]);
   if(!stored)throw notFound();
   const fresh=matchRow(stored);
   if(fresh.declinedBy)throw new HttpError(409,'DECLINED','This pairing was passed on.');
@@ -33,7 +43,7 @@ export async function decideIntroduction(m:Match,me:string,input:z.infer<typeof 
   return fresh;
  }
  // Check disclosure and clear only this person's consent in one atomic write.
- const [row]=await q(
+ const [row]=await query(
   `update matches set ${side}_approved=false, ${side}_identity=null, ${side}_approved_at=null, ${side}_card_version=null
      ${input.decision==='decline'?', declined_by=coalesce(declined_by,$2)':''}
    where id=$1 and not (a_approved and b_approved and a_identity is not null and b_identity is not null
@@ -41,4 +51,5 @@ export async function decideIntroduction(m:Match,me:string,input:z.infer<typeof 
   input.decision==='decline'?[m.id,me]:[m.id]);
  if(!row)throw new HttpError(409,'ALREADY_REVEALED','The details already shared cannot be recalled.');
  return matchRow(row);
+ });
 }

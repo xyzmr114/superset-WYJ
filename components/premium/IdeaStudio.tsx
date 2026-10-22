@@ -5,6 +5,7 @@ import type { MatchingCard } from '@/lib/contracts';
 import { approvedEnhancementInput } from '@/lib/premium/enhancement-contract';
 import Markdown from '@/components/shared/Markdown';
 import FounderReview from '@/components/pitch/FounderReview';
+import IdeaResearch from './IdeaResearch';
 import { emptyAnswers, ideaKey, interviewPrompts, makeIdeaMemo, unanswered, type StudioAnswers } from './studio';
 import styles from './premium.module.css';
 
@@ -54,7 +55,7 @@ export default function IdeaStudio() {
       const [nextPlan, body] = await Promise.all([planResponse.json(), ideaResponse.json()]);
       if (!['free', 'premium'].includes(nextPlan.plan) || !Array.isArray(body.ideas)) throw new Error('The studio received an unexpected account response.');
       setPlan(nextPlan as Plan);
-      const cards = body.ideas.filter(isIdea);
+      const cards = body.ideas.filter((card: unknown) => isIdea(card) && (card as MatchingCard & {publicationStatus?: string}).publicationStatus !== 'unpublished');
       setIdeas(cards); setSelectedId(current => cards.some((card: MatchingCard) => ideaKey(card) === current) ? current : cards[0] ? ideaKey(cards[0]) : '');
     }).catch(cause => { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'The studio could not load.'); })
       .finally(() => { if (!controller.signal.aborted) setReady(true); });
@@ -125,14 +126,14 @@ export default function IdeaStudio() {
     <div className={styles.topline}><p className="eyebrow">WYJ PREMIUM / IDEA STUDIO</p><Link className="secondary" href="/agent">← Your private workspace</Link></div>
     <h1>Make your idea<br/><em>worth testing.</em></h1>
     <p className="lead">Find the first customer, sharpen one useful workflow, and leave with a 48-hour experiment.</p>
-    <p className={styles.boundary}>Starts with an idea you already approved to share. Questionnaire answers and drafts stay in this page’s memory. Optional DeepSeek enhancement sends only the approved brief shown below, after a separate approval. Refreshing clears unsaved work.</p>
+    <p className={styles.boundary}>Work from a published idea. Questionnaire answers and drafts stay in this page’s memory. Optional DeepSeek enhancement has its own exact send preview and approval. Refreshing clears unsaved work.</p>
     {!ready && <p role="status">Opening your Idea Studio…</p>}
     {error && <div role="alert" className={styles.error}>{error}<p><button onClick={() => setReload(value => value + 1)}>Try again</button></p></div>}
-    {ready && join && <article className={styles.gate}><h2>Create your founder profile first.</h2><p>Your studio works from your own approved ideas.</p><Link className="button" href="/agent">Join WYJ →</Link></article>}
+    {ready && join && <article className={styles.gate}><h2>Create your founder profile first.</h2><p>Your studio works from your own approved ideas.</p><Link className="button" href="/agent">Build my profile →</Link></article>}
     {ready && plan?.plan === 'free' && <article className={styles.gate}><span className="badge">PREMIUM DEVELOPMENT PREVIEW</span><h2>Give your idea a working plan.</h2><p>Premium adds a structured studio for each approved idea:</p><ul><li>Optional DeepSeek refinement of your approved brief, with an exact send preview.</li><li>A specific customer, current workaround and first product.</li><li>A risky assumption with a test that could change your mind.</li><li>An editable solution memo with copy and Markdown download.</li></ul><Link className="button" href="/plans">Explore plans →</Link><p className="muted">Billing is not connected. No payment is collected in this preview.</p></article>}
     {ready && plan?.plan === 'premium' && <>
       <p><span className="badge">PREMIUM PREVIEW · NO CHARGE</span></p>
-      {!ideas.length ? <article className={styles.gate}><h2>Approve your first idea.</h2><p>Only explicitly published briefs can enter the studio. Your private notes stay in the private workspace.</p><Link className="button" href="/agent">Create an approved idea →</Link></article> : <>
+      {!ideas.length ? <article className={styles.gate}><h2>Approve your first idea.</h2><p>Only explicitly published briefs can enter the studio. Your private background is not included.</p><Link className="button" href="/agent">Create an approved idea →</Link></article> : <>
         <label htmlFor="studio-idea">Choose an approved idea</label><select id="studio-idea" value={selectedId} onChange={event => { setSelectedId(event.target.value); setAnswers({ ...emptyAnswers }); setMarkdown(''); setDirty(false); setMessage(''); }}>
           {ideas.map(card => <option key={ideaKey(card)} value={ideaKey(card)}>{card.alias} — {card.approvedBlurb.slice(0, 85)}</option>)}
         </select>
@@ -146,6 +147,7 @@ export default function IdeaStudio() {
           {enhancementError && <p role="alert" className={styles.error}>{enhancementError} Review the brief and try again, or build a local memo below.</p>}
           <p className="muted">Enhancing replaces the memo below, including edits. You can use the local questionnaire instead; it makes no cloud request.</p>
         </article>}
+        {idea && <IdeaResearch idea={idea}/>}
         {idea && <div className={styles.layout}>
           <article className={styles.question}>
             <p className={styles.step}>LOCAL OPTION / Sharpen the first product</p><h2>One customer. One useful result.</h2>
