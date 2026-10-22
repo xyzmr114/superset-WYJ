@@ -92,7 +92,8 @@ test('matching persists unlimited idea pairs, exact snapshots, and idempotent ge
  assert.deepEqual((await toView(await getMyMatch(m.id,a.id),a.id)).candidate,old);
 });
 
-test('server publication schema rejects private extras and non-allowlisted preferences',()=>{
+test('server publication schema accepts bounded custom preferences but rejects private extras',()=>{
  assert.equal(Card.safeParse({...brief(),rawProfile:'PRIVATE'}).success,false);
- assert.equal(Card.safeParse({...brief(),preferences:{techStack:['Private employer'],strengths:[],partnerStrengths:[],workStyles:[]}}).success,false);
+ assert.equal(Card.safeParse({...brief(),preferences:{techStack:['Equestrian robotics'],strengths:[],partnerStrengths:[],workStyles:[]}}).success,true);
+ assert.equal(Card.safeParse({...brief(),preferences:{techStack:['x'.repeat(41)],strengths:[],partnerStrengths:[],workStyles:[]}}).success,false);
 });

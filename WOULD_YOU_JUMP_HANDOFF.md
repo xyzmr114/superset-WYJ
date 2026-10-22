@@ -142,3 +142,23 @@ Next owner work: **Anusha** polish the three-step workspace/shared profile, pres
 ## Frontend branch integrated
 
 Merged Anusha’s `anusha/landing-clouds` into integration: editorial landing, Sage Cream shell, sky, halftone footer and shared navigation. Preserved the latest three-step private workspace, automatic browser models and code-free session entry. Landing CTA also requires no event code. Pull main before further UI work.
+
+## Direct entry and custom profile fields
+
+All profile CTAs go directly to `/agent`; `/join` only redirects old bookmarks. Publishing creates a session if needed. Every skills/niche/strength/stack/style picker accepts explicit custom entries (40 characters, same selection caps). Custom preference strings are accepted by the shared brief schema and exact normalized overlaps affect matching; never put raw background in those fields automatically. Continue is actionable: missing fields are highlighted, scrolled into view and focused. The initial suggested alias selects on focus so typing replaces it.
+
+## Footer and navigation polish
+
+The shared footer now lives in `app/SiteFooter.tsx` + `app/footer.module.css`: glass wordmark, pointer-driven damped letter springs, current Next links and working `/#how` anchor. It pauses offscreen/at rest and respects reduced motion. The legacy halftone component is no longer mounted. Mobile navigation keeps the app routes visible; duplicate Start here CTA only appears on the landing.
+
+## External model assets and legacy API gate
+
+See DEPLOYMENT.md for Drive archive → public Blob upload → MODEL_ASSET_BASE_URL. All four asset folders and SHA-256 manifest travel together. No weights/runtime binaries are committed. `pnpm models:upload` is dry-run; `--upload` requires the Blob write token in ignored local env. Public asset rewrites preserve same-origin worker execution. Hosted execution must be checked after actual Blob provisioning. `/api/agent` is disabled by default (410); explicit enabling additionally requires an authenticated Premium session. Free browser assistance and exact-brief Premium enhancement remain separate. Footer is now a light, translucent WYJ treatment with the existing reduced-motion-aware springs.
+
+## Persistence fix
+
+Local development is now disk-backed PGlite (`.wyj-local/data`, ignored, private directory permissions); tests stay isolated in memory and production requires DATABASE_URL. A running old memory database is copied when available during hot reload; already-erased rows cannot be recovered. A process lock prevents two dev servers writing the same directory. Session creation reuses/renews valid HttpOnly cookies for 30 days rather than replacing the participant.
+
+The private workspace saves matching-field drafts in localStorage, restores the current step/name/custom choices, and separately remembers publication IDs. It never stores pasted background, contacts or publication consent. Reload always requires fresh publication approval. Start a new idea explicitly clears the active draft. Never clear `.wyj-local/data` as a routine restart fix.
+
+Localhost sessions now use port-specific cookie names (with legacy-cookie migration) so another local app/port cannot replace the active session. Cookies remain HttpOnly, SameSite=Lax and Secure in production.

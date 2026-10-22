@@ -11,7 +11,7 @@ export default function SiteNav() {
       {!home && <Link href="/matches">Founders</Link>}
       {!home && <Link href="/ideas">My ideas</Link>}
       {!home && <Link href="/plans">Plans</Link>}
-      <Link className="nav-cta" href="/join">Start here</Link>
+      {home && <Link className="nav-cta" href="/agent">Build my profile ↗</Link>}
     </nav>
   );
 }

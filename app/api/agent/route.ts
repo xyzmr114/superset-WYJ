@@ -1,3 +1,5 @@
+import {assertLegacyAgentAccess} from '@/lib/server/legacy-agent-access';
+import {HttpError} from '@/lib/server/http';
 import {agentInput,type AgentEvent} from '@/lib/agent/schema';
 import {resolveModel} from '@/lib/agent/provider';
 import {browserSessionId} from '@/lib/browser/session';
@@ -9,6 +11,7 @@ export const maxDuration=180;
 let active=0;
 export async function POST(request:Request){
  const origin=request.headers.get('origin');if(origin&&origin!==new URL(request.url).origin)return Response.json({error:'Request origin does not match.'},{status:403});
+ try{await assertLegacyAgentAccess(request);}catch(error){if(error instanceof HttpError)return Response.json({error:error.message,code:error.code},{status:error.status});return Response.json({error:'Agent access could not be verified.'},{status:503});}
  const accessCode=process.env.AGENT_ACCESS_CODE;
  if(accessCode&&request.headers.get('x-agent-access-code')!==accessCode)return Response.json({error:'Enter the room access code.'},{status:401});
  const raw=await request.text();if(raw.length>50000)return Response.json({error:'Conversation is too long. Start a new chat.'},{status:413});

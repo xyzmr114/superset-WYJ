@@ -29,7 +29,7 @@ Current product: see `PIVOT.md`. Roles and implementation ownership: see `WOULD_
 
 Local inference must really run on the user's device. Pseudonyms are not guaranteed anonymity. No contact is revealed before both approvals. The demo does not send external messages, book meetings, promise investment or claim a match predicts founder success.
 
-With DATABASE_URL set, apply pnpm db:migrate before rehearsal. Without it, the PGlite fallback resets on restart; avoid restarting between participants joining and revealing. Rehearse with actual independently controlled sessions; do not simulate the other person's consent.
+With DATABASE_URL set, apply pnpm db:migrate before rehearsal. Without it, local PGlite persists in `.wyj-local/data`; avoid restarting between participants joining and revealing. Rehearse with actual independently controlled sessions; do not simulate the other person's consent.
 
 ## Implemented match/reveal rehearsal
 
