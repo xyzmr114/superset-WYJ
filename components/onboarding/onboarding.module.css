@@ -1,9 +1,9 @@
 .privatePanel {
   border-color: #c7cdbb;
-  background: #fbfcf4;
+  background: #f7faf4;
 }
 .publicPanel {
-  border-color: #d8dcd0;
+  border-color: var(--line);
 }
 .tagset {
   border: 0;
@@ -87,7 +87,7 @@
 }
 .menuItem:hover,
 .menuItemAdd:hover {
-  background: #eef1e4;
+  background: var(--accent);
 }
 .menuItemAdd {
   font-weight: 600;
@@ -120,7 +120,7 @@
   margin-top: 18px;
   padding: 14px 16px;
   border-radius: 10px;
-  background: #eef1e4;
+  background: var(--accent);
   font-size: 13px;
   line-height: 1.6;
 }

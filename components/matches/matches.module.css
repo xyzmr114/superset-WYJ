@@ -53,7 +53,7 @@
   font-size: 12px;
   font-weight: 700;
 }
-.satisfied .mark { background: #d8f36a; color: #20281f; }
+.satisfied .mark { background: var(--accent); color: var(--primary-deep); }
 .unknown .mark { background: #eceee4; color: #6b7363; }
 .unmet .mark { background: #f3d6d0; color: #7a3326; }
 .checkBody strong { display: block; font-size: 14px; }
@@ -86,7 +86,7 @@
   margin-top: 16px;
   padding: 14px 16px;
   border-radius: 10px;
-  background: #eef1e4;
+  background: var(--accent);
   font-size: 14px;
 }
 .revealed {
@@ -94,7 +94,7 @@
   padding: 16px;
   border-radius: 10px;
   border: 1px dashed #b7c089;
-  background: #fbfcf4;
+  background: #f7faf4;
 }
 .revealed h4 {
   margin: 0 0 6px;

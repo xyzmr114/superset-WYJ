@@ -138,3 +138,7 @@ Laya and Bonsai automatically warm in isolated browser workers while the founder
 Partner choices populate both seeks and partnerStrengths. New suggestions require a shared topic plus at least one requested skill/strength actually fulfilled by the other founder. Two engineers both requesting sales no longer qualify through similarity alone. Pending/revealed introductions are preserved.
 
 Next owner work: **Anusha** polish the three-step workspace/shared profile, preserving local-only input and separate approval; **Vernika** evaluate classifier quality and ranking against real reviewed examples; **Abhinav** preserve default code-free session creation, async Postgres and immutable pair snapshots; **You + Codex** verify local generation, automatic warmup and complete publication/mutual reveal.
+
+## Frontend branch integrated
+
+Merged Anusha’s `anusha/landing-clouds` into integration: editorial landing, Sage Cream shell, sky, halftone footer and shared navigation. Preserved the latest three-step private workspace, automatic browser models and code-free session entry. Landing CTA also requires no event code. Pull main before further UI work.
