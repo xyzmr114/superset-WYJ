@@ -13,7 +13,7 @@ The first run downloads the checkpoint into ignored `.wyj-local/hf` (about 1.4 G
 
 ## Questions
 
-`questions.py` asks one yes/no (`noul`) question per label: 5 skills offered, 5 skills sought and 6 interests (the four `INTERESTS` tags plus `travel` and `ai-agents` for the demo story, which are not in `lib/contracts.ts`). Availability is one choice question with a `not_stated` option. Only these labels can leave the classifier.
+`questions.py` asks one yes/no (`noul`) question per label: 5 skills offered, 5 skills sought and 6 interests (the `INTERESTS` tags in `lib/contracts.ts`, including `travel` and `ai-agents`). Availability is one choice question with a `not_stated` option. Only these labels can leave the classifier.
 
 ## Result: 22 October 2026, laya 0.4.13, 10 synthetic snippets
 

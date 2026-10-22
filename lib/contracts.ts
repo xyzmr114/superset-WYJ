@@ -7,4 +7,4 @@ export type MatchView = { id: string; candidate: MatchingCard; score: number; op
 export type PitchView = { id: string; matchId: string; version: number; markdown: string; proposedIdentityFields: Record<string,string[]>; myApproval: boolean; bothApproved: boolean; exportable: boolean };
 export type ApiError = { error: { code: string; message: string } };
 export const SKILLS = ['engineering','sales','product','design','data'] as const;
-export const INTERESTS = ['developer-tools','payments','healthcare','climate'] as const;
+export const INTERESTS = ['developer-tools','payments','healthcare','climate','travel','ai-agents'] as const;
