@@ -1,0 +1,25 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {MockLanguageModelV4} from 'ai/test';
+import {runAgent} from './runner';
+import type {AgentEvent} from './schema';
+const usage={inputTokens:{total:10,noCache:10,cacheRead:0,cacheWrite:0},outputTokens:{total:10,text:10,reasoning:0}};
+const draft={title:'A starting point',problem:'Unverified workflow pain',customer:'Unknown buyer',solution:'One narrow workflow',team:'Skills to confirm',whyNow:'Timing to investigate',experiment:'Interview five users',unknowns:['Who pays?']};
+test('agent executes tools and carries their results into subsequent model steps',async()=>{
+ const model=new MockLanguageModelV4({doGenerate:[
+  {content:[{type:'tool-call',toolCallId:'t1',toolName:'get_founder_framework',input:'{}'}],finishReason:{unified:'tool-calls',raw:undefined},usage,warnings:[]},
+  {content:[{type:'tool-call',toolCallId:'t2',toolName:'draft_solution_memo',input:JSON.stringify(draft)}],finishReason:{unified:'tool-calls',raw:undefined},usage,warnings:[]},
+  {content:[{type:'text',text:'Your working memo is ready.'}],finishReason:{unified:'stop',raw:undefined},usage,warnings:[]}
+ ]});
+ const events:AgentEvent[]=[];
+ await runAgent({provider:'test',model:'test',messages:[{role:'user',content:'Draft my memo'}]},model,e=>events.push(e),new AbortController().signal);
+ assert.equal(model.doGenerateCalls.length,3);
+ assert.ok(model.doGenerateCalls[1].prompt.some(m=>m.role==='tool'));
+ const memo=events.find(e=>e.type==='memo');assert.ok(memo&&memo.type==='memo');assert.match(memo.markdown,/superset.com/);assert.match(memo.markdown,/Founder skills and experience have not been supplied/);assert.doesNotMatch(memo.markdown,/Skills to confirm/);
+ assert.equal(events.at(-1)?.type,'done');
+});
+test('repeated tool requests stop at the step budget',async()=>{
+ const model=new MockLanguageModelV4({doGenerate:async()=>({content:[{type:'tool-call',toolCallId:crypto.randomUUID(),toolName:'get_founder_framework',input:'{}'}],finishReason:{unified:'tool-calls',raw:undefined},usage,warnings:[]})});
+ await runAgent({provider:'test',model:'test',messages:[{role:'user',content:'Continue'}]},model,()=>{},new AbortController().signal);
+ assert.equal(model.doGenerateCalls.length,5);
+});

@@ -59,3 +59,7 @@ See [full handoff](WOULD_YOU_JUMP_HANDOFF.md) for exact API contracts and accept
 ## Pitch workspace milestone
 
 Open `/pitch` for the synthetic local demo. Use `/pitch?matchId=ID` after a real mutual introduction, or `/pitch?pitchId=ID` for an existing draft. Includes editing, saved-version review, approval states, server-authorized export calls, and stale-version handling. See [pitch integration notes](components/pitch/README.md).
+
+## Founder agent
+
+Open `/agent` for the chat workflow. The models.dev catalog powers provider/model selection; the harness uses native or compatible adapters. Set a provider key in `.env.local` and restart. See [agent setup](docs/AGENT_SETUP.md). The agent can search public projects, inspect founder questions, rank example counterparts, and prepare a memo for the pitch editor. Telegram remains a later channel adapter.

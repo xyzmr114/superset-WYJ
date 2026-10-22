@@ -8,20 +8,24 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test lib/matching/index.test.ts components/pitch/demo-state.test.ts lib/client/private-profile.test.ts"
+    "test": "tsx --test lib/matching/index.test.ts components/pitch/*.test.ts lib/agent/*.test.ts lib/client/*.test.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.85",
+    "@ai-sdk/google": "^4.0.102",
+    "@ai-sdk/openai-compatible": "^3.0.75",
+    "@tanstack/react-query": "5.104.5",
+    "ai": "^7.0.148",
     "next": "16.4.2",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "@tanstack/react-query": "5.104.5",
     "zod": "4.6.7"
   },
   "devDependencies": {
-    "typescript": "5.9.3",
     "@types/node": "22.20.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "tsx": "4.23.15"
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
   }
 }
