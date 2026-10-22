@@ -31,7 +31,7 @@ export default function PrivateWorkspace(){
   if(currentRun!==runId.current)return;
   if(result.status==='unavailable'){setMessage(result.message);return;}
   const {offers,seeks,interests}=result.suggested;
-  setBrief(b=>({...b,offers,seeks,interests,approvedBlurb:suggestedIdea(interests,offers)}));setConsent(false);setClassified(true);setMessage('Laya ran on this device. Review every suggestion; missing or incorrect labels are yours to correct. Your idea preview uses a broad template, never a copy of your private text.');
+  setBrief(b=>({...b,offers,seeks:seeks.length?seeks:b.seeks,interests,approvedBlurb:suggestedIdea(interests,offers)}));setConsent(false);setClassified(true);setMessage('Laya ran on this device. Review every suggestion; missing or incorrect labels are yours to correct. Your idea preview uses a broad template, never a copy of your private text.');
  }catch{setMessage('Local classifier unavailable. Continue with manual fields; no private text was sent to a hosted model.');}finally{setRunning(false);}}
  async function publish(){if(!consent||busy)return;setBusy(true);setError('');try{
   const payload=approvedBrief(brief);let card;
