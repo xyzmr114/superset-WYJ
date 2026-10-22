@@ -2,5 +2,7 @@ allowBuilds:
   bun: true
   esbuild: true
   msgpackr-extract: true
+  onnxruntime-node: false
   opencode-ai: true
   protobufjs: false
+  sharp: false

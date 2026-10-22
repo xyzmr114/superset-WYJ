@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { q } from '@/lib/server/store';
 import { HttpError, assertSameOrigin, newId, requireSession, route } from '@/lib/server/http';
 import { evidenceFor, myMatches, pairKey, views } from '@/lib/server/matches';
-import { rankCandidates,scorePair } from '@/lib/matching';
+import { rankCandidates,scorePair,hasPartnerFit } from '@/lib/matching';
 import { proposeOpportunity } from '@/lib/generation';
 import {ideasFor} from '@/lib/server/ideas';
 import type {MatchingCard} from '@/lib/contracts';
@@ -20,11 +20,11 @@ export const POST = route(async (req) => {
   const best=new Map<string,MatchingCard>();
   for(const card of otherIdeas){
    const scored=scorePair(idea,card);
-   if(!scored.sharedInterests.length)continue;
+   if(!scored.sharedInterests.length||!hasPartnerFit(idea,card))continue;
    const prev=best.get(card.id),previous=prev?scorePair(idea,prev):null;
    if(!previous||scored.score>previous.score||(scored.score===previous.score&&scored.preferenceScore>previous.preferenceScore))best.set(card.id,card);
   }
-  for(const {candidate,score,sharedInterests} of rankCandidates(idea,[...best.values()],{requireSharedInterest:true,limit:Infinity})){
+  for(const {candidate,score,sharedInterests} of rankCandidates(idea,[...best.values()],{requireSharedInterest:true,requirePartnerFit:true,limit:Infinity})){
    const [a,b]=pairKey(me.id,candidate.id),aCard=a===me.id?idea:candidate,bCard=b===me.id?idea:candidate;
    const aIdea=aCard.ideaId??'legacy',bIdea=bCard.ideaId??'legacy';
    const key=JSON.stringify([a,b,aIdea,bIdea]);

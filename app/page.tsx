@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import Elevation from './Elevation';
 import WhoSeesWhat from './WhoSeesWhat';
 import styles from './landing.module.css';
@@ -201,14 +202,10 @@ export default function Home() {
         <div>
           <p className={styles.tag}>05 / Landing</p>
           <h2 className={styles.landTitle}>So, would you <em>jump?</em></h2>
-          <form className={styles.join} action="/join" method="get">
-            <label htmlFor="event-code" className={styles.mono}>Event code</label>
-            <div className={styles.joinRow}>
-              <input id="event-code" name="code" defaultValue="SUPERSET" autoComplete="off" spellCheck={false} />
-              <button type="submit">Join the event <span aria-hidden="true">→</span></button>
-            </div>
+          <div className={styles.join}>
+            <Link className={styles.cta} href="/join">Create my founder profile <span aria-hidden="true">→</span></Link>
             <p className={styles.joinNote}>No account, no résumé, no announcement.</p>
-          </form>
+          </div>
         </div>
         <svg className={styles.ground} viewBox="0 0 1440 260" preserveAspectRatio="none" aria-hidden="true">
           <path fill="#e3dcc0" d="M0 150 L120 110 L230 135 L350 80 L470 125 L590 95 L720 140 L850 85 L980 128 L1100 100 L1230 138 L1340 108 L1440 130 L1440 260 L0 260Z" />

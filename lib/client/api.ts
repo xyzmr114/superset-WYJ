@@ -8,7 +8,7 @@ async function call<T>(method:string,url:string,body?:unknown):Promise<T>{
 }
 export type CardInput = Omit<MatchingCard,'id'|'eventId'|'version'>;
 export const api={
- createSession:(eventCode:string)=>call<{participantId:string;eventId:string}>('POST','/api/session',{eventCode}),
+ createSession:(eventCode?:string)=>call<{participantId:string;eventId:string}>('POST','/api/session',{eventCode}),
  putIdentity:(displayName:string,contact:string)=>call<{saved:true}>('PUT','/api/me/identity',{displayName,contact}),
  publishIdea:(card:CardInput)=>call<MatchingCard>('POST','/api/me/ideas',{...card,publishConsent:true}),
  publishCard:(card:CardInput)=>call<MatchingCard>('PUT','/api/me/card',{...card,publishConsent:true}),

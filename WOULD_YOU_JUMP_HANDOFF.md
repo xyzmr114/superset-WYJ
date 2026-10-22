@@ -73,7 +73,7 @@ Frontend: first click opens an identity preview; the explicit approval button su
 
 ## Integration checks
 
-1. Type a recognizable secret into the private goal; confirm it never appears in shared matching or hosted-model requests.
+1. Type a recognizable canary into optional background; confirm it never appears in shared matching or hosted-model requests.
 2. A and B publish complementary briefs. A third session cannot fetch their pairing.
 3. A approves; B's contact is absent from A's JSON response, not merely hidden in the DOM.
 4. B approves; only then do both see the approved contact snapshots.
@@ -128,3 +128,13 @@ The API and actual DeepSeek browser walkthrough returned a real refinement from 
 Verified in the actual in-app browser: cold model download, completed local classification, warm-model classification, cancellation and a successful restart. Model/runtime file loading uses fixed same-origin GETs only. The WebGPU ORT bundle needs its asyncify WASM pair; preserve those files in the preparation script. Both real browser inference and real DeepSeek output were demonstrated before push.
 
 Latest persistence merge: the backend now uses async `requireSession`, `planFor`, `ideasFor` and SQL-backed stores. DeepSeek enhancement awaits these gates before reading the approved projection. Postgres persists configured deployments; zero-setup PGlite still resets on restart. Preserve migrations through 005 and run the deployment migration step.
+
+## Current intake and free agent update — pull before editing
+
+The integration pass changed Anusha’s private workspace files and Vernika’s matching files; pull this commit before continuing. Ownership remains unchanged. Canonical flow: **Your idea → Your partner → Preview & publish**. No room code, private-constraints field, template idea paragraph or repeated partner questions. The founder authors the shareable idea. Optional background stays in tab memory; Laya suggestions fill visible skills/topics without overwriting existing choices. `components/founders/FounderProfile.tsx` is the shared dynamic profile renderer for intake, saved ideas and matches.
+
+Laya and Bonsai automatically warm in isolated browser workers while the founder writes; warmup contains no user text. Free Bonsai 1.7B rewrites only the entered idea after a click, with editable output and explicit adoption. It never publishes. Prepare both generated asset sets before deployment: `pnpm browser:prepare` and `pnpm bonsai:prepare` (about 950 MB total first visitor download). Manual entry remains usable throughout and on unsupported browsers. Premium DeepSeek still receives only separately approved saved briefs.
+
+Partner choices populate both seeks and partnerStrengths. New suggestions require a shared topic plus at least one requested skill/strength actually fulfilled by the other founder. Two engineers both requesting sales no longer qualify through similarity alone. Pending/revealed introductions are preserved.
+
+Next owner work: **Anusha** polish the three-step workspace/shared profile, preserving local-only input and separate approval; **Vernika** evaluate classifier quality and ranking against real reviewed examples; **Abhinav** preserve default code-free session creation, async Postgres and immutable pair snapshots; **You + Codex** verify local generation, automatic warmup and complete publication/mutual reveal.

@@ -1,63 +1,6 @@
-"use client";
-import {useEffect, useState} from 'react';
+'use client';
+import {useState} from 'react';
 import {useRouter} from 'next/navigation';
-import {usePrivateProfile} from '@/lib/client/private-profile';
 import {api} from '@/lib/client/api';
-
-export default function Join() {
-  const router = useRouter();
-  const {clear} = usePrivateProfile();
-  const [eventCode, setEventCode] = useState('SUPERSET');
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  // QR codes point at /join?code=EVENT; prefill from it after mount.
-  useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get('code');
-    if (code) setEventCode(code);
-  }, []);
-
-  // Creates an anonymous server session (HttpOnly cookie), wipes any lingering
-  // private notes, then moves to intake.
-  const start = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    setError('');
-    try {
-      await api.createSession(eventCode);
-      clear();
-      router.push('/agent');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not join.');
-      setBusy(false);
-    }
-  };
-
-  return (
-    <section className="narrow">
-      <p className="eyebrow">THE ROOM</p>
-      <h1>
-        Meet your<br />next possibility.
-      </h1>
-      <p className="lead">
-        Scan the event code to join anonymously. Names stay hidden until two people both approve an
-        introduction.
-      </p>
-      <article>
-        <h3>Start an anonymous session</h3>
-        <p>
-          No account, no resume. Your private intake lives only in this browser tab and is erased
-          when you refresh or leave.
-        </p>
-        <form onSubmit={start}>
-          <label>
-            Event code
-            <input value={eventCode} onChange={e => setEventCode(e.target.value)} required />
-          </label>
-          <button type="submit" disabled={busy}>{busy ? 'Joining…' : 'Join this event →'}</button>
-          {error && <p className="muted" role="alert">{error}</p>}
-        </form>
-      </article>
-    </section>
-  );
-}
+import {useQueryClient} from '@tanstack/react-query';
+export default function Join(){const router=useRouter(),client=useQueryClient();const [busy,setBusy]=useState(false),[error,setError]=useState('');async function start(){setBusy(true);try{await api.createSession();client.clear();router.push('/agent');}catch(e){setError(e instanceof Error?e.message:'Could not start.');setBusy(false);}}return <section className="narrow"><p className="eyebrow">FIND YOUR COFOUNDER</p><h1>Start with an idea.<br/><em>Find your people.</em></h1><p className="lead">Build a profile, choose what you need in a partner, and connect when you both say yes.</p><button disabled={busy} onClick={()=>void start()}>{busy?'Starting…':'Create my founder profile →'}</button>{error&&<p role="alert">{error}</p>}</section>;}
