@@ -2,44 +2,52 @@
 import {useState} from 'react';
 import styles from './onboarding.module.css';
 
+const MAX_TAG_LEN = 40; // matches the server's per-tag cap (app/api/me/card)
+
 // A type-ahead combobox: start typing to filter a long suggestion list, pick a
 // suggestion, OR add any custom value you type that isn't listed. Selected
-// values show below as removable tags. Multiple selections allowed.
+// values show below as removable tags. `max` caps how many can be added so the
+// picker never exceeds what the card route accepts.
 export default function MultiSelect({
   legend,
   suggestions,
   selected,
   onChange,
   placeholder = 'Type a skill…',
+  max,
 }: {
   legend: string;
   suggestions?: readonly string[];
   selected?: string[];
   onChange: (next: string[]) => void;
   placeholder?: string;
+  max?: number;
 }) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
   // Default so a transient hot-reload / missing prop can never crash the page.
   suggestions ??= [];
   selected ??= [];
-  const [query, setQuery] = useState('');
-  const [open, setOpen] = useState(false);
+
+  const atMax = max !== undefined && selected.length >= max;
   const norm = (s: string) => s.trim().toLowerCase();
 
   const add = (raw: string) => {
-    const value = raw.trim();
+    if (atMax) return;
+    const value = raw.trim().slice(0, MAX_TAG_LEN);
     if (!value) return;
-    if (!selected.some(s => norm(s) === norm(value))) onChange([...selected, value]);
+    if (!selected!.some(s => norm(s) === norm(value))) onChange([...selected!, value]);
     setQuery('');
     setOpen(false);
   };
-  const remove = (value: string) => onChange(selected.filter(o => o !== value));
+  const remove = (value: string) => onChange(selected!.filter(o => o !== value));
 
   const q = norm(query);
   const matches = suggestions
-    .filter(s => (q ? norm(s).includes(q) : true) && !selected.some(x => norm(x) === norm(s)))
+    .filter(s => (q ? norm(s).includes(q) : true) && !selected!.some(x => norm(x) === norm(s)))
     .slice(0, 8);
   const canAddCustom =
-    q.length > 0 && !suggestions.some(s => norm(s) === q) && !selected.some(s => norm(s) === q);
+    q.length > 0 && !suggestions.some(s => norm(s) === q) && !selected!.some(s => norm(s) === q);
 
   return (
     <fieldset className={styles.tagset}>
@@ -61,40 +69,45 @@ export default function MultiSelect({
         </div>
       )}
 
-      <div className={styles.combo}>
-        <input
-          type="text"
-          value={query}
-          placeholder={placeholder}
-          onChange={e => {
-            setQuery(e.target.value);
-            setOpen(true);
-          }}
-          onFocus={() => setOpen(true)}
-          // Let a click on a menu item register before the menu closes.
-          onBlur={() => setTimeout(() => setOpen(false), 120)}
-          onKeyDown={e => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              add(matches[0] ?? query);
-            }
-          }}
-        />
-        {open && (matches.length > 0 || canAddCustom) && (
-          <div className={styles.menu}>
-            {matches.map(match => (
-              <button type="button" key={match} className={styles.menuItem} onClick={() => add(match)}>
-                {match}
-              </button>
-            ))}
-            {canAddCustom && (
-              <button type="button" className={styles.menuItemAdd} onClick={() => add(query)}>
-                + Add “{query.trim()}”
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+      {atMax ? (
+        <p className="muted">Up to {max} — remove one to change your selection.</p>
+      ) : (
+        <div className={styles.combo}>
+          <input
+            type="text"
+            value={query}
+            maxLength={MAX_TAG_LEN}
+            placeholder={placeholder}
+            onChange={e => {
+              setQuery(e.target.value);
+              setOpen(true);
+            }}
+            onFocus={() => setOpen(true)}
+            // Let a click on a menu item register before the menu closes.
+            onBlur={() => setTimeout(() => setOpen(false), 120)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                add(matches[0] ?? query);
+              }
+            }}
+          />
+          {open && (matches.length > 0 || canAddCustom) && (
+            <div className={styles.menu}>
+              {matches.map(match => (
+                <button type="button" key={match} className={styles.menuItem} onClick={() => add(match)}>
+                  {match}
+                </button>
+              ))}
+              {canAddCustom && (
+                <button type="button" className={styles.menuItemAdd} onClick={() => add(query)}>
+                  + Add “{query.trim().slice(0, MAX_TAG_LEN)}”
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </fieldset>
   );
 }

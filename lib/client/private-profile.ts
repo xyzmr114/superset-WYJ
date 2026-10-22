@@ -9,16 +9,20 @@ import type {Opportunity} from '@/lib/contracts';
 // This value lives in React state for the life of the tab and nowhere else:
 //   - never localStorage / sessionStorage / cookies / IndexedDB
 //   - never an API request body, query string, or query-cache key
+//     (sole exception: profileText may go to a classifier on this laptop's
+//     loopback address — see components/private/localClassifier.ts)
 //   - never a model prompt, analytics event, or error report
 // Refreshing the tab erases it. There is deliberately no persistence.
 // =============================================================================
 export type PrivateProfile = {
+  profileText: string; // Your own pasted profile (e.g. LinkedIn "About"). Only ever sent to a loopback classifier on this laptop.
   ambition: string;    // Why you would jump — the company you actually want to build.
   conditions: string;  // What would need to be true before you leap.
   mustHaves: string;   // Non-negotiables. Yours alone.
 };
 
 export const emptyPrivateProfile: PrivateProfile = {
+  profileText: '',
   ambition: '',
   conditions: '',
   mustHaves: '',
