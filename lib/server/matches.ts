@@ -3,20 +3,11 @@ import { searchPublicProjects } from '@/lib/evidence/github';
 import { db, type Match } from './store';
 import { notFound } from './http';
 
-const evidenceCache = new Map<string, { at: number; items: Evidence[] }>();
-const TTL = 15 * 60_000;
-
-/** Public evidence for a domain, cached 15 min. Any failure/timeout => [] (UI shows template mode; never invent evidence). */
-export async function evidenceFor(domain: string): Promise<Evidence[]> {
-  const hit = evidenceCache.get(domain);
-  if (hit && Date.now() - hit.at < TTL) return hit.items.map((e) => ({ ...e, cached: true }));
+/** Public evidence for approved tags. Vernika's adapter caches 15 min and falls back to a labeled
+ *  snapshot itself; any unexpected failure still yields [] (never invented evidence). */
+export async function evidenceFor(tags: string[]): Promise<Evidence[]> {
   try {
-    const items = await Promise.race([
-      searchPublicProjects(domain),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 6000)),
-    ]);
-    evidenceCache.set(domain, { at: Date.now(), items });
-    return items;
+    return (await searchPublicProjects(tags)).evidence;
   } catch {
     return [];
   }
