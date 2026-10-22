@@ -5,6 +5,7 @@ export const linkedinProfile=z.string().url().refine(value=>{
 },'Use a LinkedIn profile URL, such as https://www.linkedin.com/in/name/.');
 export const browserActionSchema=z.discriminatedUnion('kind',[
   z.object({kind:z.literal('linkedin_post'),id:z.string().uuid(),title:z.string().max(150),body:z.string().min(1).max(3000)}).strict(),
+  z.object({kind:z.literal('linkedin_connection'),id:z.string().uuid(),title:z.string().max(150),body:z.string().min(1).max(200),profileUrl:linkedinProfile}).strict(),
   z.object({kind:z.literal('linkedin_message'),id:z.string().uuid(),title:z.string().max(150),body:z.string().min(1).max(3000),profileUrl:linkedinProfile}).strict(),
 ]);
 export type BrowserAction=z.infer<typeof browserActionSchema>;

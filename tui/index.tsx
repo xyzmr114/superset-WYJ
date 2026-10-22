@@ -47,7 +47,7 @@ function App(){
         if(event.type==='progress')setStatus(event.message);
         if(event.type==='answer'){log('WYJ  '+event.text);setHistory(old=>[...old,{role:'assistant',content:event.text}]);}
         if(event.type==='error')log('ERROR  '+event.message);
-        if(event.type==='action'){actionCount++;setActions(old=>[...old,event.action]);log(`ACTION ${actionCount} · ${event.action.title}\n${event.action.kind==='linkedin_message'?event.action.profileUrl+'\n':''}${event.action.body}\n/prepare ${actionCount} opens this draft · /send ${actionCount} submits the exact prepared draft`);}
+        if(event.type==='action'){actionCount++;setActions(old=>[...old,event.action]);log(`ACTION ${actionCount} · ${event.action.title}\n${event.action.kind!=='linkedin_post'?event.action.profileUrl+'\n':''}${event.action.body}\n/prepare ${actionCount} opens this draft · /send ${actionCount} submits the exact prepared draft`);}
         if(event.type==='memo'){const directory=path.join(process.cwd(),'.wyj-runtime','memos');await mkdir(directory,{recursive:true,mode:0o700});const filename=path.join(directory,'WYJ-'+Date.now()+'.md');await writeFile(filename,event.markdown,{mode:0o600});log('MEMO  '+filename+'\n'+event.markdown);}
         if(event.type==='sources')for(const source of event.sources)log('SOURCE  '+source.title+' '+source.url);
       }

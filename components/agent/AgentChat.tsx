@@ -76,7 +76,7 @@ export default function AgentChat(){
     if(event.type==='answer')setMessages(old=>[...old,{role:'assistant',content:event.text}]);
     if(event.type==='error')setError(event.message);
   }
-  async function send(text=input,action:'chat'|'draft_memo'|'outreach'|'social_post'='chat'){
+  async function send(text=input,action:'chat'|'draft_memo'|'outreach'|'social_post'|'connection'='chat'){
     if(!text.trim()||!canSend||!selectedProvider||!selectedModel)return;
     const next=[...messages,{role:'user' as const,content:text.trim()}];
     setMessages(next);setInput('');setBusy(true);setEvents([]);setError('');
@@ -130,7 +130,7 @@ export default function AgentChat(){
         </div>
         {error&&<p role="alert" className={styles.error}>{error}</p>}
         {storageError&&<p role="status" className={styles.error}>{storageError}</p>}
-        {actions.length>0&&<div className={styles.actionList}><h2>Your next moves, ready to run.</h2>{actions.map(action=><BrowserActionCard key={action.id} action={action} onEdit={next=>setActions(old=>old.map(current=>current.id===action.id?next:current))}/>)}</div>}
+        {actions.length>0&&<div className={styles.actionList}><h2>Your next moves, ready to run.</h2>{actions.map(action=><BrowserActionCard key={action.id} action={action} onConnection={url=>void send('Draft a short personalized LinkedIn connection invitation note (at most 200 characters) for '+url+'. Use our conversation and the profile we read; keep it as an editable connection card.','connection')} onEdit={next=>setActions(old=>old.map(current=>current.id===action.id?next:current))}/>)}</div>}
         <form className={styles.composer} onSubmit={event=>{event.preventDefault();void send();}}>
           <label htmlFor="agent-message">Your message</label>
           <textarea id="agent-message" value={input} onChange={event=>setInput(event.target.value)} maxLength={8000} placeholder="I’ve been thinking about…"/>

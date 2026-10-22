@@ -13,7 +13,7 @@ test('MCP grants are bound to one run and revoked on completion or abort',()=>{
 test('OpenCode MCP exposes application tools and returns editable action cards without sending',async()=>{
   const events:AgentEvent[]=[];const run=registerHarnessRun(input,event=>events.push(event),new AbortController().signal);
   const names=listHarnessTools(run.run).map(tool=>tool.name);
-  assert.ok(names.includes('search_linkedin_people'));assert.ok(names.includes('draft_linkedin_post'));
+  assert.ok(names.includes('search_linkedin_people'));assert.ok(names.includes('draft_linkedin_post'));assert.ok(names.includes('search_web'));assert.ok(names.includes('fetch_web_page'));assert.ok(names.includes('read_github_file'));assert.ok(names.includes('draft_linkedin_connection'));
   assert.equal(names.some(name=>/submit|send_message|publish|bash|cookie|password/.test(name)),false);
   const grant=authorizeHarnessRun(run.id,'Bearer '+run.token)!;
   await callHarnessTool(grant,'draft_linkedin_message',{profileUrl:'https://www.linkedin.com/in/example/',title:'Ask about booking groups',body:'Could I ask how group bookings work at your hostel?'});

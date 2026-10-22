@@ -5,7 +5,7 @@ import type {BrowserContext,Page} from 'playwright';
 import {browserActionSchema,linkedinProfile,type BrowserAction,type BrowserReceipt,type BrowserStatus} from './contracts';
 
 export const BROWSER_COOKIE='wyj_browser_session';
-type Prepared={page:Page;action:BrowserAction;fingerprint:string;dialog:ReturnType<Page['getByRole']>;editor:ReturnType<Page['getByRole']>};
+type Prepared={page:Page;recipientName?:string;action:BrowserAction;fingerprint:string;dialog:ReturnType<Page['getByRole']>;editor:ReturnType<Page['getByRole']>};
 type Session={profile:string;signedIn:boolean;context:BrowserContext;page:Page;busy:boolean;prepared:Map<string,Prepared>;receipts:Map<string,BrowserReceipt>};
 const globalBrowser=globalThis as unknown as {__wyjBrowsers?:Map<string,Session>};
 const sessions=globalBrowser.__wyjBrowsers??=new Map<string,Session>();
@@ -119,14 +119,20 @@ export async function prepareBrowserAction(id:string|undefined,input:BrowserActi
     }
     if(session.context.pages().length>=8)throw new Error('Close a finished browser tab before preparing another draft.');
     const page=await session.context.newPage();page.setDefaultTimeout(12000);session.page=page;
+    let recipientName:string|undefined;
     if(action.kind==='linkedin_post'){
       await page.goto('https://www.linkedin.com/feed/',{waitUntil:'domcontentloaded'});await requireSignedIn(page);
       await page.getByRole('button',{name:/^Start a post/i}).first().click();
     }else{
       await page.goto(cleanProfile(action.profileUrl),{waitUntil:'domcontentloaded'});await requireSignedIn(page);
-      await page.getByRole('button',{name:'Message',exact:true}).or(page.getByRole('link',{name:'Message',exact:true})).filter({visible:true}).first().click();
+      if(action.kind==='linkedin_connection'){
+        recipientName=(await page.title()).split('|')[0].trim();
+        await page.getByRole('link',{name:'Invite '+recipientName+' to connect',exact:true}).or(page.getByRole('button',{name:'Connect',exact:true})).filter({visible:true}).first().click();
+        const addNote=page.getByRole('button',{name:/^Add a note$/i}).filter({visible:true});
+        await addNote.first().waitFor({state:'visible'});await addNote.first().click();
+      }else await page.getByRole('button',{name:'Message',exact:true}).or(page.getByRole('link',{name:'Message',exact:true})).filter({visible:true}).first().click();
     }
-    const visibleEditor=page.locator('[contenteditable="true"]').filter({visible:true}).first();
+    const visibleEditor=page.locator(action.kind==='linkedin_connection'?'textarea':'[contenteditable="true"]').filter({visible:true}).first();
     if(action.kind==='linkedin_message'){
       const premiumGate=page.getByRole('link',{name:/^Try 1 month/i}).filter({visible:true}).first();
       await Promise.race([visibleEditor.waitFor({state:'visible'}).catch(()=>{}),premiumGate.waitFor({state:'visible'}).catch(()=>{})]);
@@ -134,15 +140,19 @@ export async function prepareBrowserAction(id:string|undefined,input:BrowserActi
     }
     await visibleEditor.waitFor({state:'visible'});
     let dialog=action.kind==='linkedin_post'?page.getByRole('dialog').filter({has:page.locator('[contenteditable="true"]')}).filter({visible:true}):page.locator('.msg-overlay-conversation-bubble').or(page.getByRole('dialog')).filter({has:page.locator('[contenteditable="true"]')}).filter({visible:true});
+    if(action.kind==='linkedin_connection'){
+      dialog=page.getByRole('dialog').filter({has:page.locator('textarea')}).filter({visible:true});
+      if(await dialog.count()===0&&await page.locator('textarea').filter({visible:true}).count()===1)dialog=page.locator('body');
+    }
     // LinkedIn also serves a full-page composer instead of a dialog.
     if(action.kind==='linkedin_post'&&await dialog.count()===0&&/^\/sharing\/compose\/?$/.test(new URL(page.url()).pathname))dialog=page.locator('body');
     if(action.kind==='linkedin_message'&&await dialog.count()===0&&/^\/messaging\/compose\/?$/.test(new URL(page.url()).pathname))dialog=page.locator('body');
     if(await dialog.count()!==1)throw new Error('Could not identify one unambiguous composer. Open the connected browser and check the page. Nothing was sent.');
-    const editor=dialog.locator('[contenteditable="true"]').filter({visible:true});
+    const editor=dialog.locator(action.kind==='linkedin_connection'?'textarea':'[contenteditable="true"]').filter({visible:true});
     if(await editor.count()!==1)throw new Error('The composer changed. Nothing was sent; finish in the browser.');
     await editor.fill(action.body);await page.bringToFront();
-    session.prepared.set(action.id,{page,action,fingerprint:fingerprint(action),dialog,editor});
-    const receipt:BrowserReceipt={id:action.id,status:'prepared',message:action.kind==='linkedin_post'?'Post filled in the LinkedIn composer.':'Message filled in the LinkedIn conversation.',url:page.url()};
+    session.prepared.set(action.id,{page,recipientName,action,fingerprint:fingerprint(action),dialog,editor});
+    const receipt:BrowserReceipt={id:action.id,status:'prepared',message:action.kind==='linkedin_post'?'Post filled in the LinkedIn composer.':action.kind==='linkedin_connection'?'Connection note filled in LinkedIn. Review it before sending the invitation.':'Message filled in the LinkedIn conversation.',url:page.url()};
     session.receipts.set(action.id,receipt);return receipt;
   });
 }
@@ -153,7 +163,7 @@ export async function submitBrowserAction(id:string|undefined,input:BrowserActio
     if(previous&&previous.status!=='prepared')return previous;
     const prepared=session.prepared.get(action.id);
     if(!prepared||prepared.fingerprint!==fingerprint(action))throw new Error('Prepare this exact draft in the browser before sending. Changes require preparing it again.');
-    if((await prepared.editor.innerText()).trim()!==action.body.trim())throw new Error('The browser draft has changed. Finish it in the browser so your edits are preserved.');
+    if((await prepared.editor.inputValue().catch(()=>prepared.editor.innerText())).trim()!==action.body.trim())throw new Error('The browser draft has changed. Finish it in the browser so your edits are preserved.');
     if(action.kind==='linkedin_message'){
       const recipientLinks=prepared.dialog.locator('a[href*="/in/"]');let recipientMatches=false;
       for(let index=0;index<await recipientLinks.count();index++){
@@ -162,7 +172,8 @@ export async function submitBrowserAction(id:string|undefined,input:BrowserActio
       }
       if(!recipientMatches)throw new Error('Could not verify this conversation belongs to the intended profile. Finish sending in the browser.');
     }
-    const button=prepared.dialog.getByRole('button',{name:action.kind==='linkedin_post'?/^Post$/i:/^Send$/i,exact:true});
+    if(action.kind==='linkedin_connection'&&(!prepared.recipientName||!(await prepared.dialog.innerText()).includes(prepared.recipientName)))throw new Error('Could not confirm the invitation recipient. Finish the invitation in the browser.');
+    const button=prepared.dialog.getByRole('button',{name:action.kind==='linkedin_post'?/^Post$/i:action.kind==='linkedin_connection'?/^(Send|Send invitation)$/i:/^Send$/i,exact:true});
     if(await button.count()!==1||!await button.isEnabled())throw new Error('Could not identify an enabled submit button. Nothing was sent.');
     const unknown:BrowserReceipt={id:action.id,status:'unknown',message:'Submission started. Check LinkedIn before trying again.',url:prepared.page.url()};
     await recordReceipt(session,unknown);
@@ -170,9 +181,10 @@ export async function submitBrowserAction(id:string|undefined,input:BrowserActio
       const fullPagePost=action.kind==='linkedin_post'&&/^\/sharing\/compose\/?$/.test(new URL(prepared.page.url()).pathname);
       await button.click();
       if(fullPagePost)await prepared.page.waitForURL(url=>!/^\/sharing\/compose\/?$/.test(url.pathname),{timeout:15000});
+      else if(action.kind==='linkedin_connection')await prepared.editor.waitFor({state:'hidden',timeout:15000});
       else if(action.kind==='linkedin_post')await prepared.dialog.waitFor({state:'hidden',timeout:15000});
       else await prepared.page.waitForFunction(()=>{const editors=document.querySelectorAll('.msg-overlay-conversation-bubble [contenteditable="true"]');return editors.length===1&&!(editors[0] as HTMLElement).innerText.trim();},{},{timeout:15000});
-      const receipt:BrowserReceipt={id:action.id,status:'submitted',message:action.kind==='linkedin_post'?'LinkedIn accepted the post submission. Check your feed for the published post.':'LinkedIn accepted the message submission. Check the conversation for delivery.',url:prepared.page.url()};
+      const receipt:BrowserReceipt={id:action.id,status:'submitted',message:action.kind==='linkedin_post'?'LinkedIn accepted the post submission. Check your feed for the published post.':action.kind==='linkedin_connection'?'LinkedIn accepted the connection invitation submission.':'LinkedIn accepted the message submission. Check the conversation for delivery.',url:prepared.page.url()};
       await recordReceipt(session,receipt);session.prepared.delete(action.id);return receipt;
     }catch {session.prepared.delete(action.id);return {...unknown,message:'The browser did not confirm the result. Check LinkedIn before sending again; WYJ will not repeat this action automatically.'};}
   });

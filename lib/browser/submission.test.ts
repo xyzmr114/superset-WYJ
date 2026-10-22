@@ -13,7 +13,7 @@ async function fixture(options:{changed?:boolean;uncertain?:boolean}={}){
   let clicks=0;
   const page={isClosed:()=>false,url:()=> 'https://www.linkedin.com/sharing/compose',waitForURL:async()=>{if(options.uncertain)throw new Error('No confirmation');}};
   const button={count:async()=>1,isEnabled:async()=>true,click:async()=>{clicks++;}};
-  const session={profile:directory,signedIn:true,page,busy:false,receipts:new Map(),prepared:new Map([[action.id,{page,action,fingerprint:createHash('sha256').update(JSON.stringify(action)).digest('hex'),editor:{innerText:async()=>options.changed?'Unexpected browser edits':action.body},dialog:{getByRole:()=>button}}]])};
+  const session={profile:directory,signedIn:true,page,busy:false,receipts:new Map(),prepared:new Map([[action.id,{page,action,fingerprint:createHash('sha256').update(JSON.stringify(action)).digest('hex'),editor:{inputValue:async()=>{throw new Error('Not an input');},innerText:async()=>options.changed?'Unexpected browser edits':action.body},dialog:{getByRole:()=>button}}]])};
   const sessions=(globalThis as unknown as {__wyjBrowsers:Map<string,unknown>}).__wyjBrowsers;sessions.set(id,session);
   return {id,action,clicks:()=>clicks,cleanup:async()=>{sessions.delete(id);await rm(directory,{recursive:true,force:true});},receipts:async()=>JSON.parse(await readFile(path.join(directory,'wyj-receipts.json'),'utf8'))};
 }

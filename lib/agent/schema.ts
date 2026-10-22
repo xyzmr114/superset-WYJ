@@ -2,7 +2,7 @@ import {z} from 'zod';
 import type {BrowserAction} from '@/lib/browser/contracts';
 export const agentInput=z.object({
  provider:z.string().max(80),model:z.string().max(180),
- action:z.enum(['chat','draft_memo','outreach','social_post']).optional(),
+ action:z.enum(['chat','draft_memo','outreach','social_post','connection']).optional(),
  messages:z.array(z.object({role:z.enum(['user','assistant']),content:z.string().min(1).max(12000)}).strict()).min(1).max(24),
  card:z.object({alias:z.string().max(40),offers:z.array(z.string().max(40)).max(8),seeks:z.array(z.string().max(40)).max(8),interests:z.array(z.string().max(60)).max(8),availability:z.enum(['exploring','weekends','full_time']),approvedBlurb:z.string().max(500)}).strict().optional()
 }).strict();
