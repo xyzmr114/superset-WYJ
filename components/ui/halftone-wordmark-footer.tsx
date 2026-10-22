@@ -56,6 +56,9 @@ export interface HalftoneWordmarkFooterProps {
   radius?: number
   /** How much of the word's cap height hangs below the bottom edge, 0–0.6. Defaults to 0.2. */
   crop?: number
+  /** Share of the root's height the wordmark fills, 0–1. When set, the word is fitted
+   *  fully inside (no crop) instead of spanning the width. */
+  fill?: number
   /** Print grain over everything, 0–1. Defaults to 0.5. */
   grain?: number
   /** Pointer and click response. Defaults to true. */
@@ -190,6 +193,7 @@ export default function HalftoneWordmarkFooter({
   dotGap = 6,
   radius = 80,
   crop = 0.2,
+  fill,
   grain = 0.5,
   interactive = true,
   fontFamily = SANS_STACK,
@@ -201,9 +205,9 @@ export default function HalftoneWordmarkFooter({
   const colors = { ...(PRESETS[preset] || PRESETS.night), ...(palette || {}) }
   const rootRef = React.useRef(null as HTMLElement | null)
   const canvasRef = React.useRef(null as HTMLCanvasElement | null)
-  const opts = React.useRef({ colors, dotGap, radius, crop, grain, interactive, fontFamily, fontWeight, wordmark })
-  opts.current = { colors, dotGap, radius, crop, grain, interactive, fontFamily, fontWeight, wordmark }
-  const key = [wordmark, dotGap, crop, grain, fontFamily, fontWeight, colors.background, colors.ink, colors.warm].join("|")
+  const opts = React.useRef({ colors, dotGap, radius, crop, fill, grain, interactive, fontFamily, fontWeight, wordmark })
+  opts.current = { colors, dotGap, radius, crop, fill, grain, interactive, fontFamily, fontWeight, wordmark }
+  const key = [wordmark, dotGap, crop, fill, grain, fontFamily, fontWeight, colors.background, colors.ink, colors.warm].join("|")
 
   React.useEffect(() => {
     const root = rootRef.current
@@ -247,14 +251,24 @@ export default function HalftoneWordmarkFooter({
       const face = o.fontWeight + " 100px " + o.fontFamily
       m.font = face
       const word = o.wordmark || " "
-      const fit = hwfFitSize(m.measureText(word).width, w * 1.02)
+      const probe = m.measureText(word)
+      let fit = hwfFitSize(probe.width, w * 1.02)
+      if (o.fill) {
+        // Fit the whole glyph box (ascent + descent) into fill × height, never wider than the root.
+        // Use the inked box, not the advance width: italic hooks (like a "j") overhang it.
+        const tall = probe.actualBoundingBoxAscent + probe.actualBoundingBoxDescent || 100
+        const wide = probe.actualBoundingBoxLeft + probe.actualBoundingBoxRight || probe.width
+        fit = Math.min(hwfFitSize(wide, w * 0.94), ((Math.min(1, o.fill) * h) / tall) * 100)
+      }
       m.font = o.fontWeight + " " + fit + "px " + o.fontFamily
       const box = m.measureText(word)
       const cap = box.actualBoundingBoxAscent || fit * 0.72
       const c = Math.max(0, Math.min(0.6, o.crop))
       m.fillStyle = "#000"
       m.textBaseline = "alphabetic"
-      m.fillText(word, (w - box.width) / 2, h + cap * c)
+      const baseline = o.fill ? h - box.actualBoundingBoxDescent - h * 0.03 : h + cap * c
+      const left = o.fill ? (w - (box.actualBoundingBoxLeft + box.actualBoundingBoxRight)) / 2 + box.actualBoundingBoxLeft : (w - box.width) / 2
+      m.fillText(word, left, baseline)
       const img = m.getImageData(0, 0, w, h).data
 
       const gap = Math.max(3, o.dotGap)

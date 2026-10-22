@@ -94,7 +94,7 @@ textarea{min-height:105px;resize:vertical}
 .sky-page .grid article small{display:block;font-family:var(--serif);font-size:15px;letter-spacing:0;color:var(--primary)}
 @media(prefers-reduced-motion:reduce){.cloud,.stick-person{animation:none}}
 @media(max-width:700px){.sky-page .hero-copy{padding-top:80px}.sun-glow{width:340px}}
-@media(max-width:720px){.wyj-footer{height:300px!important}}
+@media(max-width:720px){.wyj-footer{height:440px!important}}
 
 /* App navigation remains reachable on smaller screens. */
 @media(max-width:760px){header{flex-wrap:wrap;gap:15px;padding:18px 20px}.site-nav{gap:18px;flex-wrap:wrap}.site-nav a:not(.nav-cta){display:inline-flex;font-size:12px}.site-nav .nav-cta{font-size:12px}}
