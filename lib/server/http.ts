@@ -4,6 +4,13 @@ import type { ZodType } from 'zod';
 import { q, type Participant } from './store';
 
 export const SESSION_COOKIE = 'wyj_session';
+export function sessionCookieName(req:Request){const url=new URL(req.url);return process.env.NODE_ENV!=='production'&&['localhost','127.0.0.1'].includes(url.hostname)&&url.port?`${SESSION_COOKIE}_${url.port}`:SESSION_COOKIE;}
+export function sessionToken(req:Request):string|null{
+ const entries=(req.headers.get('cookie')??'').split(';').map(p=>p.trim());
+ const find=(name:string)=>entries.find(p=>p.startsWith(name+'='))?.slice(name.length+1);
+ const raw=find(sessionCookieName(req))??find(SESSION_COOKIE);
+ try{return raw?decodeURIComponent(raw):null;}catch{return null;}
+}
 
 export class HttpError extends Error {
   constructor(public status: number, public code: string, message: string) { super(message); }
@@ -15,9 +22,8 @@ export const newId = () => randomBytes(9).toString('base64url');
 
 /** Identity comes only from the HttpOnly cookie, never from IDs in the request. */
 export async function requireSession(req: Request): Promise<Participant> {
-  const raw = req.headers.get('cookie') ?? '';
-  const token = raw.split(';').map((c) => c.trim().split('=')).find(([k]) => k === SESSION_COOKIE)?.[1];
-  const [p] = token ? await q('select id, event_id from participants where token_hash = $1', [hashToken(decodeURIComponent(token))]) : [];
+  const token=sessionToken(req);
+  const [p] = token ? await q('select id, event_id from participants where token_hash = $1', [hashToken(token)]) : [];
   if (!p) throw new HttpError(401, 'UNAUTHORIZED', 'Join the event first.');
   return { id: p.id, eventId: p.event_id };
 }
