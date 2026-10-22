@@ -9,28 +9,30 @@ export const SYNTHETIC_EVENT_ID = 'demo';
 
 const card = (c: Omit<MatchingCard, 'eventId' | 'version'>): MatchingCard => ({ ...c, eventId: SYNTHETIC_EVENT_ID, version: 1 });
 
-// Founder A: backend/data engineer looking for customer discovery and sales help.
+// Founder A: backend engineer who wants to build a booking layer that agents can call,
+// looking for someone to lead product and distribution.
 export const founderA = card({
   id: `${SYNTHETIC_PREFIX}founder-a`, alias: 'Builder',
-  offers: ['engineering', 'data'], seeks: ['sales', 'product'], interests: ['developer-tools'],
+  offers: ['engineering'], seeks: ['product', 'sales'], interests: ['travel', 'ai-agents'],
   availability: 'weekends',
-  approvedBlurb: 'Synthetic profile. Backend and data engineer who builds integrations; looking for someone to lead customer discovery and sales for developer workflow tools.',
+  approvedBlurb: 'Synthetic profile. Backend engineer who has built booking integrations; wants to build a booking layer that agents can call and is looking for someone to lead product and distribution.',
 });
 
-// Founder B: developer-tools product and sales background, looking for a backend cofounder.
+// Founder B: product and distribution background in travel, exploring infrastructure for
+// agents that plan and book trips, looking for an engineer.
 export const founderB = card({
   id: `${SYNTHETIC_PREFIX}founder-b`, alias: 'Signal',
-  offers: ['product', 'sales'], seeks: ['engineering'], interests: ['developer-tools'],
+  offers: ['product', 'sales'], seeks: ['engineering'], interests: ['ai-agents', 'travel'],
   availability: 'exploring',
-  approvedBlurb: 'Synthetic profile. Product and sales background in developer tools; looking for a backend cofounder.',
+  approvedBlurb: 'Synthetic profile. Product and distribution background in travel; exploring infrastructure for agents that plan and book trips and looking for an engineer.',
 });
 
 // Distractors: each fails a different part of the score, so the ranking has a visible reason.
 export const distractors: MatchingCard[] = [
   card({ // same domain, needs engineering, but offers nothing A or B asked for
     id: `${SYNTHETIC_PREFIX}canvas`, alias: 'Canvas',
-    offers: ['design'], seeks: ['engineering'], interests: ['developer-tools'], availability: 'exploring',
-    approvedBlurb: 'Synthetic profile. Product designer interested in developer experience.',
+    offers: ['design'], seeks: ['engineering'], interests: ['travel'], availability: 'exploring',
+    approvedBlurb: 'Synthetic profile. Product designer interested in trip-planning apps.',
   }),
   card({ // complementary skills, different domain
     id: `${SYNTHETIC_PREFIX}ledger`, alias: 'Ledger',

@@ -2,6 +2,7 @@ import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { searchPublicProjects, clearEvidenceCache, approvedTags, queriesFor, CACHE_TTL_MS } from './github';
 import { evidenceFixture } from '../../fixtures/evidence';
+import { INTERESTS } from '../contracts';
 
 type Call = { url: string; headers: Record<string, string> };
 
@@ -139,7 +140,12 @@ test('failures are not cached: the next call retries live', async () => {
 });
 
 test('every approved tag has a fixture', () => {
-  for (const tag of ['developer-tools', 'payments', 'healthcare', 'climate']) assert.ok(evidenceFixture[tag]?.length, tag);
+  for (const tag of INTERESTS) assert.ok(evidenceFixture[tag]?.length, tag);
+});
+
+test('a travel and agents pair runs one travel query and one agents query', () => {
+  assert.deepEqual(approvedTags(['Flights', 'agentic', 'MCP']), ['travel', 'ai-agents']);
+  assert.deepEqual(queriesFor(['travel', 'ai-agents']).map(q => q.query), ['topic:flight-search archived:false', 'topic:agent-tools archived:false']);
 });
 
 test('queries come only from mapped base tags, never from raw free text', async () => {
@@ -147,7 +153,7 @@ test('queries come only from mapped base tags, never from raw free text', async 
   assert.deepEqual(approvedTags(['robotics', 'my secret startup idea']), []);
   const f = fakeFetch(() => ok([]));
   await searchPublicProjects(['DX', 'robotics', 'acme corp stealth'], { fetchImpl: f.impl, token: '' });
-  const allowed = new Set(['developer-tools', 'payments', 'healthcare', 'climate'].flatMap(t => queriesFor([t]).map(q => q.query)));
+  const allowed = new Set(INTERESTS.flatMap(t => queriesFor([t]).map(q => q.query)));
   assert.ok(f.calls.length > 0);
   for (const c of f.calls) {
     const q = new URL(c.url).searchParams.get('q')!;

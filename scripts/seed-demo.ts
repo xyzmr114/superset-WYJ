@@ -6,9 +6,12 @@
  *
  * baseUrl defaults to BASE_URL, then http://localhost:3000. The event code defaults to
  * EVENT_CODE, then SUPERSET. By default only the four distractor profiles are seeded,
- * because the laptop and phone play Founder A and Founder B live; --all seeds all six.
- * Every seeded card is labeled synthetic in its alias and blurb, and every identity uses
- * an example.invalid address. Run once per server start: the server keeps state in memory.
+ * because the two demo browsers play Founder A (engineer, agent travel booking) and
+ * Founder B (product and distribution) live; --all seeds all six for a solo rehearsal.
+ * The server's built-in fixtures are never offered as candidates, so seeded cards are the
+ * only synthetic counterparts in the room. Every seeded card is labeled synthetic in its
+ * alias and blurb, and every identity uses an example.invalid address. Run once per server
+ * start: the server keeps state in memory.
  */
 import type { MatchingCard } from '../lib/contracts';
 import { allProfiles, distractors } from '../fixtures/profiles';
