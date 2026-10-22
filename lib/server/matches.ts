@@ -6,13 +6,13 @@ import { notFound } from './http';
 const evidenceCache = new Map<string, { at: number; items: Evidence[] }>();
 const TTL = 15 * 60_000;
 
-/** Public evidence for a domain, cached 15 min. Any failure/timeout => [] (UI shows template mode; never invent evidence). */
+/** Public evidence for a domain, cached 15 min. GitHub failures return the labeled saved snapshot; a timeout => [] (never invent evidence). */
 export async function evidenceFor(domain: string): Promise<Evidence[]> {
   const hit = evidenceCache.get(domain);
   if (hit && Date.now() - hit.at < TTL) return hit.items.map((e) => ({ ...e, cached: true }));
   try {
     const items = await Promise.race([
-      searchPublicProjects(domain),
+      searchPublicProjects([domain]).then((r) => r.evidence),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 6000)),
     ]);
     evidenceCache.set(domain, { at: Date.now(), items });
