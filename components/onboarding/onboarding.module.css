@@ -1,0 +1,71 @@
+.privatePanel {
+  border-color: #c7cdbb;
+  background: #fbfcf4;
+}
+.publicPanel {
+  border-color: #d8dcd0;
+}
+.tagset {
+  border: 0;
+  margin: 18px 0;
+  padding: 0;
+}
+.tagset legend {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: 10px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 30px;
+  padding: 8px 14px;
+  font: 600 13px 'DM Sans', sans-serif;
+  color: inherit;
+  cursor: pointer;
+}
+.chipOn {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+.previewLine {
+  display: flex;
+  gap: 8px;
+  padding: 7px 0;
+  border-top: 1px dashed var(--line);
+  font-size: 14px;
+}
+.previewLine:first-of-type {
+  border-top: 0;
+}
+.previewKey {
+  min-width: 112px;
+  color: #6b7363;
+  font-weight: 600;
+}
+.previewVal {
+  flex: 1;
+}
+.empty {
+  color: #a0a897;
+  font-style: italic;
+}
+.shareNote {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #eef1e4;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.shareNote strong {
+  display: block;
+  margin-bottom: 4px;
+}

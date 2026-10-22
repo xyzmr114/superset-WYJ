@@ -1,0 +1,131 @@
+.skills {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  margin: 6px 0 2px;
+}
+.skills b {
+  color: #6b7363;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.block {
+  margin-top: 18px;
+}
+.block h4 {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  color: #6b7363;
+  margin: 0 0 8px;
+}
+.list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* --- local "Would I jump?" checklist --- */
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.checkItem {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.checkItem:first-child {
+  border-top: 0;
+}
+.mark {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+.satisfied .mark { background: #d8f36a; color: #20281f; }
+.unknown .mark { background: #eceee4; color: #6b7363; }
+.unmet .mark { background: #f3d6d0; color: #7a3326; }
+.checkBody strong { display: block; font-size: 14px; }
+.checkBody span { font-size: 13px; color: #6b7363; }
+.statusTag {
+  font-size: 10px;
+  letter-spacing: 1px;
+  font-weight: 700;
+  margin-left: auto;
+  align-self: center;
+  white-space: nowrap;
+}
+
+/* --- evidence --- */
+.evidence {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+}
+.evidence li {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.evidence li:first-child { border-top: 0; }
+.evidence a { font-weight: 600; }
+
+/* --- reveal / waiting --- */
+.waiting {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #eef1e4;
+  font-size: 14px;
+}
+.revealed {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px dashed #b7c089;
+  background: #fbfcf4;
+}
+.revealed h4 {
+  margin: 0 0 6px;
+  color: #6b7363;
+}
+.declined {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #7a3326;
+}
+.cardActions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.synthBtn {
+  background: none;
+  border: 1px dashed var(--line);
+  color: #6b7363;
+  font: 600 12px 'DM Sans', sans-serif;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.declineBtn {
+  background: none;
+  color: #7a3326;
+  border: 0;
+  font: 600 13px 'DM Sans', sans-serif;
+  cursor: pointer;
+  padding: 10px 0;
+}

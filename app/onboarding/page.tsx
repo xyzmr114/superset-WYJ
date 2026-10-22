@@ -1,8 +1,34 @@
 "use client";
-import {useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {useDemo} from '@/app/providers';
-import {SKILLS,INTERESTS} from '@/lib/contracts';
-import type {PrivateProfile} from '@/lib/client/private-profile';
-export default function Onboarding(){const router=useRouter();const {setCard}=useDemo();const [notes,setNotes]=useState<PrivateProfile>({ambition:'',conditions:''});const [alias,setAlias]=useState('Builder');const [offers,setOffers]=useState('engineering');const [seeks,setSeeks]=useState('sales');const [interest,setInterest]=useState('developer-tools');const [approved,setApproved]=useState(false);
-return <section><p className="eyebrow">STEP 01 / YOUR TERMS</p><h1>A little context.<br/><em>Your choice to share.</em></h1><form onSubmit={e=>{e.preventDefault();setCard({id:'demo-me',eventId:'demo',alias,offers:[offers],seeks:[seeks],interests:[interest],availability:'weekends',approvedBlurb:'Exploring a weekend collaboration.',version:1});router.push('/matches')}}><div className="grid"><article><span className="badge">PRIVATE · THIS SCREEN ONLY</span><h2>What would make you jump?</h2><label>Your ambition<textarea value={notes.ambition} onChange={e=>setNotes({...notes,ambition:e.target.value})} placeholder="The company I've always wanted to build…"/></label><label>Your conditions<textarea value={notes.conditions} onChange={e=>setNotes({...notes,conditions:e.target.value})} placeholder="What would need to be true first?"/></label><p className="muted">Not sent to the server, model, or matching engine. Cleared when you leave this screen. Local fit evaluation is a teammate task.</p></article><article><span className="badge">APPROVED DEMO CARD</span><h2>What others could see</h2><label>Alias<input required maxLength={40} value={alias} onChange={e=>setAlias(e.target.value)}/></label><label>I offer<select value={offers} onChange={e=>setOffers(e.target.value)}>{SKILLS.map(s=><option key={s}>{s}</option>)}</select></label><label>I need<select value={seeks} onChange={e=>setSeeks(e.target.value)}>{SKILLS.map(s=><option key={s}>{s}</option>)}</select></label><label>Problem area<select value={interest} onChange={e=>setInterest(e.target.value)}>{INTERESTS.map(s=><option key={s}>{s}</option>)}</select></label><p>Availability: weekends · Blurb: Exploring a weekend collaboration.</p><label className="check"><input type="checkbox" required checked={approved} onChange={e=>setApproved(e.target.checked)}/>Use only this card for local demo matching.</label><button disabled={!approved}>Find my counterparts →</button></article></div></form></section>}
+import type {MatchingCard} from '@/lib/contracts';
+import PrivateIntake from '@/components/onboarding/PrivateIntake';
+import CardEditor from '@/components/onboarding/CardEditor';
+
+export default function Onboarding() {
+  const router = useRouter();
+  const {setCard} = useDemo();
+
+  const publish = (card: MatchingCard) => {
+    setCard(card);
+    router.push('/matches');
+  };
+
+  return (
+    <section>
+      <p className="eyebrow">STEP 01 / YOUR TERMS</p>
+      <h1>
+        A little context.<br />
+        <em>Your choice to share.</em>
+      </h1>
+      <p className="lead">
+        Two separate things: what you keep to yourself, and the card you explicitly approve for
+        matching. One never becomes the other automatically.
+      </p>
+      <div className="grid">
+        <PrivateIntake />
+        <CardEditor eventId="demo" onPublish={publish} />
+      </div>
+    </section>
+  );
+}
