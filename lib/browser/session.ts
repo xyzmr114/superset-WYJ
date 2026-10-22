@@ -206,3 +206,32 @@ async function recordReceipt(session:Session,receipt:BrowserReceipt){
   await writeFile(temporary,JSON.stringify([...session.receipts.values()].filter(value=>value.status!=='prepared')),{mode:0o600});
   await rename(temporary,target);
 }
+
+// Read only the thread whose header identifies the requested recipient. Never expose another open chat.
+export async function readLinkedInConversation(id:string|undefined,url:string){
+  return withPage(id,async session=>{
+    const page=await researchPage(session);
+    const target=cleanProfile(url).replace(/\/$/,'');
+    await page.goto(target,{waitUntil:'domcontentloaded'});await requireSignedIn(page);
+    await page.getByRole('button',{name:'Message',exact:true}).or(page.getByRole('link',{name:'Message',exact:true})).filter({visible:true}).first().click();
+    const premium=page.getByRole('link',{name:/^Try 1 month/i}).filter({visible:true}).first();
+    if(await premium.isVisible().catch(()=>false))throw new Error('LinkedIn requires Premium or an accepted connection to open this conversation.');
+    const bubbles=page.locator('.msg-overlay-conversation-bubble, .msg-thread').filter({visible:true});
+    await bubbles.first().waitFor({state:'visible',timeout:10000}).catch(()=>{});
+    for(let i=0;i<await bubbles.count();i++){
+      const bubble=bubbles.nth(i);let matches=false;
+      const links=bubble.locator('a[href*="/in/"]');
+      for(let j=0;j<await links.count();j++){
+        const href=await links.nth(j).getAttribute('href');
+        if(href)try{if(cleanProfile(new URL(href,'https://www.linkedin.com').href).replace(/\/$/,'')===target)matches=true;}catch{}
+      }
+      if(!matches)continue;
+      const messages=bubble.locator('.msg-s-event-listitem, .msg-s-message-list__event');
+      await messages.first().waitFor({state:'visible',timeout:5000}).catch(()=>{});
+      const text=(await messages.allInnerTexts()).join('\n\n').slice(-12000);
+      if(!text.trim())throw new Error('No readable messages were visible in this conversation.');
+      return {url:page.url(),text};
+    }
+    throw new Error('LinkedIn did not expose a readable conversation for this profile. You may need an accepted connection first.');
+  });
+}

@@ -8,7 +8,8 @@ import type {AgentEvent,ResearchPerson} from '@/lib/agent/schema';
 import {CHAT_KEY,restoreConversation,openWorkingDraft} from '@/lib/agent/workspace';
 import BrowserDock,{useBrowserConnection} from './BrowserDock';
 import BrowserActionCard from './BrowserActionCard';
-import type {BrowserAction} from '@/lib/browser/contracts';
+import ProspectBoard from './ProspectBoard';
+import type {BrowserAction,BrowserReceipt} from '@/lib/browser/contracts';
 import Markdown from '@/components/shared/Markdown';
 import styles from './agent.module.css';
 
@@ -30,6 +31,7 @@ export default function AgentChat(){
   const router=useRouter();
   const connection=useBrowserConnection();
   const [goal,setGoal]=useState('');
+  const [receiptUpdate,setReceiptUpdate]=useState<{action:BrowserAction;receipt:BrowserReceipt}|null>(null);
   const [people,setPeople]=useState<ResearchPerson[]>([]);
   const {card}=useDemo();
   const [messages,setMessages]=useState<Message[]>([]);
@@ -81,16 +83,16 @@ export default function AgentChat(){
     if(event.type==='answer')setMessages(old=>[...old,{role:'assistant',content:event.text}]);
     if(event.type==='error')setError(event.message);
   }
-  async function send(text=input,action:'chat'|'draft_memo'|'outreach'|'social_post'|'connection'='chat'){
+  async function send(text=input,action:'chat'|'draft_memo'|'outreach'|'social_post'|'connection'='chat',displayText?:string){
     if(!text.trim()||!canSend||!selectedProvider||!selectedModel)return;
-    const next=[...messages,{role:'user' as const,content:text.trim()}];
+    const next=[...messages,{role:'user' as const,content:displayText??text.trim()}];
     setMessages(next);setInput('');setBusy(true);setEvents([]);setError('');
     const controller=new AbortController();abortRef.current=controller;
     try {
       const response=await fetch('/api/agent',{
         method:'POST',signal:controller.signal,
         headers:{'Content-Type':'application/json',...(accessCode?{'x-agent-access-code':accessCode}:{})},
-        body:JSON.stringify({provider:selectedProvider.id,model:selectedModel.id,action,messages:next.slice(-20),
+        body:JSON.stringify({provider:selectedProvider.id,model:selectedModel.id,action,messages:[...next.slice(0,-1),{role:'user',content:text.trim()}].slice(-20),
           ...(useCard&&card?{card:{alias:card.alias,offers:card.offers,seeks:card.seeks,interests:card.interests,availability:card.availability,approvedBlurb:card.approvedBlurb}}:{})}),
       });
       if(!response.ok){const data=await response.json();throw new Error(data.error??'Could not start the conversation.');}
@@ -129,8 +131,8 @@ export default function AgentChat(){
     <div className={styles.layout}>
       <div>
         {(busy||events.length>0)&&<article className={styles.activity} aria-live="polite"><p className="eyebrow">{busy?'WORKING ON YOUR GOAL':'LATEST ACTIVITY'}</p><h3>{busy?'Research in progress':'Research trail'}</h3><ol>{events.map((event,index)=><li key={index}>{event}</li>)}</ol>{busy&&!events.length&&<p>Starting your research…</p>}{!busy&&events.length>0&&<p className="muted">{error?'Run stopped. See the message below.':actions.length?'Drafts are ready below. Review the text, then prepare it in LinkedIn.':'Run finished. Continue the conversation below.'}</p>}</article>}
-        {people.length>0&&<article><p className="eyebrow">PEOPLE RESEARCHED</p><div className={styles.people}>{people.map(person=><div className={styles.person} key={person.url}><h3><a href={person.url} target="_blank" rel="noreferrer">{person.name} ↗</a></h3><p className="muted">{person.text?'Profile read · available for personalization':'Found in LinkedIn search · profile not read yet'}</p>{person.text&&<details><summary>Read profile evidence</summary><p className={styles.profileText}>{person.text}</p></details>}</div>)}</div></article>}
-        {actions.length>0&&<div className={styles.actionList}><h2>Outreach to review</h2>{actions.map(action=><BrowserActionCard key={action.id} action={action} onConnection={url=>void send('Draft a short personalized LinkedIn connection invitation note (at most 200 characters) for '+url+'. Use our conversation and the profile we read; keep it as an editable connection card.','connection')} onEdit={next=>setActions(old=>old.map(current=>current.id===action.id?next:current))}/>)}</div>}
+        <ProspectBoard people={people} goal={goal} actions={actions} canDraft={canSend} receiptUpdate={receiptUpdate} onFollowup={(prompt,label)=>void send(prompt,'chat',label)}/>
+        {actions.length>0&&<div className={styles.actionList}><h2>Outreach to review</h2>{actions.map(action=><BrowserActionCard key={action.id} action={action} onReceipt={(action,receipt)=>setReceiptUpdate({action,receipt})} onConnection={url=>void send('Draft a short personalized LinkedIn connection invitation note (at most 200 characters) for '+url+'. Use our conversation and the profile we read; keep it as an editable connection card.','connection')} onEdit={next=>setActions(old=>old.map(current=>current.id===action.id?next:current))}/>)}</div>}
         <div className={styles.chat} aria-live="polite" aria-busy={busy}>
           {!messages.length&&<div className={styles.empty}>
             <h2>Work through it together.</h2>

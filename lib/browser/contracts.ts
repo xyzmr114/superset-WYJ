@@ -12,6 +12,7 @@ export type BrowserAction=z.infer<typeof browserActionSchema>;
 export type BrowserReceipt={id:string;status:'prepared'|'submitted'|'unknown';message:string;url?:string};
 export type BrowserStatus={available:boolean;connected:boolean;signedIn:boolean;url?:string;message:string};
 export const browserCommandSchema=z.discriminatedUnion('command',[
+  z.object({command:z.literal('read_conversation'),profileUrl:linkedinProfile}).strict(),
   z.object({command:z.literal('connect')}).strict(),
   z.object({command:z.literal('disconnect')}).strict(),
   z.object({command:z.literal('prepare'),action:browserActionSchema}).strict(),

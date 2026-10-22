@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
 import {browserCommandSchema,isLoopback,browserErrorMessage} from '@/lib/browser/contracts';
-import {BROWSER_COOKIE,browserSessionId,browserStatus,connectBrowser,disconnectBrowser,prepareBrowserAction,submitBrowserAction} from '@/lib/browser/session';
+import {BROWSER_COOKIE,browserSessionId,browserStatus,connectBrowser,disconnectBrowser,prepareBrowserAction,submitBrowserAction,readLinkedInConversation} from '@/lib/browser/session';
 export const runtime='nodejs';
 function localRequest(request:Request){
   const url=new URL(request.url);
@@ -29,6 +29,7 @@ export async function POST(request:Request){
     if(command.command==='disconnect'){
       await disconnectBrowser(id);const response=NextResponse.json({connected:false});response.cookies.delete(BROWSER_COOKIE);return response;
     }
+    if(command.command==='read_conversation')return NextResponse.json(await readLinkedInConversation(id,command.profileUrl));
     return NextResponse.json(command.command==='prepare'?await prepareBrowserAction(id,command.action):await submitBrowserAction(id,command.action));
   }catch(error){return NextResponse.json({error:browserErrorMessage(error)},{status:400});}
 }

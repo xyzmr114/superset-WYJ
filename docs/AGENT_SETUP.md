@@ -84,3 +84,12 @@ Abhinav: replace example matching with participant-scoped data, and add durable 
 Open `/agent`, describe the outcome in the goal box, connect LinkedIn, and click Start researching. The app streams tool activity, shows profiles discovered/read with expandable original evidence, and creates editable outreach cards. Prepare in browser fills the exact text into LinkedIn; the invitation/message/post button is a separate final action. Goal, research, conversation and drafts survive navigation in the same tab. The normal product flow requires no terminal interface.
 
 A supplied profile is researched before broader discovery. LinkedIn can hide search-result identities for the signed-in account; the app reports missing usable links and can continue from a pasted profile URL. The agent does not create invented prospects. Runs operate while the page stays open; durable background jobs and reply tracking are not implemented.
+
+
+## Prospect shortlist and follow-ups
+
+Save researched people to the shortlist in `/agent`. Prospects use the device’s localStorage (`wyj-prospects-v1`), separate from the tab conversation, so clearing a chat does not clear the shortlist. Each record stores the profile, goal, fit notes, status, latest reply and latest outreach draft. Profile variants are deduplicated. Users can remove individual records.
+
+Check LinkedIn replies opens the intended profile’s conversation and reads visible message text only after matching its recipient profile link. It never submits a message and does not poll the inbox in the background. If LinkedIn gates messaging or the recipient cannot be verified, the app explains the limitation. Users copy the actual incoming reply into Latest reply, or paste it from LinkedIn. Adding reply text sets Replied; other statuses are editable. Only confirmed invitation submissions through WYJ automatically set Invitation pending. No status implies delivery without confirmation.
+
+Draft a response uses the saved goal, fit notes, latest draft and user-selected reply to create an editable LinkedIn message card through the existing model tool. With no reply, Draft a follow-up asks for a check-in without inventing a response. Drafting sends that selected context to the chosen model. Sending still requires the card’s explicit preparation and submit actions. Closed prospects cannot generate follow-ups until reopened.

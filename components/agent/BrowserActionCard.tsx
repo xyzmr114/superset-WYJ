@@ -4,13 +4,13 @@ import type {BrowserAction,BrowserReceipt} from '@/lib/browser/contracts';
 import {browserCommand,useBrowserConnection} from './BrowserDock';
 import styles from './agent.module.css';
 
-export default function BrowserActionCard({action,onEdit,onConnection}:{action:BrowserAction;onEdit:(action:BrowserAction)=>void;onConnection:(url:string)=>void}){
+export default function BrowserActionCard({action,onEdit,onConnection,onReceipt}:{action:BrowserAction;onEdit:(action:BrowserAction)=>void;onConnection:(url:string)=>void;onReceipt?:(action:BrowserAction,receipt:BrowserReceipt)=>void}){
   const connection=useBrowserConnection();const [receipt,setReceipt]=useState<BrowserReceipt|null>(null);
   const [pending,setPending]=useState(false);const [error,setError]=useState('');const [copied,setCopied]=useState(false);
   const completed=receipt?.status==='submitted'||receipt?.status==='unknown';
   async function run(command:'prepare'|'submit'){
     setPending(true);setError('');
-    try {setReceipt(await browserCommand({command,action}));}
+    try {const result=await browserCommand({command,action});setReceipt(result);onReceipt?.(action,result);}
     catch(error){setError(error instanceof Error?error.message:'Browser action failed.');}finally{setPending(false);}
   }
   async function copy(){try{await navigator.clipboard.writeText(action.body);setCopied(true);}catch{setError('Clipboard unavailable. Select and copy the draft text.');}}
