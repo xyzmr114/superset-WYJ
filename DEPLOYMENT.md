@@ -28,6 +28,8 @@ Initial verification: production build and TypeScript checks passed, 169 local t
 
 ## Features not configured
 
-The first deployment uses the manual reviewed-brief path. Browser Laya assets are generated locally, ignored by Git, and absent from this deployment. Preparing and hosting them is a separate step; see [browser Laya setup](scripts/browser-laya/README.md). Never send private intake text to a hosted classifier as a fallback.
+Laya and Bonsai weights and WASM files are hosted in the public `wyj-browser-models` Blob store, under the immutable `wyj-20261022` prefix. `public/model-assets.mjs` selects that public asset base. Builds download and checksum-verify the small runtime files using `scripts/browser-models-manifest.json`, then rebuild the workers from repository source. Weights stay outside Git and the website deployment. Blob write credentials are never shipped to browsers.
+
+Only fixed model/runtime GETs are redirected to Blob. Private text remains inside each browser worker. Bonsai requires WebGPU; device memory and first-download time still matter. Manual entry remains available. Never send private intake text to a hosted classifier as a fallback.
 
 Optional DeepSeek enhancement is not configured. To enable it, set the server-only `DEEPSEEK_API_KEY` and redeploy; preserve the existing exact-brief consent flow. Premium remains an unpaid preview.

@@ -1,4 +1,5 @@
 import {pipeline,env,TextStreamer} from '@huggingface/transformers';
+import {MODEL_ASSET_BASE_URL} from '/model-assets.mjs';
 // This runtime and its ORT instance are isolated from the Laya worker.
 env.allowRemoteModels=false;env.allowLocalModels=true;
 env.localModelPath='/models/bonsai/';env.useBrowserCache=true;env.useWasmCache=false;
@@ -11,8 +12,11 @@ self.fetch=async(input,options)=>{
  const modelAllowed=modelFiles.some(file=>url.pathname===`/models/bonsai/Bonsai-1.7B-ONNX/${file}`);
  const runtimeAllowed=/^\/bonsai-runtime\/ort-wasm-[a-z0-9.-]+\.(wasm|mjs)$/.test(url.pathname);
  if(url.origin!==self.location.origin||url.search||url.hash||options?.body||(!modelAllowed&&!runtimeAllowed)||(options?.method&&options.method!=='GET')) throw new Error('Only fixed local model/runtime asset downloads are allowed.');
- return originalFetch(input,{...options,credentials:'omit',referrerPolicy:'no-referrer'});
+ const target=MODEL_ASSET_BASE_URL ? MODEL_ASSET_BASE_URL+url.pathname : url.href;
+ return originalFetch(target,{...options,credentials:'omit',referrerPolicy:'no-referrer'});
 };
+// Transformers captures fetch at import time; route its asset reads through the same guard.
+env.fetch=self.fetch;
 let loading, generator, generating=false;
 const subscribers=new Set();
 const notify=message=>{for(const id of subscribers)self.postMessage({id,type:'progress',message});};
