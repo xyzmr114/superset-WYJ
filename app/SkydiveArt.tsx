@@ -35,7 +35,7 @@ export function Plane({className}: {className?: string}) {
       {/* Near wing */}
       <path d="M196 86 L236 136 L262 136 L240 86Z" fill="#efe7dd" stroke={INK} strokeWidth="2" strokeLinejoin="round" />
       {/* Propeller */}
-      <ellipse cx="348" cy="80" rx="3" ry="18" fill={INK} opacity=".55" />
+      <ellipse className="plane-prop" cx="348" cy="80" rx="3" ry="18" fill={INK} opacity=".55" />
     </svg>
   );
 }

@@ -3,11 +3,14 @@ import {useEffect, useRef} from 'react';
 import {Jumper} from './SkydiveArt';
 import styles from './landing.module.css';
 
-// The jumper leaves the plane door ([data-door]), falls, opens the canopy, sways down the
-// page and lands on [data-land] by the final call to action. Position is a pure function
-// of scroll, recomputed once per animation frame. With reduced motion (or no JS) the
+// The plane ([data-plane]) flies left to right as the page scrolls, carrying the jumper in
+// its door ([data-door]). After RIDE of a viewport the jumper leaves, falls, opens the
+// canopy, sways down the page and lands on [data-land] by the final call to action, while
+// the plane flies on and out. Everything is a pure function of scroll, once per frame. With reduced motion (or no JS) the
 // page shows a static landed figure instead; see .motion in landing.module.css.
 const FALL = 0.1, OPEN = 0.16, SETTLE = 0.26, FLARE = 0.88;
+// Plane centre as a fraction of the viewport width: start, at the jump, and gone.
+const RIDE = 0.45, PLANE_FROM = 0.16, PLANE_JUMP = 0.62, PLANE_GONE = 1.35;
 const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
 const span = (p: number, a: number, b: number) => clamp((p - a) / (b - a));
 const ease = (t: number) => t * t * (3 - 2 * t);
@@ -21,19 +24,34 @@ export default function SkydiveScene() {
     const page = node?.closest<HTMLElement>('[data-skydive]');
     const door = page?.querySelector<HTMLElement>('[data-door]');
     const land = page?.querySelector<HTMLElement>('[data-land]');
+    const plane = page?.querySelector<HTMLElement>('[data-plane]');
     if (!node || !page || !door || !land) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
     let raf = 0;
 
     const draw = () => {
       raf = 0;
+      if (reduce.matches) return;
       const vw = window.innerWidth, vh = window.innerHeight;
       const size = node.offsetWidth;
+      const sy = window.scrollY, ride = vh * RIDE;
+      // Plane: held in view and carried across by scroll until the jump, then it scrolls away
+      // with the page while flying on out of view.
+      const planeW = plane?.offsetWidth ?? 0;
+      if (plane) {
+        const toJump = span(sy, 0, ride), away = span(sy, ride, ride + vh * 0.9);
+        const cx = vw * (away > 0 ? mix(PLANE_JUMP, PLANE_GONE, ease(away)) : mix(PLANE_FROM, PLANE_JUMP, toJump));
+        const hostLeft = plane.offsetParent?.getBoundingClientRect().left ?? 0;
+        plane.style.transform = `translate(${cx - planeW / 2 - hostLeft}px, ${Math.min(sy, ride)}px)`;
+      }
       const d = door.getBoundingClientRect(), l = land.getBoundingClientRect();
-      // Landed when the landing pad reaches 70% of the viewport.
-      const landAt = l.top + window.scrollY - vh * 0.7;
-      const p = landAt > 0 ? clamp(window.scrollY / landAt) : 1;
-      const doorX = d.left + d.width / 2, doorY = d.top + d.height / 2;
+      // Landed when the landing pad reaches 70% of the viewport. The jump happens at `ride`.
+      const landAt = l.top + sy - vh * 0.7;
+      const start = landAt > 0 ? clamp(ride / landAt) : 0;
+      const p = landAt > 0 ? (start < 1 ? clamp((sy / landAt - start) / (1 - start)) : 1) : 1;
+      // Riding: follow the moving door. After the jump: leave from where the door was then.
+      const jumpDoorX = vw * PLANE_JUMP + planeW * (0.628 - 0.5);
+      const doorX = plane && sy > ride ? jumpDoorX : d.left + d.width / 2, doorY = d.top + d.height / 2;
       const driftY = vh * 0.36;
       const reach = Math.min(vw * 0.36, 520);
       const swayT = span(p, OPEN, FLARE);
@@ -71,7 +89,7 @@ export default function SkydiveScene() {
     const schedule = () => { if (!raf) raf = requestAnimationFrame(draw); };
     const apply = () => {
       page.classList.toggle(styles.motion, !reduce.matches);
-      if (reduce.matches) { cancelAnimationFrame(raf); raf = 0; } else draw();
+      if (reduce.matches) { cancelAnimationFrame(raf); raf = 0; if (plane) plane.style.transform = ''; } else draw();
     };
 
     apply();

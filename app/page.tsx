@@ -1,14 +1,10 @@
-import {DM_Mono, Fraunces, Libre_Franklin} from 'next/font/google';
 import Elevation from './Elevation';
 import WhoSeesWhat from './WhoSeesWhat';
 import SkydiveScene from './SkydiveScene';
+import HeroTitle from './HeroTitle';
 import {Landed, Plane} from './SkydiveArt';
+import type {CSSProperties} from 'react';
 import styles from './landing.module.css';
-
-// Self-hosted by next/font at build time: the page makes no font requests to Google.
-const display = Fraunces({subsets: ['latin'], style: ['normal', 'italic'], axes: ['opsz', 'SOFT', 'WONK'], variable: '--jump-display'});
-const body = Libre_Franklin({subsets: ['latin'], variable: '--jump-body'});
-const mono = DM_Mono({subsets: ['latin'], weight: ['400', '500'], variable: '--jump-mono'});
 
 const STEPS = [
   {title: 'A private brief, on your device', body: 'Write your idea and, if you like, paste your background. Skill suggestions run in your own browser, and your background never leaves it. You approve the exact brief, word for word.'},
@@ -23,6 +19,26 @@ const NEVER = [
   ['Fall back to a cloud model', 'No local classifier? You fill it in.'],
 ];
 
+// Small white clouds drifting across the whole page, forever. Each: vertical position (% of
+// the page), size, seconds per crossing, and a negative delay so they start spread out.
+// With reduced motion each rests where it would be in its loop (--x).
+const DRIFTERS = [
+  [2, 1, 46, -5], [5, 0.6, 38, -22], [9, 0.8, 52, -40], [14, 0.5, 34, -12],
+  [19, 0.9, 58, -30], [24, 0.55, 40, -3], [30, 0.75, 48, -26], [36, 0.5, 36, -18],
+  [42, 0.85, 54, -44], [48, 0.6, 42, -8], [55, 0.7, 50, -33], [61, 0.5, 37, -20],
+  [68, 0.8, 56, -11], [74, 0.55, 41, -36], [81, 0.7, 47, -2], [88, 0.5, 39, -27],
+];
+
+function Drifters() {
+  return (
+    <div className={styles.drifters} aria-hidden="true">
+      {DRIFTERS.map(([top, scale, secs, delay], i) => (
+        <span key={i} style={{top: `${top}%`, '--scale': scale, '--x': Math.round((-delay / secs) * 100), animationDuration: `${secs}s`, animationDelay: `${delay}s`} as CSSProperties} />
+      ))}
+    </div>
+  );
+}
+
 function Clouds({className}: {className: string}) {
   return (
     <div className={`${styles.clouds} ${className}`} aria-hidden="true">
@@ -33,22 +49,22 @@ function Clouds({className}: {className: string}) {
 
 export default function Home() {
   return (
-    <div className={`${styles.page} ${display.variable} ${body.variable} ${mono.variable}`} data-skydive>
+    <div className={styles.page} data-skydive>
+      <Drifters />
       <Elevation />
       <SkydiveScene />
 
       {/* THE JUMP */}
       <section className={styles.hero}>
         <Clouds className={styles.cloudsHigh} />
-        <div className={styles.planeWrap}>
+        <div className={styles.planeWrap} data-plane>
           <Plane className={styles.plane} />
           <span className={styles.door} data-door aria-hidden="true" />
         </div>
         <p className={styles.kicker}>Private founder matchmaking</p>
-        <h1 className={styles.title}>Would you <em>jump?</em></h1>
+        <HeroTitle />
         <p className={styles.deck}>Find your co&#8209;founder before you quit, without telling anyone you might leave.</p>
         <div className={styles.heroActions}>
-          <a className={styles.primary} href="/agent">Build my profile <span aria-hidden="true">→</span></a>
           <a className={styles.scroll} href="#problem">Scroll</a>
         </div>
         <p className={styles.byline}>Built at super&#123;set&#125; · October 2026 · 3 min read</p>
