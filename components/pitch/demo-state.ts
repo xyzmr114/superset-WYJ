@@ -31,10 +31,11 @@ Reference: https://superset.com/portfolio
 - What commitment can each founder make?
 `;
 export function initialDemo():PitchView {return {id:'demo-pitch',matchId:'demo-match',version:1,markdown:DEMO_MARKDOWN,proposedIdentityFields:{},myApproval:false,bothApproved:false,exportable:false};}
-export type DemoAction={type:'save';markdown:string}|{type:'approve'}|{type:'partner'}|{type:'reset'};
+export type DemoAction={type:'load';markdown:string}|{type:'save';markdown:string}|{type:'approve'}|{type:'partner'}|{type:'reset'};
 export function demoReducer(state:PitchView,action:DemoAction):PitchView {
  switch(action.type){
  case 'reset':return initialDemo();
+ case 'load':return {...initialDemo(),markdown:action.markdown};
  case 'save':return {...state,markdown:action.markdown,version:state.version+1,myApproval:false,bothApproved:false,exportable:false};
  case 'approve':return {...state,myApproval:true};
  case 'partner':return state.myApproval?{...state,bothApproved:true,exportable:true}:state;
