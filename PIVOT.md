@@ -66,13 +66,13 @@ Sources:
 - `lib/server/` and `app/api/matches/`: participant sessions, reciprocal matches and mutual reveal.
 - `app/pitch/` and `components/pitch/`: shared pitch, versioned approvals and export.
 
-Current `/agent` and `/onboarding` both route to `components/private/PrivateWorkspace.tsx`; the previous outreach UI is no longer the main product. Existing shared backend state is process memory: it survives hot reload, not server restarts or multiple server instances. Earlier unpushed evidence/privacy experiments were saved in a named Git stash and are outside this pivot.
+Current `/agent` and `/onboarding` both route to `components/private/PrivateWorkspace.tsx`; the previous outreach UI is no longer the main product. Shared backend state persists in configured Postgres. The PGlite fallback survives hot reload but resets on restart and supports one process. Earlier unpushed evidence/privacy experiments were saved in a named Git stash and are outside this pivot.
 
 ## Match/reveal integration landed
 
 `/matches` now offers Interested / Pass, an exact identity preview and pair-specific approval. Pending consent can be withdrawn. Both independent approvals are required by the server before any counterpart contact appears in JSON. Approval snapshots cannot be silently replaced, and edits to the older global identity record do not change them. Joint pitch creation uses the same mutual-consent gate.
 
-Verified with two independent browsers and `scripts/acceptance-pivot.ts` (21 checks). The private workspace and direct own-device Laya adapter have now also landed; see the integration update below. Storage remains process memory.
+Verified with two independent browsers and `scripts/acceptance-pivot.ts` (21 checks). The private workspace and direct own-device Laya adapter have now also landed; see the integration update below. Storage uses configured Postgres, with an in-memory PGlite fallback.
 
 ## Intake, trials and plans integration
 

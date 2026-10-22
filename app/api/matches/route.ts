@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { requireSession, route } from '@/lib/server/http';
-import { myMatches, toView } from '@/lib/server/matches';
+import { myMatches, views } from '@/lib/server/matches';
 
 export const GET = route(async (req) => {
-  const me = requireSession(req);
-  return NextResponse.json({ matches: myMatches(me.id).map((m) => toView(m, me.id)) });
+  const me = await requireSession(req);
+  return NextResponse.json({ matches: await views(await myMatches(me.id), me.id) });
 });

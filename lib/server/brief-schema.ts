@@ -14,4 +14,3 @@ export const Card = z.object({
   preferences:z.object({techStack:z.array(z.enum(TECH_STACK)).max(5),strengths:z.array(z.enum(STRENGTHS)).max(5),partnerStrengths:z.array(z.enum(STRENGTHS)).max(5),workStyles:z.array(z.enum(WORK_STYLES)).max(4)}).strict().optional(),
   publishConsent: z.literal(true), // explicit opt-in to publish this card for matching
 }).strict();
-

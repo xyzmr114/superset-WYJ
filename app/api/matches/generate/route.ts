@@ -1,27 +1,41 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/server/store';
+import { q } from '@/lib/server/store';
 import { HttpError, assertSameOrigin, newId, requireSession, route } from '@/lib/server/http';
-import { evidenceFor, myMatches, pairKey, toView } from '@/lib/server/matches';
+import { evidenceFor, myMatches, pairKey, views } from '@/lib/server/matches';
 import { rankCandidates,scorePair } from '@/lib/matching';
 import { proposeOpportunity } from '@/lib/generation';
 import {ideasFor} from '@/lib/server/ideas';
 import type {MatchingCard} from '@/lib/contracts';
-const sameIdea=(a:MatchingCard|undefined,b:MatchingCard)=>a?.id===b.id&&(a.ideaId??'legacy')===(b.ideaId??'legacy');
-function existing(mine:MatchingCard,other:MatchingCard){return [...db.matches.values()].some(m=>(m.a===mine.id&&m.b===other.id&&sameIdea(m.aCard??db.cards.get(m.a),mine)&&sameIdea(m.bCard??db.cards.get(m.b),other))||(m.b===mine.id&&m.a===other.id&&sameIdea(m.bCard??db.cards.get(m.b),mine)&&sameIdea(m.aCard??db.cards.get(m.a),other)));}
+
 export const POST = route(async (req) => {
- assertSameOrigin(req);const me=requireSession(req);const mine=ideasFor(me.id);
+ assertSameOrigin(req);
+ const me=await requireSession(req),mine=await ideasFor(me.id);
  if(!mine.length)throw new HttpError(409,'NO_CARD','Publish your approved idea first.');
- const otherIdeas=[...db.participants.values()].filter(p=>p.id!==me.id&&p.eventId===me.eventId&&p.tokenHash!==null).flatMap(p=>ideasFor(p.id));
+ const participants=await q('select id from participants where id<>$1 and event_id=$2 and token_hash is not null',[me.id,me.eventId]);
+ const otherIdeas=(await Promise.all(participants.map(p=>ideasFor(p.id)))).flat();
+ const previous=await myMatches(me.id);
+ const known=new Set(previous.map(m=>JSON.stringify([m.a,m.b,m.aCard?.ideaId??'legacy',m.bCard?.ideaId??'legacy'])));
  for(const idea of mine){
   // Pick the strongest relevant idea from each founder, before ranking founders.
   const best=new Map<string,MatchingCard>();
-  for(const card of otherIdeas){const scored=scorePair(idea,card);if(!scored.sharedInterests.length)continue;const prev=best.get(card.id);const previous=prev?scorePair(idea,prev):null;if(!previous||scored.score>previous.score||(scored.score===previous.score&&scored.preferenceScore>previous.preferenceScore))best.set(card.id,card);}
+  for(const card of otherIdeas){
+   const scored=scorePair(idea,card);
+   if(!scored.sharedInterests.length)continue;
+   const prev=best.get(card.id),previous=prev?scorePair(idea,prev):null;
+   if(!previous||scored.score>previous.score||(scored.score===previous.score&&scored.preferenceScore>previous.preferenceScore))best.set(card.id,card);
+  }
   for(const {candidate,score,sharedInterests} of rankCandidates(idea,[...best.values()],{requireSharedInterest:true,limit:Infinity})){
-   if(existing(idea,candidate))continue;
-   const evidence=await evidenceFor(sharedInterests[0]);if(existing(idea,candidate))continue;
-   const opportunity={...proposeOpportunity(idea,candidate),evidenceIds:evidence.map(e=>e.id)};const [a,b]=pairKey(me.id,candidate.id);const id=newId();
-   db.matches.set(id,{id,eventId:me.eventId,a,b,aCard:structuredClone(a===me.id?idea:candidate),bCard:structuredClone(b===me.id?idea:candidate),score,opportunity,evidence,approvals:new Set(),declinedBy:null});
+   const [a,b]=pairKey(me.id,candidate.id),aCard=a===me.id?idea:candidate,bCard=b===me.id?idea:candidate;
+   const aIdea=aCard.ideaId??'legacy',bIdea=bCard.ideaId??'legacy';
+   const key=JSON.stringify([a,b,aIdea,bIdea]);
+   if(known.has(key))continue;
+   const evidence=await evidenceFor(sharedInterests);
+   const opportunity=proposeOpportunity(idea,candidate,evidence);
+   await q(`insert into matches (id,event_id,a,b,score,opportunity,evidence,a_card,b_card,a_idea_id,b_idea_id)
+    values ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8::jsonb,$9::jsonb,$10,$11) on conflict (a,b,a_idea_id,b_idea_id) do nothing`,
+    [newId(),me.eventId,a,b,score,JSON.stringify(opportunity),JSON.stringify(evidence),JSON.stringify(aCard),JSON.stringify(bCard),aIdea,bIdea]);
+   known.add(key);
   }
  }
- return NextResponse.json({matches:myMatches(me.id).map(m=>toView(m,me.id))});
+ return NextResponse.json({matches:await views(await myMatches(me.id),me.id)});
 });

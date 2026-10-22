@@ -94,7 +94,9 @@ You + Codex have integrated `/matches`, the consent preview, waiting/passed/intr
 
 Candidate generation now excludes built-in fixture participants and requires at least one shared approved interest. Current server fixtures remain for older tests; they are not consent participants in the new flow.
 
-`lib/server/intro-consent.test.ts` covers gating, outsider access, immutable snapshots, withdrawal and legacy approvals. `scripts/acceptance-pivot.ts` is the current live API acceptance script; the older `acceptance.ts` uses the previous consent shape and is not the pivot acceptance test.
+`lib/server/intro-consent.test.ts` covers gating, outsider access, immutable snapshots, withdrawal and legacy approvals. `scripts/acceptance-pivot.ts` is the focused pivot acceptance script. The broader `acceptance.ts` also uses explicit pair-specific identities.
+
+The Postgres integration preserves these contracts: `decideIntroduction()` is asynchronous and persists conditional updates; `matchRow()` reconstructs `introConsents` from the identity, timestamp and brief-version columns in migration 003. Migration 004 keeps pair ordering consistent with JavaScript. Configure and migrate Postgres as described in `db/README.md`; without `DATABASE_URL`, PGlite is limited to one process and resets on restart.
 
 **Remaining owners:** Anusha's private workspace still needs to replace the old `/agent` screen and early global identity collection; Vernika's real local classification/evaluation remains pending. Do not describe either as completed by this integration.
 
@@ -108,7 +110,7 @@ Pulled main before starting; no teammate commits were present. User explicitly r
 - **Working trial:** `GET/POST /api/matches/:id/trial` requires mutual introduction. POST propose `{plan,version}`, approve `{version}`, feedback `{version,decision}`. Proposals do not auto-approve; edits invalidate both approvals; stale version rejected; active plan fixed. Contributions are caller-relative. Only mutual continuation is shared; no counterpart feedback/completion bit exposes a pass.
 - **Plans/tools:** `/ideas`, `/plans`, `/premium` are live. Premium is explicitly a no-charge development preview. Idea refinement reuses the memo renderer/Markdown/founder review and runs locally from approved idea plus user-entered answers, without cloud calls.
 
-All new stores still reset on server restart; there is no multi-instance persistence or durable per-person quota. Do not present preview plan selection as real paid billing. Laya visitors need their own local runtime or manual entry.
+Ideas, preview plans, frozen idea pairs and trials now use Postgres through migration 005. Participant-row locks serialize quota changes/publication; trial version checks and consent snapshots use conditional SQL updates. Run `pnpm db:migrate` before deployment. The PGlite fallback still resets on restart and supports one process. Quotas remain per session, not durable person accounts; preview plan selection is not paid billing. Laya visitors need their own local runtime or manual entry.
 
 ### Upstream reconciliation
 
@@ -124,3 +126,5 @@ Merged teammate travel/ai-agents taxonomy, public evidence queries, travel fixtu
 The API and actual DeepSeek browser walkthrough returned a real refinement from a separately approved brief. Raw private-questionnaire canary remained outside the provider request. Existing in-memory plans/storage limits still apply.
 
 Verified in the actual in-app browser: cold model download, completed local classification, warm-model classification, cancellation and a successful restart. Model/runtime file loading uses fixed same-origin GETs only. The WebGPU ORT bundle needs its asyncify WASM pair; preserve those files in the preparation script. Both real browser inference and real DeepSeek output were demonstrated before push.
+
+Latest persistence merge: the backend now uses async `requireSession`, `planFor`, `ideasFor` and SQL-backed stores. DeepSeek enhancement awaits these gates before reading the approved projection. Postgres persists configured deployments; zero-setup PGlite still resets on restart. Preserve migrations through 005 and run the deployment migration step.

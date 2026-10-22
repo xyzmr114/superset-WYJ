@@ -1,17 +1,15 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/server/store';
+import { pitchRow, q } from '@/lib/server/store';
 import { assertSameOrigin, newId, requireSession, route } from '@/lib/server/http';
 import { type Ctx, conflict, draftMarkdown, isRevealed, myMatch, toView } from '@/lib/server/pitches';
 
 export const POST = route(async (req, ctx: Ctx) => {
   assertSameOrigin(req);
-  const me = requireSession(req);
-  const match = myMatch((await ctx.params).id, me.id);
+  const me = await requireSession(req);
+  const match = await myMatch((await ctx.params).id, me.id);
   if (!isRevealed(match)) throw conflict('NOT_REVEALED', 'Both of you must approve the intro first.');
-  let pitch = [...db.pitches.values()].find((p) => p.matchId === match.id);
-  if (!pitch) {
-    pitch = { id: newId(), matchId: match.id, version: 1, markdown: draftMarkdown(match), identityFields: {}, approvedVersion: {} };
-    db.pitches.set(pitch.id, pitch);
-  }
-  return NextResponse.json(toView(pitch, match, me.id));
+  // unique (match_id): both founders clicking at once still share one draft.
+  await q('insert into pitches (id, match_id, markdown) values ($1, $2, $3) on conflict (match_id) do nothing', [newId(), match.id, await draftMarkdown(match)]);
+  const [row] = await q('select * from pitches where match_id = $1', [match.id]);
+  return NextResponse.json(toView(pitchRow(row, match), match, me.id));
 });
