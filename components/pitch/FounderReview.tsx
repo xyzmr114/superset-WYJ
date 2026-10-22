@@ -9,9 +9,9 @@ export default function FounderReview({onInsert,disabled}:{onInsert:(text:string
   const appendix=buildReviewAppendix(answers);
   return <details className={styles.review}>
     <summary><span>Prepare a solution memo</span><span className="badge">9 EVIDENCE QUESTIONS</span></summary>
-    <p>Drawn from public super&#123;set&#125; writing, with separate general startup prompts. This is our preparation aid, not its official application or selection rubric.</p>
-    <p className="muted">super&#123;set&#125; describes message testing as an experienced studio practice. A clear pitch or encouraging conversation does not establish product-market fit.</p>
-    <p className={styles.notice}>Notes stay in this tab until you choose “Add notes to draft.” That copies them into the shared draft editor; saving then sends them to the server in connected mode. Include only information you intend both founders to review.</p>
+    <p>A working guide inspired by public super&#123;set&#125; writing and practical startup lessons.</p>
+    <p className="muted">Build conviction with evidence: customer behavior matters more than a polished pitch.</p>
+    <p className={styles.notice}>Work through the questions, then choose which notes to bring into your shared draft.</p>
     <div className={styles.promptGrid}>
       {reviewPrompts.map(prompt=>{const answer=answers[prompt.id]??{note:'',status:'unknown'};return <article key={prompt.id}>
         <span className="badge">{prompt.origin==='published'?'PUBLIC SUPER{SET} APPROACH':'GENERAL STARTUP PRACTICE'}</span>
@@ -26,6 +26,6 @@ export default function FounderReview({onInsert,disabled}:{onInsert:(text:string
       </article>})}
     </div>
     <button disabled={disabled||!appendix||inserted} onClick={()=>{onInsert(appendix);setInserted(true);}}>{inserted?'Added to draft—review before saving':'Add notes to draft'}</button>
-    <p className="muted">Adding notes changes the draft. Save a new version and get both approvals before export. Completing questions is not proof of demand or likelihood of funding.</p>
+    <p className="muted">Add your notes, save the next version, and review it together.</p>
   </details>;
 }

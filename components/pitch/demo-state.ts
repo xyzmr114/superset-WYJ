@@ -1,7 +1,7 @@
 import type {PitchView} from '@/lib/contracts';
 export const DEMO_MARKDOWN = `# Developer Workflow Discovery — Joint Pitch
 
-> SYNTHETIC DEMO · Independent draft for discussion, not an official application.
+> Example working draft.
 
 ## Problem hypothesis
 Small developer teams may lose time transferring context between customer reports and engineering work. This needs customer validation.
@@ -13,16 +13,16 @@ A focused assistant that helps a team turn one recurring customer workflow into 
 Small developer-tool companies. The first buyer and budget are not yet validated.
 
 ## Team complementarity
-Builder brings backend engineering; Signal brings product and sales experience. These are fictional participant profiles, not verified credentials.
+Builder brings backend engineering; Signal brings product and sales experience.
 
 ## Public evidence
-No live public evidence is attached to this demo. Before presenting a market claim, add a source and explain what it actually supports.
+Add a source and explain what it supports. Customer demand is still untested.
 
 ## First 48-hour experiment
 Interview five prospective users. Ask for a recent example, the current workaround, frequency, and cost. Continue only if a repeated problem emerges.
 
 ## Why explore this with super{set}?
-Our hypothesis is that a specific workflow problem and complementary founding team fit its company-building approach. This is not an endorsement or prediction of funding.
+Our hypothesis is that a specific workflow problem and complementary founding team fit its company-building approach.
 Reference: https://superset.com/portfolio
 
 ## Open questions
