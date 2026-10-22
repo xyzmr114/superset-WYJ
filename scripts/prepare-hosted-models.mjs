@@ -20,7 +20,14 @@ if(MODEL_ASSET_BASE_URL){
   const target=path.join('public',asset.file);
   await mkdir(path.dirname(target),{recursive:true});await writeFile(target,bytes);
  }
- await writeFile('public/laya-runtime/worker.mjs',await readFile('scripts/browser-laya/worker.mjs'));
- await build({entryPoints:['scripts/browser-bonsai/worker.mjs'],outfile:'public/bonsai-runtime/worker.mjs',bundle:true,platform:'browser',format:'esm',conditions:['browser'],external:['/model-assets.mjs'],target:'es2022'});
- console.log('Prepared checksum-verified runtimes; model weights remain in Blob.');
+ console.log('Prepared checksum-verified hosted runtimes; model weights remain in Blob.');
 }
+// Refresh workers for both asset modes. Do not require downloaded models or WASM
+// merely to build a fresh clone: manual entry must remain deployable without them.
+await mkdir('public/laya-runtime',{recursive:true});
+await mkdir('public/bonsai-runtime',{recursive:true});
+await writeFile('public/laya-runtime/worker.mjs',await readFile('scripts/browser-laya/worker.mjs'));
+await build({entryPoints:['scripts/browser-bonsai/worker.mjs'],outfile:'public/bonsai-runtime/worker.mjs',bundle:true,platform:'browser',format:'esm',conditions:['browser'],external:['/model-assets.mjs'],target:'es2022'});
+console.log(MODEL_ASSET_BASE_URL
+ ? 'Rebuilt both workers from current source; fixed public assets use the hosted base.'
+ : 'Rebuilt both workers from current source; using local public assets. Missing models keep manual entry available.');

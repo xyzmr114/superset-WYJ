@@ -1,2 +1,4 @@
-// Empty uses assets prepared locally; production points to the versioned public Blob directory.
-export const MODEL_ASSET_BASE_URL = 'https://mbej6helmu7ynh1s.public.blob.vercel-storage.com/wyj-20261022';
+// Default to own-device inference using locally prepared, same-origin public assets.
+// The previously configured Blob store returns 403 (store blocked). Keep hosted support
+// available, but set a public base only after its runtime and weight GETs are verified.
+export const MODEL_ASSET_BASE_URL = '';

@@ -4,6 +4,7 @@
 
 Schema: `db/migrations/*.sql`, applied in name order by `pnpm db:migrate`. Server code: `lib/server/store.ts`.
 Migration `005_ideas_and_trials.sql` adds immutable idea-pair briefs, idea collections, preview plans and working trials. It preserves existing matches and backfills their brief snapshots. Apply it before starting the updated app; new tables also block the Supabase public REST API through RLS.
+Migration `006_idea_publication.sql` adds saved-idea publication state and withdrawal timestamps. It is applied to shared Supabase; each other deployment must run `pnpm db:migrate`. Active publication determines matching eligibility and Free quota; owner history retains unpublished briefs.
 The app uses plain Postgres through the `pg` driver. It doesn't use the supabase-js client or Supabase keys.
 
 - **`DATABASE_URL` set** → the app uses that Postgres (Supabase).
