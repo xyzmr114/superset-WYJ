@@ -12,6 +12,8 @@
     "acceptance": "tsx scripts/acceptance.ts",
     "test": "tsx --test \"lib/**/*.test.ts\" \"components/**/*.test.ts\"",
     "seed": "tsx scripts/seed-demo.ts",
+    "classifier:setup": "sh scripts/local-classifier/setup.sh",
+    "classifier": "test -x .wyj-local/venv/bin/python && ls .wyj-local/hf/models--convaiinnovations--laya/snapshots/*/model.safetensors >/dev/null 2>&1 || { echo 'run pnpm classifier:setup first'; exit 1; }; HF_HUB_CACHE=.wyj-local/hf .wyj-local/venv/bin/python scripts/local-classifier/server.py",
     "tui": "bun --env-file=.env.local --tsconfig-override=tui/tsconfig.json tui/index.tsx",
     "typecheck:tui": "tsc --project tui/tsconfig.json --noEmit",
     "browser:prepare": "sh scripts/browser-laya/setup.sh"
