@@ -2,53 +2,47 @@
 import {useMemo, useState} from 'react';
 import type {MatchingCard} from '@/lib/contracts';
 import MultiSelect from './MultiSelect';
+import {AVAILABILITY, AVAILABILITY_LABEL, INTEREST_SUGGESTIONS, LIMITS, SKILL_SUGGESTIONS} from './vocabulary';
 import styles from './onboarding.module.css';
-
-// Suggestions shown in the type-ahead. The demo attendees use the base tags
-// (engineering, sales, product, design, data / developer-tools, payments,
-// healthcare, climate), so keep those here for matching — everything else is
-// extra convenience, and the user can also type a fully custom skill.
-const SKILL_SUGGESTIONS = [
-  'engineering', 'frontend engineering', 'backend engineering', 'full-stack engineering',
-  'mobile development', 'data', 'data science', 'machine learning', 'AI/ML', 'devops',
-  'infrastructure', 'security', 'design', 'UX design', 'UI design', 'product',
-  'product management', 'sales', 'marketing', 'growth', 'business development',
-  'operations', 'finance', 'legal', 'content', 'community', 'research', 'hardware',
-];
-const INTEREST_SUGGESTIONS = [
-  'developer-tools', 'payments', 'fintech', 'healthcare', 'climate', 'education',
-  'e-commerce', 'logistics', 'productivity', 'social', 'gaming', 'enterprise SaaS',
-  'consumer apps', 'AI', 'marketplaces', 'real estate', 'biotech', 'robotics',
-  'cybersecurity', 'media',
-];
-
-const AVAILABILITY: MatchingCard['availability'][] = ['exploring', 'weekends', 'full_time'];
-const AVAILABILITY_LABEL: Record<MatchingCard['availability'], string> = {
-  exploring: 'Just exploring',
-  weekends: 'Evenings & weekends',
-  full_time: 'Ready to go full-time',
-};
 
 // When a model is wired for opportunity generation, name it here via env so the
 // publication-consent copy is honest about who sees the approved card.
 const MODEL_PROVIDER = process.env.NEXT_PUBLIC_MODEL_PROVIDER?.trim();
 
+// Allowlisted labels suggested on this device. Applied only when the user asks.
+export type BriefSuggestion = Pick<MatchingCard, 'offers' | 'seeks' | 'interests'> &
+  Partial<Pick<MatchingCard, 'availability'>>;
+
 // The matching card is composed EXPLICITLY here. Private intake is never read,
-// summarized, or copied into this card — the user types every published field.
+// summarized, or copied into this card — the user types or accepts every published field.
 export default function CardEditor({
   eventId,
   onPublish,
+  suggestion,
 }: {
   eventId: string;
   onPublish: (card: MatchingCard) => void;
+  suggestion?: BriefSuggestion | null;
 }) {
   const [alias, setAlias] = useState('Builder');
-  const [offers, setOffers] = useState<string[]>(['engineering']);
-  const [seeks, setSeeks] = useState<string[]>(['sales']);
-  const [interests, setInterests] = useState<string[]>(['developer-tools']);
+  const [offers, setOffers] = useState<string[]>([]);
+  const [seeks, setSeeks] = useState<string[]>([]);
+  const [interests, setInterests] = useState<string[]>([]);
   const [availability, setAvailability] = useState<MatchingCard['availability']>('weekends');
   const [approvedBlurb, setApprovedBlurb] = useState('');
-  const [consented, setConsented] = useState(false);
+  // Approval is tied to the exact preview it was given for; any edit invalidates it.
+  const [approvedPreview, setApprovedPreview] = useState<string | null>(null);
+
+  // Fill the editable fields when a new suggestion is applied (React's
+  // "adjust state when a prop changes" pattern). Empty suggestion lists keep what's there.
+  const [appliedSuggestion, setAppliedSuggestion] = useState(suggestion);
+  if (suggestion && suggestion !== appliedSuggestion) {
+    setAppliedSuggestion(suggestion);
+    if (suggestion.offers.length) setOffers(suggestion.offers.slice(0, LIMITS.offers));
+    if (suggestion.seeks.length) setSeeks(suggestion.seeks.slice(0, LIMITS.seeks));
+    if (suggestion.interests.length) setInterests(suggestion.interests.slice(0, LIMITS.interests));
+    if (suggestion.availability) setAvailability(suggestion.availability);
+  }
 
   const complete = Boolean(
     alias.trim() && offers.length && seeks.length && interests.length && approvedBlurb.trim(),
@@ -69,6 +63,9 @@ export default function CardEditor({
     }),
     [eventId, alias, offers, seeks, interests, availability, approvedBlurb],
   );
+  const previewKey = JSON.stringify([card.alias, offers, seeks, interests, availability, card.approvedBlurb]);
+  const consented = approvedPreview === previewKey;
+  const approvalReset = approvedPreview !== null && !consented;
 
   return (
     <article className={styles.publicPanel}>
@@ -80,12 +77,12 @@ export default function CardEditor({
 
       <label>
         Alias
-        <input required maxLength={40} value={alias} onChange={e => setAlias(e.target.value)} />
+        <input required maxLength={LIMITS.alias} value={alias} onChange={e => setAlias(e.target.value)} />
       </label>
 
-      <MultiSelect legend="Skills I offer" suggestions={SKILL_SUGGESTIONS} selected={offers} onChange={setOffers} placeholder="Type or pick a skill…" max={5} />
-      <MultiSelect legend="Skills I'm looking for" suggestions={SKILL_SUGGESTIONS} selected={seeks} onChange={setSeeks} placeholder="Type or pick a skill…" max={5} />
-      <MultiSelect legend="Problem areas I care about" suggestions={INTEREST_SUGGESTIONS} selected={interests} onChange={setInterests} placeholder="Type or pick a problem area…" max={4} />
+      <MultiSelect legend="Skills I offer" suggestions={SKILL_SUGGESTIONS} selected={offers} onChange={setOffers} placeholder="Type or pick a skill…" max={LIMITS.offers} />
+      <MultiSelect legend="Skills I'm looking for" suggestions={SKILL_SUGGESTIONS} selected={seeks} onChange={setSeeks} placeholder="Type or pick a skill…" max={LIMITS.seeks} />
+      <MultiSelect legend="Problem areas I care about" suggestions={INTEREST_SUGGESTIONS} selected={interests} onChange={setInterests} placeholder="Type or pick a problem area…" max={LIMITS.interests} />
 
       <label>
         Availability
@@ -105,7 +102,7 @@ export default function CardEditor({
         A short blurb to publish
         <textarea
           value={approvedBlurb}
-          maxLength={240}
+          maxLength={LIMITS.blurb}
           onChange={e => setApprovedBlurb(e.target.value)}
           placeholder="Write this in your own words — it is published exactly as typed."
         />
@@ -149,9 +146,12 @@ export default function CardEditor({
       </div>
 
       <label className="check">
-        <input type="checkbox" checked={consented} onChange={e => setConsented(e.target.checked)} />
+        <input type="checkbox" checked={consented} onChange={e => setApprovedPreview(e.target.checked ? previewKey : null)} />
         I approve publishing exactly this card for matching at this event.
       </label>
+      {approvalReset && (
+        <p className="muted" role="status">You changed the brief, so your earlier approval was cleared. Review it and approve this version.</p>
+      )}
 
       <button disabled={!complete || !consented} onClick={() => onPublish(card)}>
         Find my counterparts →

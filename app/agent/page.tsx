@@ -1,2 +1,6 @@
-import AgentChat from '@/components/agent/AgentChat';
-export default function AgentPage(){return <AgentChat/>;}
+import PrivateWorkspace from '@/components/private/PrivateWorkspace';
+
+// The private founder workspace is the primary product (PIVOT.md).
+export default function AgentPage() {
+  return <PrivateWorkspace />;
+}

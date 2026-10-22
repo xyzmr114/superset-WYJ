@@ -26,7 +26,7 @@ export default function Join() {
     try {
       await api.createSession(eventCode);
       clear();
-      router.push('/onboarding');
+      router.push('/agent');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not join.');
       setBusy(false);
