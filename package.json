@@ -11,7 +11,8 @@
     "test": "tsx --test \"lib/**/*.test.ts\" \"components/**/*.test.ts\"",
     "seed": "tsx scripts/seed-demo.ts",
     "tui": "bun --env-file=.env.local --tsconfig-override=tui/tsconfig.json tui/index.tsx",
-    "typecheck:tui": "tsc --project tui/tsconfig.json --noEmit"
+    "typecheck:tui": "tsc --project tui/tsconfig.json --noEmit",
+    "browser:prepare": "sh scripts/browser-laya/setup.sh"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.85",
@@ -23,6 +24,7 @@
     "@tanstack/react-query": "5.104.5",
     "ai": "^7.0.148",
     "next": "16.4.2",
+    "onnxruntime-web": "1.24.3",
     "opencode-ai": "^1.19.3",
     "playwright": "^1.64.1",
     "react": "19.3.1",
@@ -37,6 +39,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "bun": "^1.4.3",
+    "esbuild": "0.25.12",
     "tsx": "4.23.15",
     "typescript": "5.9.3"
   }

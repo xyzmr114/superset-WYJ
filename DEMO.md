@@ -47,3 +47,11 @@ The match/reveal browser walkthrough passed. The current `/agent` now runs the p
 4. Preview Premium (no payment), open `/premium`, select an approved idea and fill customer/problem/wedge/test answers. Generate an editable solution memo and review/copy/download. This uses local structured templates, not hosted generative inference.
 
 Start the local runtime using `scripts/local-classifier/README.md`. The teammate ten-snippet model smoke is not an accuracy claim; missing labels and wrong domains are expected review cases. The whole demo remains single-process with session-only plan state.
+
+## Browser model and real DeepSeek refinement
+
+Prepare assets on the hosting laptop once (`pnpm browser:prepare`); visitors only open the app URL. Click Load browser Laya, show first-load progress and review required labels. No companion should be required or called. Public files may be browser-cached; cancel stops the worker. Manual brief fields remain usable on devices that cannot run the model.
+
+In Premium, pick an already approved idea, inspect the exact DeepSeek payload, then explicitly approve sending it. Local questionnaire answers are excluded. Show the real DeepSeek Flash output with provider/model/brief-version attribution, edit it, and optionally export it. Do not describe local template generation as a cloud model run.
+
+Browser walkthrough passed: public model loading, completed local labels, cancellation and restart. DeepSeek browser walkthrough returned a real attributed draft from the approved brief while a local questionnaire canary remained excluded.

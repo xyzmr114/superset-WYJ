@@ -1,0 +1,13 @@
+import { build } from 'esbuild';
+import { readFile, writeFile, mkdir, cp, readdir } from 'node:fs/promises';
+import path from 'node:path';
+const source = path.resolve('.wyj-local/laya-source/laya-ts/src');
+const output = path.resolve('public/laya-runtime');
+await mkdir(output,{recursive:true});
+await build({entryPoints:[path.join(source,'index.ts')],outfile:path.join(output,'laya.js'),bundle:true,format:'esm',platform:'browser',target:'es2022',external:['node:*'],plugins:[{name:'local-browser-runtime',setup(b){b.onLoad({filter:/providers\.ts$/},async({path})=>({loader:'ts',contents:(await readFile(path,'utf8')).replace('"onnxruntime-" + "web"','"/laya-runtime/ort.webgpu.bundle.min.mjs"').replace('enc = await ort.InferenceSession.create(new Uint8Array(encBuf), {\n      executionProviders: ["wasm"],\n      ...encExtra,\n    });', 'try { enc = await ort.InferenceSession.create(new Uint8Array(encBuf), { executionProviders: ["wasm"], ...encExtra }); } catch (fallbackError) { throw new Error("Initial backend error: " + String(e?.message ?? e) + "; fallback: " + String(fallbackError?.message ?? fallbackError)); }').replace('if (cache) {\n    try {\n      const res', 'if (hit) return await hit.arrayBuffer();\n  if (cache) {\n    try {\n      const res')}));}}]});
+const ort=path.resolve('node_modules/onnxruntime-web/dist');
+for(const file of ['ort.webgpu.bundle.min.mjs','ort-wasm-simd-threaded.asyncify.mjs','ort-wasm-simd-threaded.asyncify.wasm','ort-wasm-simd-threaded.jsep.mjs','ort-wasm-simd-threaded.jsep.wasm']) await cp(path.join(ort,file),path.join(output,file));
+await cp('.wyj-local/laya-source/LICENSE',path.join(output,'LAYA-LICENSE'));
+await cp('scripts/browser-laya/ORT-LICENSE',path.join(output,'ORT-LICENSE'));
+await cp('scripts/browser-laya/worker.mjs',path.join(output,'worker.mjs'));
+console.log('Browser runtime built from pinned Laya source.');
