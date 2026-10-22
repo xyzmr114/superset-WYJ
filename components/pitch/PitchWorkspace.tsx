@@ -6,6 +6,7 @@ import type {PitchView} from '@/lib/contracts';
 import {demoReducer,initialDemo} from './demo-state';
 import {pitchApi,PitchApiError} from './api';
 import styles from './pitch.module.css';
+import FounderReview from './FounderReview';
 
 function download(markdown:string,name:string){const url=URL.createObjectURL(new Blob([markdown],{type:'text/markdown;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 export default function PitchWorkspace({pitchId,matchId}:{pitchId?:string;matchId?:string}){
@@ -46,6 +47,7 @@ export default function PitchWorkspace({pitchId,matchId}:{pitchId?:string;matchI
  {!isDemo&&live.isError&&<div role="alert" className={styles.error}>{live.error.message} <button onClick={()=>void live.refetch()}>Retry</button></div>}
  {actionError&&<div role="alert" className={styles.error}>{actionError}</div>}
  {message&&<p role="status" className={styles.notice}>{message}</p>}
+ {pitch&&<FounderReview disabled={busy||stale} onInsert={text=>{setDraft(current=>current+text);setMessage('Review notes added to the editor. Save a new version before requesting approvals.');}}/>}
  {pitch&&<div className={styles.workspace}><article className={styles.editor}><div className={styles.topline}><h2>Joint pitch</h2><span className="badge">VERSION {pitch.version}{dirty?' · UNSAVED':''}</span></div><p className="muted">Include only information both participants intend to share. Do not paste private intake, salary conditions, or unapproved contact details.</p>
  {stale&&<div role="alert" className={styles.error}>A newer saved version is available. Your local text is preserved. Copy any edits you need, then load the latest version before saving or approving.<button onClick={()=>{setDraft(pitch.markdown);setBaseVersion(pitch.version);setReviewed(false);}}>Load latest saved version</button></div>}
  <label htmlFor="pitch-markdown">Draft Markdown</label><textarea id="pitch-markdown" className={styles.draft} value={draft} onChange={e=>setDraft(e.target.value)} spellCheck={false}/><div className="actions"><button disabled={!dirty||stale||busy||!draft.trim()} onClick={saveDraft}>Save new version</button><span className="muted">Every save clears both approvals.</span></div></article>
