@@ -93,7 +93,7 @@ test('template maps free-text cards onto the domain and keeps typed text for dis
   const a = { ...founderA, offers: ['Rust', 'Golang'], seeks: ['Account Exec'], interests: ['DevTools'] };
   const b = { ...founderB, offers: ['BD', 'Product'], seeks: ['Backend'], interests: ['developer tools'] };
   const o = proposeOpportunity(a, b);
-  assert.equal(o.title, 'Shared idea discovery');
+  assert.equal(o.title, 'Developer workflow discovery');
   assert.ok(o.whyThisPair.some(w => w.includes('Builder offers Rust and Golang, which Signal is looking for')), o.whyThisPair.join(' / '));
   assert.ok(o.whyThisPair.some(w => w.includes('Signal offers BD, which Builder is looking for')), o.whyThisPair.join(' / '));
   const md = buildPitchMarkdown({ founders: [a, b] }, o, []);
@@ -115,7 +115,7 @@ test('the pitch keeps the 48-hour experiment but drops the intro call, which has
   const o = proposeOpportunity(founderA, founderB, evidence);
   const md = buildPitchMarkdown({ founders: [founderA, founderB] }, o, evidence);
   assert.ok(!md.includes('15-minute introduction'));
-  assert.match(md, /## First 48-hour experiment\nWithin 48 hours, agree on one overlap/);
+  assert.match(md, /## First 48-hour experiment\nWithin 48 hours, interview five developers building agents/);
 });
 
 test('travel alone and agents alone each get their own domain', () => {
@@ -144,4 +144,30 @@ test('joint draft explains explicit partner strengths without private fields', (
   assert.ok(o.whyThisPair.some(reason => reason.includes('communication') && reason.includes('wants in a partner')));
   const md = buildPitchMarkdown({ founders: [a, b] }, o, []);
   assert.doesNotMatch(md, /PRIVATE-PROFILE|PRIVATE-GOAL/);
+});
+
+test('a known domain keeps its title and hypothesis, with approved blurbs as supporting detail', () => {
+  const o = proposeOpportunity(founderA, founderB);
+  assert.equal(o.title, 'Agent travel booking discovery');
+  assert.match(o.problemHypothesis, /^Teams building agents that plan trips/);
+  assert.ok(o.problemHypothesis.includes(`Supporting detail from the approved briefs: ${founderA.alias}'s approved idea: “${founderA.approvedBlurb}”`));
+  assert.ok(o.problemHypothesis.includes(founderB.approvedBlurb));
+  assert.match(o.problemHypothesis, /This is a hypothesis, not validated demand\.$/);
+  assert.match(o.targetUser, /agents/);
+  assert.ok(o.nextExperiment.startsWith(INTRO_STEP));
+  assert.match(o.nextExperiment, /within 48 hours, interview five developers building agents that plan or book travel\. Use the two approved ideas/);
+});
+
+test('without a known domain the approved blurbs lead', () => {
+  const a = { ...founderA, interests: ['robotics'] }, b = { ...founderB, interests: ['Robotics'] };
+  const o = proposeOpportunity(a, b);
+  assert.equal(o.title, 'Shared idea discovery');
+  assert.ok(o.problemHypothesis.startsWith(`${a.alias}'s approved idea`));
+  assert.match(o.nextExperiment, /agree on one overlap between the two approved ideas/);
+});
+
+test('opportunity text uses approved blurbs only, never private fields', () => {
+  const a = { ...founderA, rawProfile: 'PRIVATE-PROFILE-1', privateGoal: 'PRIVATE-GOAL-1', conditions: 'PRIVATE-COND-1' } as typeof founderA;
+  const o = proposeOpportunity(a, founderB);
+  assert.doesNotMatch(JSON.stringify(o), /PRIVATE-(PROFILE|GOAL|COND)-1/);
 });

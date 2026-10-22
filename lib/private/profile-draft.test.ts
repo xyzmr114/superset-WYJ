@@ -12,3 +12,5 @@ test('local suggestions fill visible fields without inventing or overwriting the
  const next=withLocalSuggestions(draft,result);assert.deepEqual(next.offers,['engineering']);assert.deepEqual(next.interests,['travel']);assert.equal(next.approvedBlurb,'A booking API for travel agents.');assert.deepEqual(next.preferences?.strengths,['technical depth']);
  const edited=withLocalSuggestions({...draft,offers:['design'],interests:['climate']},result);assert.deepEqual(edited.offers,['design']);assert.deepEqual(edited.interests,['climate']);
 });
+
+test('custom partner requests are retained in both approved fields',()=>{const next=withPartnerNeeds(draft,['Horse training']);assert.deepEqual(next.seeks,['Horse training']);assert.deepEqual(next.preferences?.partnerStrengths,['Horse training']);});

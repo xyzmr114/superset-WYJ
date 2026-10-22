@@ -1,4 +1,4 @@
-import { TECH_STACK, STRENGTHS, WORK_STYLES, type MatchingCard } from '@/lib/contracts';
+import { type MatchingCard } from '@/lib/contracts';
 import { mapTags, tagSet, type MappedTag } from './tags';
 
 export { normalizeTag, mapTag, mapTags, type MappedTag, type TagKind } from './tags';
@@ -100,19 +100,16 @@ function availabilityComponent(me: MatchingCard, other: MatchingCard): ScoreComp
   return { key: 'availability', points, max: 20, reason };
 }
 
-const approvedValues = (values: string[] | undefined, allowed: readonly string[]) => {
-  const allowedSet = new Set(allowed.map(value => value.toLowerCase()));
-  return [...new Set((values ?? []).map(value => value.trim().toLowerCase()))].filter(value => allowedSet.has(value) && value !== 'no preference');
-};
+const approvedValues = (values: string[] | undefined) => [...new Set((values ?? []).map(value => value.trim().toLowerCase()))].filter(value => value && value !== 'no preference');
 const overlap = (a: string[], b: string[]) => a.filter(value => b.includes(value));
 
 /** Explicit approved answers only; shared style is a conversation starter, not a personality assessment. */
 export function preferenceCompatibility(a: MatchingCard, b: MatchingCard): { score: number; reasons: string[] } {
   const ap = a.preferences, bp = b.preferences;
-  const stack = overlap(approvedValues(ap?.techStack, TECH_STACK), approvedValues(bp?.techStack, TECH_STACK));
-  const styles = overlap(approvedValues(ap?.workStyles, WORK_STYLES), approvedValues(bp?.workStyles, WORK_STYLES));
-  const aGives = overlap(approvedValues(ap?.strengths, STRENGTHS), approvedValues(bp?.partnerStrengths, STRENGTHS));
-  const bGives = overlap(approvedValues(bp?.strengths, STRENGTHS), approvedValues(ap?.partnerStrengths, STRENGTHS));
+  const stack = overlap(approvedValues(ap?.techStack), approvedValues(bp?.techStack));
+  const styles = overlap(approvedValues(ap?.workStyles), approvedValues(bp?.workStyles));
+  const aGives = overlap(approvedValues(ap?.strengths), approvedValues(bp?.partnerStrengths));
+  const bGives = overlap(approvedValues(bp?.strengths), approvedValues(ap?.partnerStrengths));
   const reasons = [
     ...(stack.length ? [`Both approved ${list(stack)} as a preferred tech stack.`] : []),
     ...(styles.length ? [`Both prefer ${list(styles)} when working together.`] : []),
