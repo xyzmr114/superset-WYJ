@@ -15,14 +15,12 @@ import type {Opportunity} from '@/lib/contracts';
 export type PrivateProfile = {
   ambition: string;    // Why you would jump — the company you actually want to build.
   conditions: string;  // What would need to be true before you leap.
-  runway: string;      // Months of personal runway. '' means "not disclosed".
   mustHaves: string;   // Non-negotiables. Yours alone.
 };
 
 export const emptyPrivateProfile: PrivateProfile = {
   ambition: '',
   conditions: '',
-  runway: '',
   mustHaves: '',
 };
 
@@ -53,17 +51,13 @@ export function usePrivateProfile(): PrivateProfileStore {
 // LOCAL "Would I jump?" checklist.
 //
 // A pure function that runs entirely in the browser against the private profile.
-// Its result is rendered locally and never transmitted. Funding/runway can only
-// be 'satisfied' when the user explicitly discloses it — an undisclosed runway
-// stays 'unknown', never silently "satisfied".
+// Its result is rendered locally and never transmitted. Items the user can't
+// resolve from what they've entered stay 'unknown', never silently "satisfied".
 // =============================================================================
 export type CheckStatus = 'satisfied' | 'unknown' | 'unmet';
 export type CheckItem = {id: string; label: string; status: CheckStatus; detail: string};
 
 export function evaluateJump(profile: PrivateProfile, opportunity: Opportunity): CheckItem[] {
-  const runwayMonths = Number.parseFloat(profile.runway);
-  const runwayDisclosed = Number.isFinite(runwayMonths) && runwayMonths >= 0;
-
   return [
     {
       id: 'ambition',
@@ -72,14 +66,6 @@ export function evaluateJump(profile: PrivateProfile, opportunity: Opportunity):
       detail: profile.ambition.trim()
         ? 'You described this ambition in private intake (stays on this device).'
         : 'Add your ambition in intake to judge this locally.',
-    },
-    {
-      id: 'funding',
-      label: 'You can personally afford to explore this',
-      status: runwayDisclosed ? (runwayMonths >= 6 ? 'satisfied' : 'unmet') : 'unknown',
-      detail: runwayDisclosed
-        ? `You noted ~${runwayMonths} month(s) of runway. This never leaves your browser.`
-        : 'Runway not disclosed — stays UNKNOWN. It is never assumed satisfied.',
     },
     {
       id: 'conditions',

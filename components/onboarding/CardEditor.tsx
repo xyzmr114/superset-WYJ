@@ -1,8 +1,26 @@
 "use client";
 import {useMemo, useState} from 'react';
-import {SKILLS, INTERESTS, type MatchingCard} from '@/lib/contracts';
-import TagSelect from './TagSelect';
+import type {MatchingCard} from '@/lib/contracts';
+import MultiSelect from './MultiSelect';
 import styles from './onboarding.module.css';
+
+// Suggestions shown in the type-ahead. The demo attendees use the base tags
+// (engineering, sales, product, design, data / developer-tools, payments,
+// healthcare, climate), so keep those here for matching — everything else is
+// extra convenience, and the user can also type a fully custom skill.
+const SKILL_SUGGESTIONS = [
+  'engineering', 'frontend engineering', 'backend engineering', 'full-stack engineering',
+  'mobile development', 'data', 'data science', 'machine learning', 'AI/ML', 'devops',
+  'infrastructure', 'security', 'design', 'UX design', 'UI design', 'product',
+  'product management', 'sales', 'marketing', 'growth', 'business development',
+  'operations', 'finance', 'legal', 'content', 'community', 'research', 'hardware',
+];
+const INTEREST_SUGGESTIONS = [
+  'developer-tools', 'payments', 'fintech', 'healthcare', 'climate', 'education',
+  'e-commerce', 'logistics', 'productivity', 'social', 'gaming', 'enterprise SaaS',
+  'consumer apps', 'AI', 'marketplaces', 'real estate', 'biotech', 'robotics',
+  'cybersecurity', 'media',
+];
 
 const AVAILABILITY: MatchingCard['availability'][] = ['exploring', 'weekends', 'full_time'];
 const AVAILABILITY_LABEL: Record<MatchingCard['availability'], string> = {
@@ -65,9 +83,9 @@ export default function CardEditor({
         <input required maxLength={40} value={alias} onChange={e => setAlias(e.target.value)} />
       </label>
 
-      <TagSelect legend="Skills I offer" options={SKILLS} selected={offers} onChange={setOffers} />
-      <TagSelect legend="Skills I'm looking for" options={SKILLS} selected={seeks} onChange={setSeeks} />
-      <TagSelect legend="Problem areas I care about" options={INTERESTS} selected={interests} onChange={setInterests} />
+      <MultiSelect legend="Skills I offer" suggestions={SKILL_SUGGESTIONS} selected={offers} onChange={setOffers} placeholder="Type or pick a skill…" />
+      <MultiSelect legend="Skills I'm looking for" suggestions={SKILL_SUGGESTIONS} selected={seeks} onChange={setSeeks} placeholder="Type or pick a skill…" />
+      <MultiSelect legend="Problem areas I care about" suggestions={INTEREST_SUGGESTIONS} selected={interests} onChange={setInterests} placeholder="Type or pick a problem area…" />
 
       <label>
         Availability
