@@ -57,6 +57,16 @@ const INTEREST_SYNONYMS: Record<(typeof INTERESTS)[number], string[]> = {
   payments: ['payment', 'fintech', 'fin tech', 'billing', 'invoicing'],
   healthcare: ['health', 'healthtech', 'health tech', 'digital health', 'medtech', 'medical'],
   climate: ['climate tech', 'climatetech', 'sustainability', 'clean energy', 'cleantech', 'energy', 'carbon'],
+  travel: [
+    'travel tech', 'traveltech', 'trips', 'trip planning', 'travel planning', 'itineraries', 'itinerary',
+    'booking', 'bookings', 'travel booking', 'flights', 'flight booking', 'hotels', 'hotel booking', 'airlines',
+    'online travel', 'ota', 'hospitality', 'tourism',
+  ],
+  'ai-agents': [
+    'agents', 'ai agent', 'ai agents', 'agentic', 'agentic ai', 'llm agents', 'autonomous agents',
+    'agent infrastructure', 'agent infra', 'agent tooling', 'agent tools', 'agent platform', 'agent platforms',
+    'agent frameworks', 'multi agent', 'mcp', 'mcp servers',
+  ],
 };
 
 function buildIndex(base: readonly string[], synonyms: Record<string, string[]>) {

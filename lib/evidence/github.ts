@@ -25,6 +25,10 @@ const QUERIES_BY_TAG: Record<Tag, string[]> = {
   payments: ['topic:payments archived:false'],
   healthcare: ['topic:healthcare archived:false'],
   climate: ['topic:climate-change archived:false'],
+  // travel covers flight/hotel search and booking (much of it already built for agents);
+  // ai-agents covers the plumbing agents call. A travel + agents pair gets one of each.
+  travel: ['topic:flight-search archived:false', 'topic:hotel-booking archived:false'],
+  'ai-agents': ['topic:agent-tools archived:false', 'topic:agent-infrastructure archived:false'],
 };
 
 export type EvidenceMode = 'live' | 'cached' | 'fixture' | 'none';

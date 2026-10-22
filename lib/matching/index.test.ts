@@ -66,12 +66,12 @@ test('demo: Founder A and Founder B rank each other first', () => {
   assert.equal(forA[0].candidate.id, founderB.id);
   assert.equal(forB[0].candidate.id, founderA.id);
   assert.equal(forA[0].score, 90);
-  assert.deepEqual(forA[0].sharedInterests, ['developer-tools']);
+  assert.deepEqual(forA[0].sharedInterests, ['travel', 'ai-agents']);
 });
 
 test('demo: out-of-domain distractors fall below the threshold', () => {
   const ids = rankCandidates(founderA, allProfiles).map(r => r.candidate.id);
-  for (const d of distractors.filter(d => !d.interests.includes('developer-tools'))) assert.ok(!ids.includes(d.id), d.alias);
+  for (const d of distractors.filter(d => !d.interests.includes('travel'))) assert.ok(!ids.includes(d.id), d.alias);
 });
 
 test('server pool is the four distractors; founders are exported separately', () => {
@@ -84,5 +84,6 @@ test('fixtures are six labeled synthetic profiles', () => {
   for (const p of allProfiles) {
     assert.ok(isSyntheticProfile(p));
     assert.match(p.approvedBlurb, /^Synthetic profile\./);
+    assert.ok(p.alias.length <= 40 && p.offers.length <= 5 && p.seeks.length <= 5 && p.interests.length <= 4 && p.approvedBlurb.length <= 240, p.alias);
   }
 });
