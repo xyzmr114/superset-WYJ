@@ -76,3 +76,20 @@ In `/premium`, select a currently published owned brief. DeepSeek enhancement re
 Show public web search links and, when available, the first source read through DeepSeek Fetch. Broad recognized categories also query GitHub. Custom niches can return web results without a GitHub category. Display live/cached/saved-snapshot provenance honestly; unavailable web search yields a warning and no invented results. Existing repositories are leads, not evidence of customer demand. No background, identity/contact or local questionnaire text is sent by either feature. The legacy `/api/agent` remains disabled by default and is not the research entry point.
 
 Apply migrations through `006_idea_publication.sql` before rehearsal. Migration 006 has been applied to the shared Supabase database; each other deployment must run `pnpm db:migrate` too.
+
+## Local fictional-founder demonstration (`feat/demo-founders`)
+
+The demo helpers use fictional counterpart accounts, not actual founder responses. Their revealed names end in `(demo)` and contacts use `example.com`. Normal human accounts still require their own independent approval.
+
+Run the app on port 3002, then from the repository root:
+
+```sh
+BASE_URL=http://localhost:3002 pnpm exec tsx scripts/demo/seed.ts
+BASE_URL=http://localhost:3002 pnpm exec tsx scripts/demo/adjacent.ts
+```
+
+The seed creates 12 reusable founders and saves only their session cookies in ignored `.wyj-demo/sessions.json` (private file permissions). The adjacent helper watches new published ideas, creates a complementary fictional counterpart, generates a match and answers introduction requests after a short delay. Custom approved niches and soft skills are supported locally. It never approves for a human participant. No real messages or meetings are sent.
+
+DeepSeek can pre-generate fictional examples from fixed topic/skill combinations at startup; user-derived inputs are never sent by the helper. Missing combinations use local templates. Do not use `--all` casually: it also creates counterparts for existing ideas in the configured database. The current app uses shared Supabase even though the website and model assets are served locally.
+
+Verified locally: Rider Rival → complementary Maya → user approval → delayed demo-side approval → mutual reveal. This is demonstration automation, not evidence of genuine founder interest.

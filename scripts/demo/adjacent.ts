@@ -5,9 +5,8 @@
 //   npx tsx scripts/demo/adjacent.ts [--all]      --all also covers ideas published before the script started
 //
 // Privacy: at startup DeepSeek invents one fictional founder per (topic, skill) pair, so at demo time no
-// user data reaches it at all. Only an uncached combination triggers a live call, and that call carries ONLY
-// controlled tags (e.g. skills ["engineering"], topics ["travel"]) and availability: never the blurb, alias,
-// name, contact or any free text. No DEEPSEEK_API_KEY, a slow answer (> 3.5 s) or an invalid one falls back
+// user data reaches it at all. Uncached combinations use local templates; no live user-derived
+// tags, blurb, alias, name, contact or free text are sent to DeepSeek. No DEEPSEEK_API_KEY, a slow answer (> 3.5 s) or an invalid one falls back
 // to a built-in profile, so the demo never stalls.
 // Demo founders are fictional: names end in "(demo)", contacts use example.com.
 process.loadEnvFile('.env.local');
@@ -21,16 +20,16 @@ import { EVENT_CODE, api, loadSessions, saveSessions } from './client';
 const KEY = process.env.DEEPSEEK_API_KEY;
 const MODEL = process.env.PREMIUM_DEEPSEEK_MODEL || 'deepseek-flash';
 const BUDGET_MS = 3500;
-const skillSet = new Set<string>(SKILLS), topicSet = new Set<string>(INTERESTS);
+
 
 type Tags = { offers: string[]; seeks: string[]; interests: string[]; availability: 'exploring' | 'weekends' | 'full_time' };
 type Founder = Tags & { first: string; last: string; blurb: string; source: 'DeepSeek' | 'template' };
 
-/** Only controlled tags survive; custom free-text tags never leave this machine. */
+/** Approved tags are matched locally, including custom niches and soft skills. Never sent to a provider. */
 const controlled = (card: any): Tags => ({
-  offers: tagSet(mapTags(card.offers ?? [], 'skill')).filter((t) => skillSet.has(t)),
-  seeks: tagSet(mapTags(card.seeks ?? [], 'skill')).filter((t) => skillSet.has(t)),
-  interests: tagSet(mapTags(card.interests ?? [], 'interest')).filter((t) => topicSet.has(t)),
+  offers: tagSet(mapTags(card.offers ?? [], 'skill')).slice(0,5),
+  seeks: tagSet(mapTags(card.seeks ?? [], 'skill')).slice(0,5),
+  interests: tagSet(mapTags(card.interests ?? [], 'interest')).slice(0,4),
   availability: card.availability ?? 'weekends',
 });
 
@@ -109,7 +108,7 @@ function template(t: Tags, n: number): Founder {
   const taken = new Set(loadSessions().map((s) => s.alias));
   const [first, last] = NAMES.find(([f]) => !taken.has(f)) ?? NAMES[n % NAMES.length];
   return { first, last, offers: [...t.seeks.slice(0, 2)], seeks: [...t.offers.slice(0, 1)], interests: [topic],
-    availability: t.availability, blurb: ANGLE[topic] ?? ANGLE['developer-tools'], source: 'template' };
+    availability: t.availability, blurb: ANGLE[topic] ?? `Exploring a complementary approach to ${topic} with a hands-on founder.`, source: 'template' };
 }
 
 /** Guarantees the matcher pairs them: shared topic + each offers something the other seeks. */
@@ -179,17 +178,17 @@ async function main() {
     const demo = new Set(loadSessions().map((s) => s.participantId));
     const rows = await db.q(
       `select i.idea_id, i.participant_id, i.card from ideas i join participants p on p.id = i.participant_id
-       where p.token_hash is not null and i.created_at >= $1 order by i.created_at`, [since]);
+       where p.token_hash is not null and i.published=true and i.created_at >= $1 order by i.created_at`, [since]);
     for (const r of rows) {
       if (demo.has(r.participant_id) || handled.has(r.idea_id)) continue;
       handled.add(r.idea_id);
       const t0 = Date.now(), tags = controlled(r.card), ms: Record<string, number> = {};
       console.log(`${new Date().toLocaleTimeString()}  new idea "${String(r.card?.alias ?? '')}" -> tags ${JSON.stringify(tags)}`);
       try {
-        const session = newSession(); // starts while DeepSeek thinks
+        const session = newSession(); // overlaps the local profile selection
         session.catch(() => {});
         let t = Date.now();
-        const f = makeAdjacent(cached(tags) ?? (await fromDeepSeek(tags)) ?? template(tags, made), tags);
+        const f = makeAdjacent(cached(tags) ?? template(tags, made), tags);
         ms.profile = Date.now() - t;
         const out = await createFounder(f, session, ms);
         made++;

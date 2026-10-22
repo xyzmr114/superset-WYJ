@@ -1,5 +1,5 @@
 // Tiny API client for demo scripts: one cookie per demo founder, sessions kept in a local gitignored file.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, chmodSync } from 'node:fs';
 
 export const BASE = (process.env.BASE_URL || 'http://localhost:3000').replace(/\/+$/, '');
 export const EVENT_CODE = process.env.EVENT_CODE || 'SUPERSET';
@@ -8,8 +8,10 @@ const FILE = '.wyj-demo/sessions.json';
 export type Session = { alias: string; cookie: string; participantId: string; displayName: string; contact: string };
 export const loadSessions = (): Session[] => (existsSync(FILE) ? JSON.parse(readFileSync(FILE, 'utf8')) : []);
 export function saveSessions(s: Session[]) {
-  mkdirSync('.wyj-demo', { recursive: true });
-  writeFileSync(FILE, JSON.stringify(s, null, 2));
+  mkdirSync('.wyj-demo', { recursive: true, mode: 0o700 });
+  chmodSync('.wyj-demo', 0o700);
+  writeFileSync(FILE, JSON.stringify(s, null, 2), {mode: 0o600});
+  chmodSync(FILE, 0o600);
 }
 
 export async function api<T = any>(method: string, path: string, body?: unknown, cookie?: string): Promise<{ status: number; data: T; cookie?: string }> {

@@ -54,9 +54,9 @@ export function setIdeaPublished(me:Participant,ideaId:string,published:boolean)
 }
 /** Every published idea of the other real participants in an event, in one query (legacy cards as fallback). */
 export async function otherIdeasInEvent(me:string,eventId:string,query:Q=q):Promise<MatchingCard[]>{
- const rows=await query(`select p.id, i.card from participants p left join ideas i on i.participant_id=p.id
+ const rows=await query(`select p.id, i.card, i.published from participants p left join ideas i on i.participant_id=p.id
   where p.id<>$1 and p.event_id=$2 and p.token_hash is not null order by p.id, i.created_at, i.idea_id`,[me,eventId]);
- const ideas=rows.filter(r=>r.card).map(r=>r.card as MatchingCard);
+ const ideas=rows.filter(r=>r.card&&r.published).map(r=>r.card as MatchingCard);
  const legacy=[...new Set(rows.filter(r=>!r.card).map(r=>r.id as string))];
  if(legacy.length)ideas.push(...(await query('select * from cards where participant_id=any($1)',[legacy])).map(cardRow));
  return ideas;
