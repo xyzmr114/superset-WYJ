@@ -49,6 +49,12 @@ export const distractors: MatchingCard[] = [
   }),
 ];
 
-export const profiles: MatchingCard[] = [founderA, founderB, ...distractors];
+// Founder A and B are played live on the two demo devices, so the server never pre-loads
+// them: a synthetic copy would tie with the real person. Use them in tests and seed --all.
+export const founders: MatchingCard[] = [founderA, founderB];
+export const allProfiles: MatchingCard[] = [...founders, ...distractors];
+
+/** The synthetic pool the server pre-loads: distractors only. */
+export const profiles: MatchingCard[] = distractors;
 
 export const isSyntheticProfile = (c: Pick<MatchingCard, 'id'>) => c.id.startsWith(SYNTHETIC_PREFIX);

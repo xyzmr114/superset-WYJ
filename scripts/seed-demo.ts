@@ -11,7 +11,7 @@
  * an example.invalid address. Run once per server start: the server keeps state in memory.
  */
 import type { MatchingCard } from '../lib/contracts';
-import { distractors, profiles } from '../fixtures/profiles';
+import { allProfiles, distractors } from '../fixtures/profiles';
 
 const SYNTHETIC_LABEL = 'Synthetic · ';
 
@@ -92,7 +92,7 @@ async function seedOne(base: string, eventCode: string, profile: MatchingCard) {
 
 async function main() {
   const { base, eventCode, all } = parseArgs(process.argv.slice(2));
-  const targets = all ? profiles : distractors;
+  const targets = all ? allProfiles : distractors;
   console.log(`Seeding ${targets.length} synthetic participants into ${base} (event ${eventCode})`);
   for (const profile of targets) {
     const { session, card } = await seedOne(base, eventCode, profile);
