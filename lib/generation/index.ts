@@ -80,7 +80,8 @@ export function proposeOpportunity(a: MatchingCard, b: MatchingCard, evidence: E
   const shared = sharedDomains(a, b);
   const agentTravel = shared.includes('travel') && shared.includes('ai-agents');
   const tag = agentTravel ? 'travel and ai-agents' : shared[0] ?? tagSet(mapTags([...a.interests, ...b.interests], 'interest'))[0] ?? null;
-  const d = (agentTravel && AGENT_TRAVEL) || (tag && DOMAINS[tag]) || {
+  const known = (agentTravel && AGENT_TRAVEL) || (tag && DOMAINS[tag]) || null;
+  const d = known || {
     label: tag ? `${tag} workflow` : 'Shared workflow',
     problem: `There may be a repeated, costly workflow in ${tag ?? 'a shared problem area'} that a two-person team could improve.`,
     targetUser: 'To be chosen after the first interviews',
@@ -94,16 +95,20 @@ export function proposeOpportunity(a: MatchingCard, b: MatchingCard, evidence: E
   if (shared.length) whyThisPair.push(`Both listed ${tag} as ${agentTravel ? 'problem areas' : 'a problem area'} they want to work on.`);
   const preferenceReasons = preferenceCompatibility(a, b).reasons;
   if (preferenceReasons.length) whyThisPair.push(preferenceReasons.join(' '));
+  // Approved blurbs only. With a known domain they support its hypothesis; without one they lead.
   const approvedIdeas = [a, b].filter(card => card.approvedBlurb.trim());
   const ideaSummary = approvedIdeas.map(card => `${card.alias}'s approved idea: “${card.approvedBlurb.trim()}”`).join(' ');
-  const experiment = approvedIdeas.length
+  const blurbLed = !known && approvedIdeas.length > 0;
+  const interviews = `within 48 hours, interview five ${d.interviewees}.${approvedIdeas.length ? ' Use the two approved ideas to choose which part of this problem to test first.' : ''} Ask for a recent example, the current workaround, how often it happens and what it costs. Continue only if at least three describe the same problem without prompting.`;
+  const experiment = blurbLed
     ? 'within 48 hours, agree on one overlap between the two approved ideas, choose a specific user, and interview five people who fit. Split discovery and a small prototype between your stated strengths. Compare findings and independently decide whether to keep building together.'
-    : `within 48 hours, interview five ${d.interviewees}. Ask for a recent example, the current workaround, how often it happens and what it costs. Continue only if at least three describe the same problem without prompting.`;
+    : interviews;
+  const problem = blurbLed ? ideaSummary : [d.problem, ideaSummary && `Supporting detail from the approved briefs: ${ideaSummary}`].filter(Boolean).join(' ');
   const evidenceIds = evidence.slice(0, MAX_EVIDENCE).map(e => e.id);
   return {
-    title: approvedIdeas.length ? 'Shared idea discovery' : `${d.label} discovery`,
-    problemHypothesis: `${ideaSummary || d.problem} This is a hypothesis, not validated demand.`,
-    targetUser: approvedIdeas.length ? 'Agree on a specific user from the two approved ideas during the first conversation' : d.targetUser,
+    title: blurbLed ? 'Shared idea discovery' : `${d.label} discovery`,
+    problemHypothesis: `${problem} This is a hypothesis, not validated demand.`,
+    targetUser: blurbLed ? 'Agree on a specific user from the two approved ideas during the first conversation' : d.targetUser,
     whyThisPair,
     evidenceIds,
     unknowns: [
