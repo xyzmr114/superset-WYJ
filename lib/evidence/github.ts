@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { INTERESTS, type Evidence } from '@/lib/contracts';
 import { evidenceFixture, EVIDENCE_SNAPSHOT_AT } from '@/fixtures/evidence';
+import { mapTag } from '@/lib/matching/tags';
 export { EVIDENCE_CAVEAT } from './caveat';
 
 // Server-side only: may read GITHUB_TOKEN. Queries are built from a fixed table keyed by
@@ -60,9 +61,10 @@ export function clearEvidenceCache() { cache.clear(); }
 
 const isApprovedTag = (t: string): t is Tag => (INTERESTS as readonly string[]).includes(t);
 
-/** Approved tags, deduplicated, in the order given, at most two. */
+/** Base interest tags mapped from the input (synonyms included), deduplicated, at most two. Custom text is dropped. */
 export function approvedTags(tags: string[]): Tag[] {
-  return [...new Set(tags.map(t => t.trim().toLowerCase()))].filter(isApprovedTag).slice(0, MAX_QUERIES);
+  const mapped = tags.map(t => mapTag(t, 'interest')).filter(m => m && m.via !== 'custom').map(m => m!.tag);
+  return [...new Set(mapped)].filter(isApprovedTag).slice(0, MAX_QUERIES);
 }
 
 /** At most two fixed queries, taken round-robin across the approved tags. */

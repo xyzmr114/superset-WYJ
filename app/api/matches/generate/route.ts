@@ -11,9 +11,9 @@ export const POST = route(async (req) => {
   const mine = db.cards.get(me.id);
   if (!mine) throw new HttpError(409, 'NO_CARD', 'Publish your card first.');
   const others = [...db.cards.values()].filter((c) => c.eventId === me.eventId && c.id !== me.id && !findPair(me.id, c.id)?.declinedBy);
-  for (const { candidate, score } of rankCandidates(mine, others)) {
+  for (const { candidate, score, sharedInterests } of rankCandidates(mine, others)) {
     if (findPair(me.id, candidate.id)) continue; // idempotent
-    const domain = mine.interests.find((x) => candidate.interests.includes(x)) ?? mine.interests[0];
+    const domain = sharedInterests[0] ?? mine.interests[0]; // mapped tag; evidence search maps again and drops custom tags
     const evidence = await evidenceFor(domain);
     if (findPair(me.id, candidate.id)) continue; // a concurrent request created it while we awaited
     const opportunity = { ...proposeOpportunity(mine, candidate), evidenceIds: evidence.map((e) => e.id) };
