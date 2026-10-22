@@ -1,5 +1,167 @@
-import type { MatchingCard, Opportunity } from '@/lib/contracts';
-export function proposeOpportunity(a: MatchingCard,b: MatchingCard): Opportunity {
- const domain=a.interests.find(x=>b.interests.includes(x)) ?? 'a shared problem';
- return {title:`Explore ${domain} together`,problemHypothesis:`Find one repetitive workflow in ${domain} that a small team can improve. This template is a hypothesis, not validated demand.`,targetUser:'To be chosen after customer interviews',whyThisPair:[`${a.alias} offers ${a.offers.join(', ')}.`,`${b.alias} offers ${b.offers.join(', ')}.`],evidenceIds:[],unknowns:['Who has this problem?','Will they pay?','Are both founders ready to commit?'],nextExperiment:'Interview five prospective users and document one repeated pain point before building.',generationMode:'template'};
+import { z } from 'zod';
+import type { Evidence, MatchingCard, Opportunity } from '@/lib/contracts';
+import { EVIDENCE_CAVEAT } from '@/lib/evidence/caveat';
+
+// Pure and safe to import from client components. The hosted-model path lives in
+// ./model.ts (server-only) and falls back to proposeOpportunity below.
+
+const MAX_EVIDENCE = 5;
+
+type Domain = { label: string; problem: string; targetUser: string; interviewees: string };
+const DOMAINS: Record<string, Domain> = {
+  'developer-tools': {
+    label: 'Developer workflow',
+    problem: 'Small software teams may lose time moving context from customer reports into engineering work, so the same issue gets re-explained several times before anyone fixes it.',
+    targetUser: 'Engineering leads at small software companies (roughly 5 to 50 engineers) who triage customer-reported issues',
+    interviewees: 'engineering leads or support engineers at small software companies',
+  },
+  payments: {
+    label: 'Payments operations',
+    problem: 'Small online businesses that use more than one payment provider may spend hours each week reconciling payouts by hand.',
+    targetUser: 'Finance or operations leads at small online businesses using two or more payment providers',
+    interviewees: 'finance or operations leads at small online businesses',
+  },
+  healthcare: {
+    label: 'Clinic operations',
+    problem: 'Independent clinics may lose staff time to scheduling and record handoffs between systems that do not talk to each other.',
+    targetUser: 'Practice managers at independent clinics',
+    interviewees: 'practice managers or front-desk leads at independent clinics',
+  },
+  climate: {
+    label: 'Energy reporting',
+    problem: 'Small companies asked to report energy use or emissions may assemble the numbers by hand from several sources.',
+    targetUser: 'Operations leads at small companies that must report energy use to customers or regulators',
+    interviewees: 'operations leads who have recently prepared an energy or emissions report',
+  },
+};
+
+const norm = (xs: string[]) => [...new Set(xs.map(x => x.trim().toLowerCase()).filter(Boolean))];
+const list = (xs: string[]) => xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`;
+const covers = (offers: string[], seeks: string[]) => { const s = new Set(norm(seeks)); return norm(offers).filter(x => s.has(x)); };
+
+export function sharedDomain(a: MatchingCard, b: MatchingCard): string | null {
+  const bs = new Set(norm(b.interests));
+  return norm(a.interests).find(x => bs.has(x)) ?? null;
+}
+
+/** Deterministic opportunity from approved card fields. Always generationMode 'template'. */
+export function proposeOpportunity(a: MatchingCard, b: MatchingCard, evidence: Evidence[] = []): Opportunity {
+  const tag = sharedDomain(a, b) ?? norm([...a.interests, ...b.interests])[0] ?? null;
+  const d = (tag && DOMAINS[tag]) || {
+    label: tag ? `${tag} workflow` : 'Shared workflow',
+    problem: `There may be a repeated, costly workflow in ${tag ?? 'a shared problem area'} that a two-person team could improve.`,
+    targetUser: 'To be chosen after the first interviews',
+    interviewees: `people who do this work in ${tag ?? 'the chosen area'}`,
+  };
+  const aGives = covers(a.offers, b.seeks), bGives = covers(b.offers, a.seeks);
+  const whyThisPair = [
+    aGives.length ? `${a.alias} offers ${list(aGives)}, which ${b.alias} is looking for.` : `${a.alias} offers ${list(norm(a.offers)) || 'skills not yet listed'}.`,
+    bGives.length ? `${b.alias} offers ${list(bGives)}, which ${a.alias} is looking for.` : `${b.alias} offers ${list(norm(b.offers)) || 'skills not yet listed'}.`,
+  ];
+  if (sharedDomain(a, b)) whyThisPair.push(`Both listed ${tag} as a problem area they want to work on.`);
+  const evidenceIds = evidence.slice(0, MAX_EVIDENCE).map(e => e.id);
+  return {
+    title: `${d.label} discovery`,
+    problemHypothesis: `${d.problem} This is a hypothesis, not validated demand.`,
+    targetUser: d.targetUser,
+    whyThisPair,
+    evidenceIds,
+    unknowns: [
+      'Who has this problem often enough to pay for a fix, and who would approve the purchase?',
+      ...(evidenceIds.length ? ['What do the existing projects listed under public evidence already solve?'] : []),
+      `What time and money can each founder commit? Cards list ${a.availability.replace('_', ' ')} and ${b.availability.replace('_', ' ')}.`,
+      'Willingness to pay is untested.',
+    ],
+    nextExperiment: `Within 48 hours, interview five ${d.interviewees}. Ask for a recent example, the current workaround, how often it happens and what it costs. Continue only if at least three describe the same problem without prompting.`,
+    generationMode: 'template',
+  };
+}
+
+// Shape checks for opportunity text from an untrusted source (the hosted model).
+export const opportunitySchema = z.object({
+  title: z.string().trim().min(3).max(120),
+  problemHypothesis: z.string().trim().min(10).max(700),
+  targetUser: z.string().trim().min(3).max(300),
+  whyThisPair: z.array(z.string().trim().min(3).max(300)).min(1).max(4),
+  evidenceIds: z.array(z.string()).max(10),
+  unknowns: z.array(z.string().trim().min(3).max(300)).min(1).max(6),
+  nextExperiment: z.string().trim().min(10).max(700),
+});
+
+/** Validates untrusted output and keeps only evidence ids that were supplied. Returns null if invalid. */
+export function sanitizeOpportunity(raw: unknown, suppliedEvidenceIds: Iterable<string>): Opportunity | null {
+  const parsed = opportunitySchema.safeParse(raw);
+  if (!parsed.success) return null;
+  const allowed = new Set(suppliedEvidenceIds);
+  const evidenceIds = [...new Set(parsed.data.evidenceIds)].filter(id => allowed.has(id));
+  return { ...parsed.data, evidenceIds, generationMode: 'model' };
+}
+
+// ---- Pitch draft ----
+
+export type PitchMatch = { founders: readonly [MatchingCard, MatchingCard] };
+
+export const SUPERSET_REFERENCES = ['https://superset.com/', 'https://superset.com/portfolio'];
+
+// Text from cards, the model, or GitHub is inserted as plain text: one line, no markdown syntax.
+const md = (s: string) => s.replace(/\s+/g, ' ').trim().replace(/([\\`*_[\]<>#|!])/g, '\\$1');
+const safeUrl = (u: string) => /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+$/.test(u) ? u : null;
+const day = (iso: string) => { const t = Date.parse(iso); return Number.isNaN(t) ? 'unknown date' : new Date(t).toISOString().slice(0, 10); };
+
+function evidenceLines(opportunity: Opportunity, evidence: Evidence[]): string[] {
+  const byId = new Map(evidence.map(e => [e.id, e]));
+  return opportunity.evidenceIds.flatMap(id => {
+    const e = byId.get(id);
+    const url = e && safeUrl(e.url);
+    if (!e || !url) return [];
+    const source = e.cached ? `cached copy, fetched ${day(e.fetchedAt)}` : `fetched ${day(e.fetchedAt)}`;
+    return [`- [${md(e.title)}](${url})${e.excerpt ? `: ${md(e.excerpt)}` : ''} (${source})`];
+  });
+}
+
+/**
+ * Joint pitch draft from approved cards, the opportunity and its cited evidence.
+ * Uses aliases only: identity fields are appended separately after both approvals.
+ */
+export function buildPitchMarkdown(match: PitchMatch, opportunity: Opportunity, evidence: Evidence[]): string {
+  const [a, b] = match.founders;
+  const sources = evidenceLines(opportunity, evidence);
+  const mode = opportunity.generationMode === 'model'
+    ? 'Drafted by a hosted model from approved matching cards and public sources. Check every line before approving.'
+    : 'Drafted from a fixed template using approved matching cards. No hosted model was used.';
+  const founder = (c: MatchingCard) => `- ${md(c.alias)}: offers ${md(list(norm(c.offers)) || 'nothing listed')}; seeks ${md(list(norm(c.seeks)) || 'nothing listed')}; availability ${c.availability.replace('_', ' ')}.`;
+  return [
+    `# ${md(opportunity.title)}: joint pitch draft`,
+    '',
+    `> Working draft. ${mode} Everything here is a hypothesis to test, not validated demand. It contains no customer names, endorsements or official application requirements.`,
+    '',
+    '## Problem hypothesis',
+    md(opportunity.problemHypothesis),
+    '',
+    '## Proposed product',
+    `A narrowly scoped first version for the target customer below, focused only on the problem above. ${md(opportunity.title)} is a working name. Decide the product shape after the first experiment, not before.`,
+    '',
+    '## Target customer',
+    `${md(opportunity.targetUser)}. The first buyer and budget are not yet validated.`,
+    '',
+    '## Team complementarity',
+    ...opportunity.whyThisPair.map(w => `- ${md(w)}`),
+    founder(a),
+    founder(b),
+    '',
+    '## Public evidence',
+    EVIDENCE_CAVEAT,
+    ...(sources.length ? sources : ['- No public sources attached yet.']),
+    '',
+    '## First 48-hour experiment',
+    md(opportunity.nextExperiment),
+    '',
+    '## Why explore this with super{set}?',
+    'Our hypothesis, not a statement from super{set}: a complementary founding team working on one specific business problem may fit its company-building approach. We have not confirmed this with super{set}.',
+    ...SUPERSET_REFERENCES.map(u => `Reference: ${u}`),
+    '',
+    '## Open questions',
+    ...opportunity.unknowns.map(u => `- ${md(u)}`),
+    '',
+  ].join('\n');
 }
