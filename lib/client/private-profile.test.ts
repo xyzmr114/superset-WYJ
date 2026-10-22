@@ -20,27 +20,20 @@ const find = (items: ReturnType<typeof evaluateJump>, id: string) => {
   return item;
 };
 
-test('undisclosed runway stays unknown, never satisfied', () => {
-  const items = evaluateJump(emptyPrivateProfile, opportunity);
-  assert.equal(find(items, 'funding').status, 'unknown');
+test('ambition stays unknown until the user describes one', () => {
+  assert.equal(find(evaluateJump(emptyPrivateProfile, opportunity), 'ambition').status, 'unknown');
 });
 
-test('garbage runway input does not become satisfied', () => {
-  const profile: PrivateProfile = {...emptyPrivateProfile, runway: 'soon'};
-  assert.equal(find(evaluateJump(profile, opportunity), 'funding').status, 'unknown');
-});
-
-test('short disclosed runway is unmet, not silently satisfied', () => {
-  const profile: PrivateProfile = {...emptyPrivateProfile, runway: '2'};
-  assert.equal(find(evaluateJump(profile, opportunity), 'funding').status, 'unmet');
-});
-
-test('sufficient disclosed runway is satisfied', () => {
-  const profile: PrivateProfile = {...emptyPrivateProfile, runway: '9'};
-  assert.equal(find(evaluateJump(profile, opportunity), 'funding').status, 'satisfied');
+test('a described ambition is satisfied', () => {
+  const profile: PrivateProfile = {...emptyPrivateProfile, ambition: 'build dev tooling'};
+  assert.equal(find(evaluateJump(profile, opportunity), 'ambition').status, 'satisfied');
 });
 
 test('conditions item is never auto-satisfied — only the user can judge it', () => {
   const profile: PrivateProfile = {...emptyPrivateProfile, conditions: 'need a co-founder I trust'};
   assert.equal(find(evaluateJump(profile, opportunity), 'conditions').status, 'unknown');
+});
+
+test('a proposed first experiment satisfies the experiment item', () => {
+  assert.equal(find(evaluateJump(emptyPrivateProfile, opportunity), 'experiment').status, 'satisfied');
 });
