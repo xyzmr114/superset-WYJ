@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test lib/matching/index.test.ts components/pitch/*.test.ts lib/agent/*.test.ts"
+    "test": "tsx --test lib/matching/index.test.ts components/pitch/*.test.ts lib/agent/*.test.ts lib/client/*.test.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.85",
