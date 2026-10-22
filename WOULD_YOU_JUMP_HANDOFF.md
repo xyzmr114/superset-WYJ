@@ -150,3 +150,7 @@ All profile CTAs go directly to `/agent`; `/join` only redirects old bookmarks. 
 ## Footer and navigation polish
 
 The shared footer now lives in `app/SiteFooter.tsx` + `app/footer.module.css`: glass wordmark, pointer-driven damped letter springs, current Next links and working `/#how` anchor. It pauses offscreen/at rest and respects reduced motion. The legacy halftone component is no longer mounted. Mobile navigation keeps the app routes visible; duplicate Start here CTA only appears on the landing.
+
+## External model assets and legacy API gate
+
+See DEPLOYMENT.md for Drive archive → public Blob upload → MODEL_ASSET_BASE_URL. All four asset folders and SHA-256 manifest travel together. No weights/runtime binaries are committed. `pnpm models:upload` is dry-run; `--upload` requires the Blob write token in ignored local env. Public asset rewrites preserve same-origin worker execution. Hosted execution must be checked after actual Blob provisioning. `/api/agent` is disabled by default (410); explicit enabling additionally requires an authenticated Premium session. Free browser assistance and exact-brief Premium enhancement remain separate. Footer is now a light, translucent WYJ treatment with the existing reduced-motion-aware springs.
