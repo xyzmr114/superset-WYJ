@@ -142,3 +142,7 @@ Next owner work: **Anusha** polish the three-step workspace/shared profile, pres
 ## Frontend branch integrated
 
 Merged Anusha’s `anusha/landing-clouds` into integration: editorial landing, Sage Cream shell, sky, halftone footer and shared navigation. Preserved the latest three-step private workspace, automatic browser models and code-free session entry. Landing CTA also requires no event code. Pull main before further UI work.
+
+## Direct entry and custom profile fields
+
+All profile CTAs go directly to `/agent`; `/join` only redirects old bookmarks. Publishing creates a session if needed. Every skills/niche/strength/stack/style picker accepts explicit custom entries (40 characters, same selection caps). Custom preference strings are accepted by the shared brief schema and exact normalized overlaps affect matching; never put raw background in those fields automatically. Continue is actionable: missing fields are highlighted, scrolled into view and focused. The initial suggested alias selects on focus so typing replaces it.

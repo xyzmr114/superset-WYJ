@@ -121,3 +121,5 @@ test('explicit unlimited mode returns every eligible founder beyond five without
   assert.equal(rankCandidates(me, partners, { limit: Infinity, requireSharedInterest: true }).length, 8);
   assert.equal(rankCandidates(me, partners).length, MAX_MATCHES);
 });
+
+test('explicitly approved custom stack and strengths participate in matching',()=>{const a={...me,preferences:{techStack:['Elixir'],strengths:[],partnerStrengths:['Horse training'],workStyles:[]}};const b={...me,id:'custom',preferences:{techStack:['elixir'],strengths:['horse training'],partnerStrengths:[],workStyles:[]}};assert.equal(scorePair(a,b).preferenceScore,3);});

@@ -8,7 +8,7 @@ export default function SiteFooter() {
       label="Would You Jump?"
       meta="Private founder matchmaking · super{set} 2026"
       columns={[
-        {title: 'Product', links: [{label: 'Join the event', href: '/join'}, {label: 'Private workspace', href: '/agent'}, {label: 'Your matches', href: '/matches'}]},
+        {title: 'Product', links: [{label: 'Join the event', href: '/agent'}, {label: 'Private workspace', href: '/agent'}, {label: 'Your matches', href: '/matches'}]},
         {title: 'Read', links: [{label: '01 The quiet problem', href: '/#problem'}, {label: '02 How it works', href: '/#how'}, {label: '03 Who sees what', href: '/#who'}, {label: '04 Nova × Atlas', href: '/#pairing'}]},
       ]}
       palette={{background: '#151916', ink: '#ece9dc', warm: '#8fd1b4'}}

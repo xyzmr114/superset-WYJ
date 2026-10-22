@@ -201,7 +201,7 @@ export default function Home() {
         <div>
           <p className={styles.tag}>05 / Landing</p>
           <h2 className={styles.landTitle}>So, would you <em>jump?</em></h2>
-          <form className={styles.join} action="/join" method="get">
+          <form className={styles.join} action="/agent" method="get">
             <p className={styles.mono}>Your next chapter starts here</p>
             <div className={styles.joinRow}>
               
