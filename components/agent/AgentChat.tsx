@@ -9,6 +9,7 @@ import {CHAT_KEY,restoreConversation,openWorkingDraft} from '@/lib/agent/workspa
 import BrowserDock,{useBrowserConnection} from './BrowserDock';
 import BrowserActionCard from './BrowserActionCard';
 import ProspectBoard from './ProspectBoard';
+import {profileKey} from '@/lib/agent/prospects';
 import type {BrowserAction,BrowserReceipt} from '@/lib/browser/contracts';
 import Markdown from '@/components/shared/Markdown';
 import styles from './agent.module.css';
@@ -83,10 +84,11 @@ export default function AgentChat(){
     if(event.type==='answer')setMessages(old=>[...old,{role:'assistant',content:event.text}]);
     if(event.type==='error')setError(event.message);
   }
-  async function send(text=input,action:'chat'|'draft_memo'|'outreach'|'social_post'|'connection'='chat',displayText?:string){
-    if(!text.trim()||!canSend||!selectedProvider||!selectedModel)return;
+  async function send(text=input,action:'chat'|'draft_memo'|'outreach'|'social_post'|'connection'='chat',displayText?:string,expectedProfile?:string,automatic=false){
+    if(!text.trim()||!canSend||!selectedProvider||!selectedModel)return false;
     const next=[...messages,{role:'user' as const,content:displayText??text.trim()}];
-    setMessages(next);setInput('');setBusy(true);setEvents([]);setError('');
+    setMessages(next);if(!automatic)setInput('');setBusy(true);setEvents([]);setError('');
+    let drafted=false;
     const controller=new AbortController();abortRef.current=controller;
     try {
       const response=await fetch('/api/agent',{
@@ -98,7 +100,7 @@ export default function AgentChat(){
       if(!response.ok){const data=await response.json();throw new Error(data.error??'Could not start the conversation.');}
       if(!response.body)throw new Error('No response stream.');
       const reader=response.body.getReader();const decoder=new TextDecoder();let buffer='';let finished=false;let failed=false;
-      function readLine(line:string){if(!line.trim())return;const event=JSON.parse(line) as AgentEvent;consume(event);if(event.type==='done')finished=true;if(event.type==='error')failed=true;}
+      function readLine(line:string){if(!line.trim())return;const event=JSON.parse(line) as AgentEvent;consume(event);if(event.type==='action'&&event.action.kind==='linkedin_message'&&(!expectedProfile||profileKey(event.action.profileUrl)===profileKey(expectedProfile)))drafted=true;if(event.type==='done')finished=true;if(event.type==='error')failed=true;}
       while(true){
         const {value,done}=await reader.read();
         if(done){buffer+=decoder.decode();break;}
@@ -109,6 +111,7 @@ export default function AgentChat(){
       if(!finished&&!failed)setError('The reply ended early. Any completed draft is still available; try again to continue.');
     }catch(e){setError(controller.signal.aborted?'Stopped.':e instanceof Error?e.message:'Request failed.');}
     finally{setBusy(false);abortRef.current=null;}
+    return drafted;
   }
   function openMemo(){
     try {openWorkingDraft(sessionStorage,memo);router.push('/pitch?from=agent');}
@@ -131,7 +134,7 @@ export default function AgentChat(){
     <div className={styles.layout}>
       <div>
         {(busy||events.length>0)&&<article className={styles.activity} aria-live="polite"><p className="eyebrow">{busy?'WORKING ON YOUR GOAL':'LATEST ACTIVITY'}</p><h3>{busy?'Research in progress':'Research trail'}</h3><ol>{events.map((event,index)=><li key={index}>{event}</li>)}</ol>{busy&&!events.length&&<p>Starting your research…</p>}{!busy&&events.length>0&&<p className="muted">{error?'Run stopped. See the message below.':actions.length?'Drafts are ready below. Review the text, then prepare it in LinkedIn.':'Run finished. Continue the conversation below.'}</p>}</article>}
-        <ProspectBoard people={people} goal={goal} actions={actions} canDraft={canSend} receiptUpdate={receiptUpdate} onFollowup={(prompt,label)=>void send(prompt,'chat',label)}/>
+        <ProspectBoard people={people} goal={goal} actions={actions} canDraft={canSend} canAutoDraft={canSend&&!input.trim()} receiptUpdate={receiptUpdate} onFollowup={(prompt,label,url,automatic)=>send(prompt,'chat',label,url,automatic)}/>
         {actions.length>0&&<div className={styles.actionList}><h2>Outreach to review</h2>{actions.map(action=><BrowserActionCard key={action.id} action={action} onReceipt={(action,receipt)=>setReceiptUpdate({action,receipt})} onConnection={url=>void send('Draft a short personalized LinkedIn connection invitation note (at most 200 characters) for '+url+'. Use our conversation and the profile we read; keep it as an editable connection card.','connection')} onEdit={next=>setActions(old=>old.map(current=>current.id===action.id?next:current))}/>)}</div>}
         <div className={styles.chat} aria-live="polite" aria-busy={busy}>
           {!messages.length&&<div className={styles.empty}>

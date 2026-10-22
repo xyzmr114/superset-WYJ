@@ -1,3 +1,5 @@
+> **Current pivot · 22 October 2026:** Read [PIVOT.md](../../PIVOT.md) and the [four-person handoff](../../WOULD_YOU_JUMP_HANDOFF.md). Private founder matchmaking is the current product. Older module notes below are implementation references; the current pivot and ownership take precedence.
+
 # Founder preparation framework — source notes
 
 Reviewed 2026-10-22. This is a public-source synthesis, not inside knowledge, an official application, or a scoring system. Other investor brands are intentionally absent from the product UI. General guidance is not attributed to super{set}.

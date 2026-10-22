@@ -1,3 +1,4 @@
+import {classifyMessages,type VisibleMessage} from '@/lib/agent/replies';
 import {randomBytes,createHash} from 'node:crypto';
 import {mkdir,readFile,writeFile,rename} from 'node:fs/promises';
 import path from 'node:path';
@@ -220,7 +221,7 @@ export async function readLinkedInConversation(id:string|undefined,url:string){
     await bubbles.first().waitFor({state:'visible',timeout:10000}).catch(()=>{});
     for(let i=0;i<await bubbles.count();i++){
       const bubble=bubbles.nth(i);let matches=false;
-      const links=bubble.locator('a[href*="/in/"]');
+      const links=bubble.locator('.msg-overlay-bubble-header a[href*="/in/"], .msg-thread__topcard a[href*="/in/"], .msg-thread__topcard-container a[href*="/in/"]');
       for(let j=0;j<await links.count();j++){
         const href=await links.nth(j).getAttribute('href');
         if(href)try{if(cleanProfile(new URL(href,'https://www.linkedin.com').href).replace(/\/$/,'')===target)matches=true;}catch{}
@@ -230,7 +231,27 @@ export async function readLinkedInConversation(id:string|undefined,url:string){
       await messages.first().waitFor({state:'visible',timeout:5000}).catch(()=>{});
       const text=(await messages.allInnerTexts()).join('\n\n').slice(-12000);
       if(!text.trim())throw new Error('No readable messages were visible in this conversation.');
-      return {url:page.url(),text};
+      const bodies=bubble.locator('.msg-s-event-listitem__body');
+      const rows:VisibleMessage[]=[];
+      for(let j=Math.max(0,await bodies.count()-60);j<await bodies.count();j++){
+        const body=bodies.nth(j);if(!await body.isVisible())continue;
+        const group=body.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," msg-s-message-group ")][1]');
+        let senderUrl:string|undefined;
+        if(await group.count()){
+          const sender=group.locator('a.msg-s-message-group__profile-link[href*="/in/"], a.msg-s-message-group__name[href*="/in/"]').first();
+          if(await sender.count()){const href=await sender.getAttribute('href');if(href)senderUrl=new URL(href,'https://www.linkedin.com').href;}
+        }
+        const event=body.locator('xpath=ancestor::*[@data-event-urn][1]');
+        const eventId=await event.count()?await event.getAttribute('data-event-urn'):null;
+        let time:string|null=null;
+        if(await group.count()){const stamp=group.locator('time, .msg-s-message-group__timestamp').first();if(await stamp.count())time=await stamp.getAttribute('datetime')??await stamp.innerText();}
+        rows.push({body:(await body.innerText()).slice(0,12000),senderUrl,eventId:eventId??undefined,time:time??undefined});
+      }
+      const structured=classifyMessages(target,rows);
+      const tail=bubble.locator('.msg-s-message-list__event').last();
+      const unreadableTail=await tail.count()>0&&await tail.locator('.msg-s-event-listitem__body').count()===0;
+      const latest=unreadableTail?undefined:structured.at(-1);
+      return {url:page.url(),text,messages:structured,latestIncoming:latest?.direction==='incoming'?latest:null,note:latest?.direction==='incoming'?'Latest message verified as incoming.':latest?.direction==='outgoing'?'The latest message is outgoing; no response is due.':'Could not verify the latest message sender; automatic drafting is paused for this conversation.'};
     }
     throw new Error('LinkedIn did not expose a readable conversation for this profile. You may need an accepted connection first.');
   });
