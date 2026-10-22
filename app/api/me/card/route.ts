@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { INTERESTS, SKILLS } from '@/lib/contracts';
-import { db, isFrozen } from '@/lib/server/store';
+import { cardRow, q } from '@/lib/server/store';
 import { HttpError, assertSameOrigin, parseBody, requireSession, route } from '@/lib/server/http';
 
 const Card = z.object({
@@ -16,12 +16,20 @@ const Card = z.object({
 
 export const PUT = route(async (req) => {
   assertSameOrigin(req);
-  const me = requireSession(req);
-  const { publishConsent: _consent, ...fields } = await parseBody(req, Card);
+  const me = await requireSession(req);
+  const c = await parseBody(req, Card);
   // Frozen once matched, so nobody consents to one card and gets shown another.
-  if (isFrozen(me.id)) throw new HttpError(409, 'CARD_FROZEN', 'Your card is locked after matching.');
-  const prev = db.cards.get(me.id);
-  const card = { ...fields, id: me.id, eventId: me.eventId, version: (prev?.version ?? 0) + 1 };
-  db.cards.set(me.id, card);
-  return NextResponse.json(card);
+  // The WHERE on the update makes the check and the write one atomic statement.
+  const [row] = await q(
+    `insert into cards (participant_id, event_id, alias, offers, seeks, interests, availability, approved_blurb)
+     values ($1, $2, $3, $4, $5, $6, $7, $8)
+     on conflict (participant_id) do update set
+       alias = excluded.alias, offers = excluded.offers, seeks = excluded.seeks, interests = excluded.interests,
+       availability = excluded.availability, approved_blurb = excluded.approved_blurb, version = cards.version + 1
+     where not exists (select 1 from matches where a = $1 or b = $1)
+     returning *`,
+    [me.id, me.eventId, c.alias, c.offers, c.seeks, c.interests, c.availability, c.approvedBlurb],
+  );
+  if (!row) throw new HttpError(409, 'CARD_FROZEN', 'Your card is locked after matching.');
+  return NextResponse.json(cardRow(row));
 });

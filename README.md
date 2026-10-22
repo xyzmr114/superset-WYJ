@@ -22,7 +22,7 @@ pnpm build
 
 ## Stack
 
-Next.js App Router + TypeScript, React, TanStack Query v5, plain CSS, Zod. Planned persistence: Supabase Postgres accessed by authenticated server routes. One optional model provider. No TanStack Start migration during the hackathon. QueryClient is wired; live query hooks are an integration task. Private intake stays outside Query cache.
+Next.js App Router + TypeScript, React, TanStack Query v5, plain CSS, Zod. Persistence: Supabase Postgres via `DATABASE_URL` (setup: [db/README.md](db/README.md)); in-memory PGlite when unset. One optional model provider. No TanStack Start migration during the hackathon. QueryClient is wired; live query hooks are an integration task. Private intake stays outside Query cache.
 
 ## What works
 
