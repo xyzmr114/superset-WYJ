@@ -7,7 +7,7 @@ Migration `005_ideas_and_trials.sql` adds immutable idea-pair briefs, idea colle
 The app uses plain Postgres through the `pg` driver. It doesn't use the supabase-js client or Supabase keys.
 
 - **`DATABASE_URL` set** → the app uses that Postgres (Supabase).
-- **`DATABASE_URL` empty** → the app starts an in-memory Postgres (PGlite). No setup, but data resets on restart, and it only works with a single server process. Fine for local dev, not for the demo.
+- **`DATABASE_URL` empty in development** → disk-backed PGlite in ignored `.wyj-local/data` (or `WYJ_DATA_DIR`). Profiles and session tokens survive restarts. One server process can own a data directory at a time. Production requires `DATABASE_URL`; it refuses ephemeral storage.
 
 ## 1. Create the project (free, ~5 minutes)
 

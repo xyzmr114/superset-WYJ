@@ -66,7 +66,7 @@ Sources:
 - `lib/server/` and `app/api/matches/`: participant sessions, reciprocal matches and mutual reveal.
 - `app/pitch/` and `components/pitch/`: shared pitch, versioned approvals and export.
 
-Current `/agent` and `/onboarding` both route to `components/private/PrivateWorkspace.tsx`; the previous outreach UI is no longer the main product. Shared backend state persists in configured Postgres. The PGlite fallback survives hot reload but resets on restart and supports one process. Earlier unpushed evidence/privacy experiments were saved in a named Git stash and are outside this pivot.
+Current `/agent` and `/onboarding` both route to `components/private/PrivateWorkspace.tsx`; the previous outreach UI is no longer the main product. Shared backend state persists in configured Postgres. Local PGlite survives hot reload and restart in `.wyj-local/data` and supports one process. Earlier unpushed evidence/privacy experiments were saved in a named Git stash and are outside this pivot.
 
 ## Match/reveal integration landed
 

@@ -2,7 +2,7 @@ import type { ApiError, MatchingCard, MatchView, IntroductionIdentity } from '@/
 // Only approved card fields and identity go to the server. Private intake never passes through here.
 export class ApiFailure extends Error {constructor(message:string,public status:number,public code?:string){super(message);}}
 async function call<T>(method:string,url:string,body?:unknown):Promise<T>{
- const response=await fetch(url,{method,headers:body===undefined?undefined:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});
+ const response=await fetch(url,{method,credentials:'same-origin',cache:'no-store',headers:body===undefined?undefined:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});
  if(!response.ok){const err=await response.json().catch(()=>null) as ApiError|null;throw new ApiFailure(err?.error?.message ?? `Request failed (${response.status})`,response.status,err?.error?.code);}
  return response.json();
 }
