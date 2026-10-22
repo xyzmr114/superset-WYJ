@@ -14,3 +14,4 @@ out/
 # Reproducibly generated local inference artifacts; prepare before deployment.
 public/models/laya/
 public/laya-runtime/
+.vercel

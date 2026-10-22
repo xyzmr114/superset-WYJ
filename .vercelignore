@@ -1,0 +1,6 @@
+.env*
+*.crt
+.wyj-browser/
+.wyj-runtime/
+.wyj-local/
+tui/

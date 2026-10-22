@@ -29,6 +29,8 @@ pnpm build
 
 Copy `.env.example` to `.env.local` for optional provider keys. Core matching and consent do not require a hosted model. Never commit credentials.
 
+Production deployment and environment setup: [DEPLOYMENT.md](DEPLOYMENT.md).
+
 Next.js App Router + TypeScript, React, TanStack Query v5, plain CSS, Zod. Persistence: Supabase Postgres via `DATABASE_URL` (setup: [db/README.md](db/README.md)); in-memory PGlite when unset. One optional model provider. No TanStack Start migration during the hackathon. QueryClient is wired; live query hooks are an integration task. Private intake stays outside Query cache.
 
 Laya is a local classifier candidate, not yet validated for founder matching. On the integration laptop it is installed in ignored `.wyj-local/venv`; checkpoint evaluation and the client adapter belong to Vernika. Details and limits are in [PIVOT.md](PIVOT.md).
