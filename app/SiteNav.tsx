@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
 
-// The landing page keeps the header minimal (wordmark + Get started); the app pages get the full nav.
+// The landing page keeps the header minimal (wordmark + Join); the app pages get the full nav.
 export default function SiteNav() {
   const home = usePathname() === '/';
   return (
@@ -11,7 +11,7 @@ export default function SiteNav() {
       {!home && <Link href="/matches">Founders</Link>}
       {!home && <Link href="/ideas">My ideas</Link>}
       {!home && <Link href="/plans">Plans</Link>}
-      <Link className="nav-cta" href="/join">Get started</Link>
+      <Link className="nav-cta" href="/join">Start here</Link>
     </nav>
   );
 }

@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import Elevation from './Elevation';
 import WhoSeesWhat from './WhoSeesWhat';
 import styles from './landing.module.css';
@@ -17,10 +16,10 @@ const ICONS = [
 ];
 
 const STEPS = [
-  {title: 'Write it privately', body: 'Paste your profile and notes. They stay on your laptop and are never sent to the server.'},
+  {title: 'Write it privately', body: 'Write your idea. Optionally paste your background for local skill suggestions; your background stays on your device.'},
   {title: 'Get suggested labels', body: 'A classifier on your own laptop suggests skills and interests. You review every one.'},
   {title: 'Approve your brief', body: 'An alias, your skills and one blurb you wrote. Edit anything and the approval resets.'},
-  {title: 'Two yeses, then names', body: 'See up to three complementary founders. Names unlock only if you both say yes.'},
+  {title: 'Two yeses, then names', body: 'See complementary founders. Names unlock only if you both say yes.'},
 ];
 
 const NEVER = [
@@ -202,10 +201,14 @@ export default function Home() {
         <div>
           <p className={styles.tag}>05 / Landing</p>
           <h2 className={styles.landTitle}>So, would you <em>jump?</em></h2>
-          <div className={styles.join}>
-            <Link className={styles.cta} href="/join">Create my founder profile <span aria-hidden="true">→</span></Link>
+          <form className={styles.join} action="/join" method="get">
+            <p className={styles.mono}>Your next chapter starts here</p>
+            <div className={styles.joinRow}>
+              
+              <button type="submit">Build my profile <span aria-hidden="true">→</span></button>
+            </div>
             <p className={styles.joinNote}>No account, no résumé, no announcement.</p>
-          </div>
+          </form>
         </div>
         <svg className={styles.ground} viewBox="0 0 1440 260" preserveAspectRatio="none" aria-hidden="true">
           <path fill="#e3dcc0" d="M0 150 L120 110 L230 135 L350 80 L470 125 L590 95 L720 140 L850 85 L980 128 L1100 100 L1230 138 L1340 108 L1440 130 L1440 260 L0 260Z" />
