@@ -83,9 +83,9 @@ export default function CardEditor({
         <input required maxLength={40} value={alias} onChange={e => setAlias(e.target.value)} />
       </label>
 
-      <MultiSelect legend="Skills I offer" suggestions={SKILL_SUGGESTIONS} selected={offers} onChange={setOffers} placeholder="Type or pick a skill…" />
-      <MultiSelect legend="Skills I'm looking for" suggestions={SKILL_SUGGESTIONS} selected={seeks} onChange={setSeeks} placeholder="Type or pick a skill…" />
-      <MultiSelect legend="Problem areas I care about" suggestions={INTEREST_SUGGESTIONS} selected={interests} onChange={setInterests} placeholder="Type or pick a problem area…" />
+      <MultiSelect legend="Skills I offer" suggestions={SKILL_SUGGESTIONS} selected={offers} onChange={setOffers} placeholder="Type or pick a skill…" max={5} />
+      <MultiSelect legend="Skills I'm looking for" suggestions={SKILL_SUGGESTIONS} selected={seeks} onChange={setSeeks} placeholder="Type or pick a skill…" max={5} />
+      <MultiSelect legend="Problem areas I care about" suggestions={INTEREST_SUGGESTIONS} selected={interests} onChange={setInterests} placeholder="Type or pick a problem area…" max={4} />
 
       <label>
         Availability
