@@ -1,9 +1,12 @@
 // Flat inline illustrations for the landing page: the plane, the jumper (freefall and
 // canopy poses in one drawing) and the landed figure. No image files.
 
-const INK = '#1d1a16';
+const INK = '#232424';
 const ACCENT = 'var(--jump-accent)';
-const CANOPY_LIGHT = '#fff7ea';
+const CANOPY = 'var(--jump-canopy)';
+const CANOPY_LIGHT = 'var(--jump-canopy-light)';
+const BODY = '#faf5ee';
+const WING = '#d9d1c8';
 
 /** Small plane flying right, door open on its side. */
 export function Plane({className}: {className?: string}) {
@@ -12,15 +15,15 @@ export function Plane({className}: {className?: string}) {
       {/* Contrail */}
       <path d="M0 74 C40 70 70 78 104 72" fill="none" stroke={INK} strokeOpacity=".18" strokeWidth="3" strokeLinecap="round" strokeDasharray="2 12" />
       {/* Far wing */}
-      <path d="M176 66 L214 22 L236 22 L222 66Z" fill="#d8cdb9" />
+      <path d="M176 66 L214 22 L236 22 L222 66Z" fill={WING} />
       {/* Tail */}
       <path d="M112 70 L96 30 L118 30 L146 66Z" fill={ACCENT} />
-      <path d="M104 74 L82 66 L88 80Z" fill="#d8cdb9" />
+      <path d="M104 74 L82 66 L88 80Z" fill={WING} />
       {/* Fuselage */}
-      <path d="M104 64 C130 56 250 54 300 60 C330 64 346 72 346 80 C346 88 330 94 300 96 C240 100 140 98 112 90 C100 86 98 70 104 64Z" fill={CANOPY_LIGHT} stroke={INK} strokeWidth="2.5" />
+      <path d="M104 64 C130 56 250 54 300 60 C330 64 346 72 346 80 C346 88 330 94 300 96 C240 100 140 98 112 90 C100 86 98 70 104 64Z" fill={BODY} stroke={INK} strokeWidth="2.5" />
       {/* Cockpit and windows */}
-      <path d="M300 64 C318 66 332 72 336 78 L304 78Z" fill="#9fb7c4" />
-      <g fill="#9fb7c4">
+      <path d="M300 64 C318 66 332 72 336 78 L304 78Z" fill="#8cb8d1" />
+      <g fill="#8cb8d1">
         <rect x="160" y="70" width="12" height="9" rx="3" />
         <rect x="184" y="70" width="12" height="9" rx="3" />
         <rect x="256" y="70" width="12" height="9" rx="3" />
@@ -30,7 +33,7 @@ export function Plane({className}: {className?: string}) {
       {/* Stripe */}
       <path d="M118 84 C170 88 250 88 330 84" fill="none" stroke={ACCENT} strokeWidth="4" strokeLinecap="round" />
       {/* Near wing */}
-      <path d="M196 86 L236 136 L262 136 L240 86Z" fill="#e8dfcd" stroke={INK} strokeWidth="2" strokeLinejoin="round" />
+      <path d="M196 86 L236 136 L262 136 L240 86Z" fill="#efe7dd" stroke={INK} strokeWidth="2" strokeLinejoin="round" />
       {/* Propeller */}
       <ellipse cx="348" cy="80" rx="3" ry="18" fill={INK} opacity=".55" />
     </svg>
@@ -45,7 +48,7 @@ export function Jumper({className}: {className?: string}) {
   return (
     <svg className={className} viewBox="0 0 120 170" aria-hidden="true">
       <g className="jump-canopy">
-        <path d="M8 62 C10 22 38 4 60 4 C82 4 110 22 112 62 C98 56 86 56 76 62 C68 56 52 56 44 62 C34 56 22 56 8 62Z" fill={ACCENT} />
+        <path d="M8 62 C10 22 38 4 60 4 C82 4 110 22 112 62 C98 56 86 56 76 62 C68 56 52 56 44 62 C34 56 22 56 8 62Z" fill={CANOPY} />
         <path d="M44 62 C46 30 52 12 60 4 C68 12 74 30 76 62 C68 56 52 56 44 62Z" fill={CANOPY_LIGHT} />
         <path d="M10 62 L54 116 M44 62 L57 114 M76 62 L63 114 M110 62 L66 116" stroke={INK} strokeWidth="1.2" strokeOpacity=".7" />
       </g>
@@ -65,7 +68,7 @@ export function Jumper({className}: {className?: string}) {
 export function Landed({className}: {className?: string}) {
   return (
     <svg className={className} viewBox="0 0 180 120" aria-hidden="true">
-      <path d="M70 108 C78 84 104 74 136 80 C158 84 172 96 176 108Z" fill={ACCENT} />
+      <path d="M70 108 C78 84 104 74 136 80 C158 84 172 96 176 108Z" fill={CANOPY} />
       <path d="M96 108 C102 92 116 84 132 84 C122 92 116 100 114 108Z" fill={CANOPY_LIGHT} />
       <path d="M58 70 C80 74 100 86 112 104" fill="none" stroke={INK} strokeWidth="1.2" strokeOpacity=".6" />
       <g fill="none" stroke={INK} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
