@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test \"lib/**/*.test.ts\" \"components/**/*.test.ts\""
+    "test": "tsx --test \"lib/**/*.test.ts\" \"components/**/*.test.ts\"",
+    "seed": "tsx scripts/seed-demo.ts"
   },
   "dependencies": {
     "next": "16.4.2",
