@@ -53,16 +53,22 @@ def build_questions():
     return q
 
 
+def build_brief_questions():
+    """Offered skills and interests only: the smoke test found sought skills and
+    availability too unreliable to suggest, so the founder enters those."""
+    return {k: v for k, v in build_questions().items() if k.startswith(("offers:", "interests:"))}
+
+
 def read_answers(result, threshold):
     answers = result["answers"]
     out = {"offers": [], "seeks": [], "interests": [], "confidence": {}}
     for key, answer in answers.items():
-        if key == "availability":
+        if key == "availability" or ":" not in key:
             continue
         kind, label = key.split(":", 1)
         p = float(answer["noul"])
         out["confidence"][key] = round(p, 3)
         if p >= threshold:
             out[kind].append(label)
-    out["availability"] = answers["availability"]["choice"]
+    out["availability"] = answers["availability"]["choice"] if "availability" in answers else None
     return out
