@@ -28,7 +28,9 @@ Initial verification: production build and TypeScript checks passed, 169 local t
 
 ## Features not configured
 
-The first deployment uses the manual reviewed-brief path. Browser Laya assets are generated locally, ignored by Git, and absent from this deployment. Preparing and hosting them is a separate step; see [browser Laya setup](scripts/browser-laya/README.md). Never send private intake text to a hosted classifier as a fallback.
+Laya and Bonsai weights and WASM files are hosted in the public `wyj-browser-models` Blob store, under the immutable `wyj-20261022` prefix. `public/model-assets.mjs` selects that public asset base. Builds download and checksum-verify the small runtime files using `scripts/browser-models-manifest.json`, then rebuild the workers from repository source. Weights stay outside Git and the website deployment. Blob write credentials are never shipped to browsers.
+
+Only fixed model/runtime GETs are redirected to Blob. Private text remains inside each browser worker. Bonsai requires WebGPU; device memory and first-download time still matter. Manual entry remains available. Never send private intake text to a hosted classifier as a fallback.
 
 Optional DeepSeek enhancement is not configured. To enable it, set the server-only `DEEPSEEK_API_KEY` and redeploy; preserve the existing exact-brief consent flow. Premium remains an unpaid preview.
 
@@ -39,7 +41,7 @@ The prepared public weights and ONNX runtimes stay ignored by Git. A Drive archi
 1. Prepare both model sets locally (`pnpm browser:prepare`, `pnpm bonsai:prepare`), or restore the shared Drive bundle from the repo root: `mkdir -p public` then `tar -xzf /path/to/WYJ-browser-models.tar.gz -C public`. Verify the archive with the accompanying SHA-256 file before extracting. No Python companion or model conversion is needed when restoring the prepared bundle. Run `pnpm bonsai:prepare` afterward to refresh the browser worker from current source; existing weights are reused. Alternatively apply the small shared Bonsai runtime update archive over `public/`.
 2. `pnpm models:upload` is a dry run; it lists the fixed public assets and total size.
 3. Create a public Vercel Blob store. Put its `BLOB_READ_WRITE_TOKEN` in ignored `.env.local`, then run `pnpm models:upload --upload`. This uploads public weights/runtime files only, with stable paths under a versioned prefix. It does not upload `.env`, profiles, contacts or private notes. Existing names are not overwritten; choose a new `MODEL_ASSET_PREFIX` for a new runtime version.
-4. Set the printed `MODEL_ASSET_BASE_URL` in the Vercel project and redeploy. Next proxies only the four fixed asset directories, so existing same-origin workers and their restrictive GET-only asset rules remain intact. No token is needed for public downloads; the write token stays server-side/local.
+4. Set the printed base URL in `public/model-assets.mjs`, update the checked manifest for that version, and redeploy. The small worker scripts stay on the website; their restrictive GET-only downloaders map fixed assets directly to Blob. No token is needed for public downloads; the write token stays server-side/local.
 5. Verify the hosted worker, WASM and weight files before inviting users. Actual hosted model execution still needs testing after the Blob upload. Drive share URLs are not substituted as runtime file URLs.
 
 ### Legacy cloud agent

@@ -13,7 +13,7 @@ await Promise.all(files.map(async(file)=>{const dest=`${dir}/${file}`;if(await s
 const require=createRequire(await realpath('node_modules/@huggingface/transformers/package.json'));
 const ortDir=path.dirname(require.resolve('onnxruntime-web/webgpu'));
 for(const filename of await readdir(ortDir)){if(filename.endsWith('.wasm')||/^ort-wasm.*\.mjs$/.test(filename)) await cp(path.join(ortDir,filename),path.join('public/bonsai-runtime',filename));}
-await build({entryPoints:['scripts/browser-bonsai/worker.mjs'],outfile:'public/bonsai-runtime/worker.mjs',bundle:true,platform:'browser',format:'esm',conditions:['browser'],target:'es2022',minify:false});
+await build({entryPoints:['scripts/browser-bonsai/worker.mjs'],outfile:'public/bonsai-runtime/worker.mjs',bundle:true,platform:'browser',format:'esm',conditions:['browser'],external:['/model-assets.mjs'],target:'es2022',minify:false});
 await cp('node_modules/@huggingface/transformers/LICENSE','public/bonsai-runtime/TRANSFORMERS-LICENSE');
 await cp('scripts/browser-laya/ORT-LICENSE','public/bonsai-runtime/ORT-LICENSE');
 const info=await Promise.all(files.map(async(file)=>({file,bytes:(await stat(`${dir}/${file}`)).size})));

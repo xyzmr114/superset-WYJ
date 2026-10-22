@@ -31,6 +31,8 @@ Copy `.env.example` to `.env.local` for optional provider keys. Core matching an
 
 Production deployment and environment setup: [DEPLOYMENT.md](DEPLOYMENT.md).
 
+Production browser models are served from Vercel Blob. `pnpm build` prepares checksum-verified runtimes; model weights stay outside Git and inference stays on the visitor's device. See [deployment setup](DEPLOYMENT.md).
+
 Next.js App Router + TypeScript, React, TanStack Query v5, plain CSS, Zod. Persistence: Supabase Postgres via `DATABASE_URL` (setup: [db/README.md](db/README.md)); disk-backed local PGlite when unset. One optional model provider. No TanStack Start migration during the hackathon. QueryClient is wired; live query hooks are an integration task. Private intake stays outside Query cache.
 
 Laya is a narrow local classifier, not a generative model or a validated founder assessment. Bonsai 1.7B supplies free browser-local idea wording. Details and limits are in [PIVOT.md](PIVOT.md).

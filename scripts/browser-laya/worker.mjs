@@ -1,4 +1,5 @@
-// Only fixed same-origin model/runtime GETs leave this worker. Profile text is never fetched or logged.
+import {MODEL_ASSET_BASE_URL} from '/model-assets.mjs';
+// Only fixed public model/runtime GETs leave this worker. Profile text is never fetched or logged.
 const scope = globalThis;
 scope.window = scope; // upstream Agent.load selects its browser provider using window presence.
 let agent;
@@ -9,7 +10,8 @@ const originalFetch=scope.fetch.bind(scope);
 scope.fetch=async(input,options)=>{
   const url=new URL(typeof input==='string'?input:input instanceof URL?input.href:input.url,scope.location.href);
   if(url.origin!==scope.location.origin || url.search || url.hash || options?.body || !(['/models/laya/encoder.onnx','/models/laya/encoder.onnx.data','/models/laya/head.onnx','/models/laya/head.onnx.data','/models/laya/tokenizer.json','/models/laya/tokenizer/tokenizer.json','/models/laya/rl_agent_config.json'].includes(url.pathname) || ['/laya-runtime/ort-wasm-simd-threaded.jsep.wasm','/laya-runtime/ort-wasm-simd-threaded.jsep.mjs','/laya-runtime/ort-wasm-simd-threaded.asyncify.wasm','/laya-runtime/ort-wasm-simd-threaded.asyncify.mjs'].includes(url.pathname)) || (options?.method && options.method!=='GET')) throw new Error(`Blocked runtime asset: ${url.origin === scope.location.origin ? url.pathname.slice(0,100) : 'foreign origin'}`);
-  const response=await originalFetch(input,{...options,credentials:'omit',referrerPolicy:'no-referrer'});
+  const target=MODEL_ASSET_BASE_URL ? MODEL_ASSET_BASE_URL+url.pathname : url.href;
+  const response=await originalFetch(target,{...options,credentials:'omit',referrerPolicy:'no-referrer'});
   if(!response.ok || !response.body) return response;
   const file=url.pathname.split('/').at(-1);
   if(!file.endsWith('.onnx')) return response;

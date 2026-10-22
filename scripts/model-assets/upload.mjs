@@ -9,4 +9,4 @@ if(!process.env.BLOB_READ_WRITE_TOKEN)throw new Error('Set BLOB_READ_WRITE_TOKEN
 let base;
 for(const {file,bytes} of plan.files){const contentType=file.endsWith('.mjs')||file.endsWith('.js')?'application/javascript':file.endsWith('.wasm')?'application/wasm':file.endsWith('.json')?'application/json':'application/octet-stream';const result=await put(`${prefix}/${file}`,createReadStream(`public/${file}`),{access:'public',addRandomSuffix:false,multipart:bytes>5*1024*1024,contentType,cacheControlMaxAge:31536000});base=result.url.slice(0,-file.length-1);console.log(`Uploaded ${file}`);}
 await put(`${prefix}/manifest.json`,JSON.stringify(plan,null,2),{access:'public',addRandomSuffix:false,contentType:'application/json',cacheControlMaxAge:31536000});
-console.log(`Set MODEL_ASSET_BASE_URL=${base} in Vercel, then redeploy.`);
+console.log(`Set MODEL_ASSET_BASE_URL to ${base} in public/model-assets.mjs, update scripts/browser-models-manifest.json, then redeploy.`);
