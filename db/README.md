@@ -1,3 +1,5 @@
+> **Current pivot · 22 October 2026:** Read [PIVOT.md](../PIVOT.md) and the [four-person handoff](../WOULD_YOU_JUMP_HANDOFF.md). Private founder matchmaking is the current product. Older module notes below are implementation references; the current pivot and ownership take precedence.
+
 # Database (Supabase Postgres)
 
 Schema: `db/migrations/*.sql`, applied in name order by `pnpm db:migrate`. Server code: `lib/server/store.ts`.

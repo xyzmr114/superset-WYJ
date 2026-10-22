@@ -31,16 +31,6 @@ export default function PrivateIntake() {
       </label>
 
       <label>
-        Months of personal runway <span className="muted">(optional)</span>
-        <input
-          inputMode="decimal"
-          value={profile.runway}
-          onChange={e => update({runway: e.target.value})}
-          placeholder="e.g. 9"
-        />
-      </label>
-
-      <label>
         Your non-negotiables <span className="muted">(optional)</span>
         <textarea
           value={profile.mustHaves}

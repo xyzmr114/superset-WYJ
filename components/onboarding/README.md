@@ -1,3 +1,5 @@
+> **Current pivot · 22 October 2026:** Read [PIVOT.md](../../PIVOT.md) and the [four-person handoff](../../WOULD_YOU_JUMP_HANDOFF.md). Private founder matchmaking is the current product. Older module notes below are implementation references; the current pivot and ownership take precedence.
+
 Anusha's reusable intake components.
 
 - `PrivateIntake.tsx` — the private panel. Reads/writes the in-memory private

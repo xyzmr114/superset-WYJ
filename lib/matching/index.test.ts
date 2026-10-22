@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rankCandidates, scorePair, MAX_MATCHES } from './index';
 import type { MatchingCard } from '../contracts';
-import { founderA, founderB, distractors, profiles, isSyntheticProfile } from '../../fixtures/profiles';
+import { founderA, founderB, distractors, profiles, allProfiles, isSyntheticProfile } from '../../fixtures/profiles';
 
 const me: MatchingCard = { id: 'a', eventId: 'event', alias: 'A', offers: ['engineering'], seeks: ['sales'], interests: ['developer-tools'], availability: 'weekends', approvedBlurb: '', version: 1 };
 
@@ -20,7 +20,7 @@ test('no matches: unrelated attendees return an empty list', () => {
 });
 
 test('excludes declined candidates', () => {
-  const result = rankCandidates(founderA, profiles, { declinedIds: [founderB.id] });
+  const result = rankCandidates(founderA, allProfiles, { declinedIds: [founderB.id] });
   assert.ok(!result.some(r => r.candidate.id === founderB.id));
 });
 
@@ -37,7 +37,7 @@ test('ignores duplicate candidate cards', () => {
 });
 
 test('score components are bounded and explained as heuristics', () => {
-  for (const other of profiles) {
+  for (const other of allProfiles) {
     const s = scorePair(founderA, other);
     assert.equal(s.score, s.components.reduce((n, c) => n + c.points, 0));
     assert.ok(s.score >= 0 && s.score <= 100);
@@ -61,8 +61,8 @@ test('availability: same 20, adjacent 10, far apart 0', () => {
 });
 
 test('demo: Founder A and Founder B rank each other first', () => {
-  const forA = rankCandidates(founderA, profiles);
-  const forB = rankCandidates(founderB, profiles);
+  const forA = rankCandidates(founderA, allProfiles);
+  const forB = rankCandidates(founderB, allProfiles);
   assert.equal(forA[0].candidate.id, founderB.id);
   assert.equal(forB[0].candidate.id, founderA.id);
   assert.equal(forA[0].score, 90);
@@ -70,13 +70,18 @@ test('demo: Founder A and Founder B rank each other first', () => {
 });
 
 test('demo: out-of-domain distractors fall below the threshold', () => {
-  const ids = rankCandidates(founderA, profiles).map(r => r.candidate.id);
+  const ids = rankCandidates(founderA, allProfiles).map(r => r.candidate.id);
   for (const d of distractors.filter(d => !d.interests.includes('developer-tools'))) assert.ok(!ids.includes(d.id), d.alias);
 });
 
+test('server pool is the four distractors; founders are exported separately', () => {
+  assert.deepEqual(profiles.map(p => p.id), distractors.map(p => p.id));
+  assert.ok(!profiles.some(p => p.id === founderA.id || p.id === founderB.id));
+});
+
 test('fixtures are six labeled synthetic profiles', () => {
-  assert.equal(profiles.length, 6);
-  for (const p of profiles) {
+  assert.equal(allProfiles.length, 6);
+  for (const p of allProfiles) {
     assert.ok(isSyntheticProfile(p));
     assert.match(p.approvedBlurb, /^Synthetic profile\./);
   }

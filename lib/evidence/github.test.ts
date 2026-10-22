@@ -141,3 +141,17 @@ test('failures are not cached: the next call retries live', async () => {
 test('every approved tag has a fixture', () => {
   for (const tag of ['developer-tools', 'payments', 'healthcare', 'climate']) assert.ok(evidenceFixture[tag]?.length, tag);
 });
+
+test('queries come only from mapped base tags, never from raw free text', async () => {
+  assert.deepEqual(approvedTags(['DevTools', 'Fintech', 'robotics']), ['developer-tools', 'payments']);
+  assert.deepEqual(approvedTags(['robotics', 'my secret startup idea']), []);
+  const f = fakeFetch(() => ok([]));
+  await searchPublicProjects(['DX', 'robotics', 'acme corp stealth'], { fetchImpl: f.impl, token: '' });
+  const allowed = new Set(['developer-tools', 'payments', 'healthcare', 'climate'].flatMap(t => queriesFor([t]).map(q => q.query)));
+  assert.ok(f.calls.length > 0);
+  for (const c of f.calls) {
+    const q = new URL(c.url).searchParams.get('q')!;
+    assert.ok(allowed.has(q), q);
+    assert.doesNotMatch(c.url, /robotics|acme|stealth/i);
+  }
+});

@@ -1,5 +1,8 @@
 import type { NextConfig } from 'next';
 
-// PGlite ships WASM + data files; load it from node_modules instead of bundling it.
-const config: NextConfig = { serverExternalPackages: ['@electric-sql/pglite'] };
+// pglite ships WASM + data files; playwright/opencode are server-only tools. Load all from node_modules.
+const config: NextConfig = {
+  outputFileTracingExcludes: { '/*': ['./.wyj-browser/**/*', './.wyj-runtime/**/*', './tui/**/*'] },
+  serverExternalPackages: ['@electric-sql/pglite', 'playwright', 'playwright-core', '@opencode-ai/sdk'],
+};
 export default config;

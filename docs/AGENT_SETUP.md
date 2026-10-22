@@ -1,40 +1,38 @@
-# Web agent setup
+# Setup for the private founder matchmaking pivot
 
-Implemented: `/agent`, a bounded tool loop using AI SDK, native Anthropic/Google adapters, compatible-endpoint adapters, a models.dev registry snapshot, streamed tool progress, GitHub search, example counterpart matching, founder research, and memo creation.
+Read [PIVOT.md](../PIVOT.md) and the [current four-person handoff](../WOULD_YOU_JUMP_HANDOFF.md) first. This replaces the earlier social/browser-agent setup as the product's primary path.
 
-## Credentials
+## Web app
 
-Set provider credentials in `.env.local`; restart Next.js. For OpenRouter:
-
-```dotenv
-OPENROUTER_API_KEY=your-key
-AGENT_PROVIDER=openrouter
-AGENT_MODEL=nvidia/nemotron-3.5-lightning:free
-# Set a room code before exposing a shared paid endpoint.
-AGENT_ACCESS_CODE=choose-a-room-code
+```sh
+pnpm install
+pnpm dev -- --port 3002
 ```
 
-The browser model picker uses the models.dev snapshot. The server resolves the adapter and looks for the provider's declared env variables. Credentials never enter browser responses. Unsupported native adapters are visibly unavailable; a catalog listing is not a guarantee the harness can execute it. Generic compatible providers use their catalog endpoint; Anthropic and Google use native SDKs. Common compatible endpoints also include Groq, xAI, Mistral, Together, and Cerebras. Actual provider quotas/model availability may differ from catalog metadata.
+Core session, matching and consent APIs use process memory and need no model key. Keep one server process running for the demo. `.env.local` may still contain ignored credentials used by earlier experiments; do not copy them into client code or commits.
 
-Catalog snapshot: `lib/agent/catalog.snapshot.json`, sourced from `https://models.dev/api.json?type=all` on 2026-10-22, MIT-licensed upstream. Only tool-capable text models are retained. Refresh deliberately, review endpoint changes, and commit a new snapshot; don't load remote code or redirect secrets using client-supplied URLs.
+## Local Laya evaluation — Vernika
 
-## Runtime
+The integration laptop has Python 3.12 and `laya==0.4.13` installed in `.wyj-local/venv`. That installation has not yet loaded weights or established founder-domain accuracy.
 
-The loop is capped at five model steps, eight tool calls, and 55 seconds. Client Stop aborts the request. At most three concurrent runs per server process. `AGENT_ACCESS_CODE` is a hackathon gate, not production identity/rate limiting. Before public scale, bind authenticated participant sessions and implement durable per-user quotas. Backend consent APIs are untouched.
+```sh
+.wyj-local/venv/bin/python -c "import laya; print(laya.__version__)"
+```
 
-Messages and the optionally included matching card are sent to the selected model provider. The onboarding private notes are never read. Chat history is held in browser memory. Only a memo explicitly opened in the editor is briefly transferred through sessionStorage; the editor removes that transfer key after loading it.
+On another machine, use Python >=3.10 in an isolated virtual environment and install Laya from its documented package. Model weights download on first inference. Keep environments, weights, caches and private text under ignored `.wyj-local/` or another ignored runtime directory.
 
-Example candidate data remains clearly identified; replace the candidate adapter with authenticated database results when Abhinav's backend is ready. Do not silently treat example candidates as real attendees. Public search results are untrusted context and only show technical alternatives, not customer demand.
+- Main docs: https://github.com/NandhaKishorM/laya
+- ONNX browser runtime: https://github.com/NandhaKishorM/laya/blob/main/laya-ts/README.md
+- Accuracy/negation limits: https://github.com/NandhaKishorM/laya/blob/main/BENCHMARKS.md
 
-Memo transfer opens a personal working draft with no approvals. It does not create a shared server pitch. After the actual match backend is ready, create a pitch via the existing authenticated endpoint and use its real ID.
+If using a companion, bind only `127.0.0.1`, restrict CORS to the configured WYJ origin and do not log bodies. The browser must call that user's own companion directly; do not proxy private profile text through the shared Next server. Tunnel/HTTPS/private-network browser behavior needs testing before claiming multi-device support.
 
-## Integration
+## Legacy code
 
-- Vernika: improve the system prompt and tool implementations in `lib/agent/runner.ts`; reuse your generation/evidence module when ready.
-- Abhinav: authenticate the agent endpoint and replace example matching with your participant-scoped database query.
-- Anusha: `/agent` is ready to link from the main experience. Provider selector uses TanStack Query.
-- Telegram: not implemented yet. Call this same runner from a separate adapter after participant linking is available; no fork required.
+The repo retains the previous OpenCode/browser/LinkedIn/TUI modules for recovery. They are not the private classifier and must not receive raw profiles in the new flow. Existing cloud profile-reading tools are not a privacy-preserving implementation of this pivot.
+
+The unpushed evidence-board experiment is preserved in the local Git stash named `WIP evidence board before consent-first pivot`. It is not part of the new implementation or something teammates need to apply.
 
 ## Verification
 
-`pnpm test` validates input boundaries, provider adapter selection, and memo rendering. A real model run requires configured credentials; don't call mocked responses a live provider test.
+Run `pnpm test`, `pnpm typecheck`, and the integration build after changes. Prove the privacy boundary by inspecting actual requests; prove reveal gating with independent participant sessions and an outsider session. Check that each approval binds to the exact identity fields and brief version approved.
