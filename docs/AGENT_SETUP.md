@@ -9,7 +9,7 @@ Set provider credentials in `.env.local`; restart Next.js. For OpenRouter:
 ```dotenv
 OPENROUTER_API_KEY=your-key
 AGENT_PROVIDER=openrouter
-AGENT_MODEL=anthropic/claude-haiku-4.5
+AGENT_MODEL=nvidia/nemotron-3.5-lightning:free
 # Set a room code before exposing a shared paid endpoint.
 AGENT_ACCESS_CODE=choose-a-room-code
 ```

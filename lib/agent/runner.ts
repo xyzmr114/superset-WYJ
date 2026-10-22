@@ -7,6 +7,7 @@ import {memoInput,renderMemo,type AgentEvent,type AgentInput} from './schema';
 export async function runAgent(input:AgentInput,model:LanguageModel,emit:(event:AgentEvent)=>void,signal:AbortSignal){
  const sources=new Map<string,{title:string;url:string}>();
  let calls=0;
+ let createdMemo=false;
  function progress(message:string){signal.throwIfAborted();if(++calls>8)throw new Error('Tool limit reached. Continue in a new message.');emit({type:'progress',message});}
  const result=await generateText({
   model,abortSignal:signal,maxOutputTokens:2200,maxRetries:1,stopWhen:isStepCount(5),
@@ -24,9 +25,9 @@ export async function runAgent(input:AgentInput,model:LanguageModel,emit:(event:
    }}),
    find_candidates:tool({description:'Rank example counterpart cards against the approved matching card. Does not access real attendees or reveal contact details.',inputSchema:z.object({}).strict(),execute:async()=>{progress('Comparing complementary skills');if(!input.card)return {question:'Create a matching card first, or tell the user which complementary skills to look for.'};return {pool:'examples',matches:rankCandidates({...input.card,id:'agent-user',eventId:'demo',version:1},profiles).map(({candidate,score})=>({alias:candidate.alias,offers:candidate.offers,seeks:candidate.seeks,interests:candidate.interests,score}))};}}),
    get_founder_framework:tool({description:'Retrieve source-backed solution memo questions and general customer-validation exercises.',inputSchema:z.object({}).strict(),execute:async()=>{progress('Checking the founder framework');for(const p of reviewPrompts)if(p.source)sources.set(p.source.url,{title:p.source.title,url:p.source.url});emit({type:'sources',sources:[...sources.values()]});return reviewPrompts;}}),
-   draft_solution_memo:tool({description:'Create a working Markdown memo from the conversation and retrieved evidence. Does not publish or grant approvals.',inputSchema:memoInput,execute:async(draft)=>{progress('Drafting your solution memo');const markdown=renderMemo(draft,[...sources.values()]);emit({type:'memo',markdown});return {created:true,message:'Working memo created; user can open the editor. Not shared or submitted.'};}})
+   draft_solution_memo:tool({description:'Create a working Markdown memo from the conversation and retrieved evidence. Does not publish or grant approvals.',inputSchema:memoInput,execute:async(draft)=>{progress('Drafting your solution memo');const team=input.card?`${input.card.alias}: offers ${input.card.offers.join(', ')}; seeks ${input.card.seeks.join(', ')}. Experience and commitments still need confirmation.`:'Founder skills and experience have not been supplied. Confirm engineering and commercial responsibilities with the actual team.';const markdown=renderMemo({...draft,team},[...sources.values()]);createdMemo=true;emit({type:'memo',markdown});return {created:true,message:'Working memo created; user can open the editor. Not shared or submitted.'};}})
   }
  });
- emit({type:'answer',text:result.text||'I completed this research pass. Review the tool results or ask me to continue.'});
+ emit({type:'answer',text:createdMemo?'Your working solution memo is ready. Open the pitch editor to review the hypotheses, sources, and next experiment.':result.text||'I completed this research pass. Review the tool results or ask me to continue.'});
  emit({type:'done'});
 }

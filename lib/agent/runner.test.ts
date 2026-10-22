@@ -15,7 +15,7 @@ test('agent executes tools and carries their results into subsequent model steps
  await runAgent({provider:'test',model:'test',messages:[{role:'user',content:'Draft my memo'}]},model,e=>events.push(e),new AbortController().signal);
  assert.equal(model.doGenerateCalls.length,3);
  assert.ok(model.doGenerateCalls[1].prompt.some(m=>m.role==='tool'));
- const memo=events.find(e=>e.type==='memo');assert.ok(memo&&memo.type==='memo');assert.match(memo.markdown,/superset.com/);
+ const memo=events.find(e=>e.type==='memo');assert.ok(memo&&memo.type==='memo');assert.match(memo.markdown,/superset.com/);assert.match(memo.markdown,/Founder skills and experience have not been supplied/);assert.doesNotMatch(memo.markdown,/Skills to confirm/);
  assert.equal(events.at(-1)?.type,'done');
 });
 test('repeated tool requests stop at the step budget',async()=>{

@@ -9,10 +9,10 @@ export type AgentEvent={type:'progress';message:string}|{type:'sources';sources:
 export const memoInput=z.object({title:z.string().min(1).max(150),problem:z.string().max(2000),customer:z.string().max(1000),solution:z.string().max(2000),team:z.string().max(1500),whyNow:z.string().max(1500),experiment:z.string().max(2000),unknowns:z.array(z.string().max(500)).max(8)}).strict();
 export function renderMemo(input:z.infer<typeof memoInput>,sources:{title:string;url:string}[]){return `# ${input.title}
 
-## Problem
+## Problem hypothesis
 ${input.problem}
 
-## Customer and buyer
+## Proposed customer and buyer
 ${input.customer}
 
 ## First product
@@ -21,7 +21,7 @@ ${input.solution}
 ## Team
 ${input.team}
 
-## Why now
+## Timing hypothesis
 ${input.whyNow}
 
 ## First experiment
