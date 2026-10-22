@@ -14,9 +14,10 @@ export const POST = route(async (req) => {
   const existing = await myMatches(me.id);
   const paired = new Set(existing.map((m) => otherOf(m, me.id)));
   const declined = new Set(existing.filter((m) => m.declinedBy).map((m) => otherOf(m, me.id)));
-  const others = (await q('select * from cards where event_id = $1 and participant_id <> $2', [me.eventId, me.id]))
+  const others = (await q('select c.* from cards c join participants p on p.id = c.participant_id where c.event_id = $1 and c.participant_id <> $2 and p.token_hash is not null', [me.eventId, me.id]))
     .map(cardRow).filter((c) => !declined.has(c.id));
   for (const { candidate, score, sharedInterests } of rankCandidates(mine, others)) {
+    if (!sharedInterests.length) continue;
     if (paired.has(candidate.id)) continue; // idempotent
     // Mapped tags only; evidence search drops custom free-text tags.
     const evidence = await evidenceFor(sharedInterests.length ? sharedInterests : mine.interests);

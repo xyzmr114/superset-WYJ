@@ -24,7 +24,8 @@ test('base tags map to themselves; synonyms map to existing base tags only', () 
     ['BD', 'sales'], ['account exec', 'sales'], ['Customer discovery', 'product'], ['PM', 'product'], ['Data Science', 'data'], ['AI/ML', 'data']] as const) {
     assert.deepEqual(mapTag(input, 'skill'), { original: input, tag, via: 'synonym' }, input);
   }
-  for (const [input, tag] of [['DevTools', 'developer-tools'], ['DX', 'developer-tools'], ['Fintech', 'payments'], ['billing', 'payments']] as const) {
+  for (const [input, tag] of [['DevTools', 'developer-tools'], ['DX', 'developer-tools'], ['Fintech', 'payments'], ['billing', 'payments'],
+    ['Travel tech', 'travel'], ['flight booking', 'travel'], ['Hotels', 'travel'], ['AI agents', 'ai-agents'], ['agentic', 'ai-agents'], ['Agent infrastructure', 'ai-agents'], ['MCP', 'ai-agents']] as const) {
     assert.equal(mapTag(input, 'interest')?.tag, tag, input);
   }
   assert.deepEqual(mapTag('Robotics', 'interest'), { original: 'Robotics', tag: 'robotics', via: 'custom' });

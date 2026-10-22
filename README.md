@@ -17,7 +17,7 @@ Private profile processing must not fall back to a hosted model. A model suggest
 
 ## Stack and run
 
-Next.js 16, React, TypeScript, TanStack Query and Zod. Existing matching and opportunity proposals are deterministic. The current backend uses single-process memory; no hosted database is required for the room demo. It resets when the server restarts.
+Next.js 16, React, TypeScript, TanStack Query and Zod. Existing matching and opportunity proposals are deterministic. The backend uses Postgres when `DATABASE_URL` is configured; otherwise it uses single-process PGlite and resets when the server restarts.
 
 ```sh
 pnpm install
@@ -35,6 +35,6 @@ Laya is a local classifier candidate, not yet validated for founder matching. On
 
 ## Implementation status
 
-Reusable code already includes private browser-memory intake, a reviewed matching card, session-scoped APIs, matching, mutual reveal and versioned joint pitch approvals. The new private workspace, actual local classifier path and stronger per-pair identity snapshots are assigned in the handoff; this docs update does not claim they are implemented.
+Reusable code already includes private browser-memory intake, a reviewed matching card, session-scoped APIs, matching, mutual reveal and versioned joint pitch approvals. The match/reveal integration now includes exact per-pair identity snapshots, a review checkbox, withdrawal before mutual reveal, live status polling and a gated joint pitch. The new private workspace and actual local classifier path remain assigned in the handoff.
 
 The existing `/agent` page still shows the previous outreach product until the new workspace replaces it. Browser automation, reply monitoring, OpenCode/OpenTUI and social posting are legacy code outside the new critical path.

@@ -1,3 +1,4 @@
+import { mutuallyApproved } from './intro-consent';
 import type { PitchView } from '@/lib/contracts';
 import { buildPitchMarkdown } from '@/lib/generation';
 import { cardRow, pitchRow, q, type Match, type Pitch } from './store';
@@ -6,7 +7,7 @@ import { getMyMatch, otherOf } from './matches';
 
 export type Ctx = { params: Promise<{ id: string }> };
 
-export const isRevealed = (m: Match) => m.declinedBy === null && m.approvals.has(m.a) && m.approvals.has(m.b);
+export const isRevealed = mutuallyApproved;
 export const conflict = (code: string, message: string) => new HttpError(409, code, message);
 export { getMyMatch as myMatch, otherOf };
 

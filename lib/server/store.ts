@@ -18,6 +18,7 @@ export type Identity = { displayName: string; contact: string };
 export type Match = {
   id: string; eventId: string; a: string; b: string; score: number;
   opportunity: Opportunity; evidence: Evidence[];
+  introConsents?: Record<string,{identity:Identity;briefVersion:number;approvedAt:string}>;
   approvals: Set<string>; declinedBy: string | null;
   // participantId -> identity that person released for THIS pair, frozen at approval. Internal only.
   snapshots: Record<string, Identity | null>;
@@ -94,6 +95,9 @@ export const matchRow = (r: Row): Match => ({
   approvals: new Set([r.a_approved ? r.a : null, r.b_approved ? r.b : null].filter((x): x is string => !!x)),
   declinedBy: r.declined_by,
   snapshots: { [r.a]: r.a_identity ?? null, [r.b]: r.b_identity ?? null },
+  introConsents: Object.fromEntries(['a', 'b'].flatMap(side =>
+    r[side + '_approved'] && r[side + '_identity'] && r[side + '_approved_at'] && r[side + '_card_version'] != null
+      ? [[r[side], { identity: r[side + '_identity'], approvedAt: new Date(r[side + '_approved_at']).toISOString(), briefVersion: r[side + '_card_version'] }]] : [])),
 });
 
 export const pitchRow = (r: Row, m: Match): Pitch => ({
