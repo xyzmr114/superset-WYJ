@@ -58,7 +58,7 @@ Only allowlisted category labels cross this boundary. Do not generate a free-for
 
 Preferred browser-local inference uses `laya-ts` with local ONNX inference. If a Python companion is faster, the browser talks directly to the user's own loopback endpoint, suggested `127.0.0.1:11435`, not the shared Next server. Allow only the configured app Origin; bind loopback; no payload logs. Anusha should accept this contract and show editable manual fields when unavailable.
 
-### Introduction consent: backend addition proposed for Abhinav
+### Introduction consent: implemented integration contract
 
 ```json
 {
@@ -85,3 +85,15 @@ Frontend: first click opens an identity preview; the explicit approval button su
 ## Delivery
 
 Pull before starting and before pushing. Suggested branches remain `feat/backend`, `feat/frontend`, `feat/matching`, `feat/integration`. Existing local integration branch is `feat/pitch-workspace`. Run appropriate tests and `pnpm typecheck`; integration runs the build. Never commit keys, browser profiles, classifier weights or private input fixtures.
+
+## Integration update — preserve on merge
+
+You + Codex have integrated `/matches`, the consent preview, waiting/passed/introduced filters, 3-second status polling, withdrawal and the joint-pitch link. Tested using two independent browser sessions.
+
+**Abhinav:** the required backend bridge was implemented alongside the UI. Preserve `lib/server/intro-consent.ts`, `Match.introConsents` in `store.ts`, the consent route, snapshot-based `toView()` in `matches.ts`, and the shared `mutuallyApproved()` gate in `pitches.ts`. Approve now requires `identity`; decline and withdraw carry no identity. Withdraw clears only the caller's pending consent. A repeated approval is idempotent only for the same details; different details require withdrawal first. Once both reveal, withdrawal cannot recall disclosed details. Legacy approval bits alone never unlock identity or pitch. `myConsent` exposes receipt metadata only, never the counterpart's pending snapshot.
+
+Candidate generation now excludes built-in fixture participants and requires at least one shared approved interest. Current server fixtures remain for older tests; they are not consent participants in the new flow.
+
+`lib/server/intro-consent.test.ts` covers gating, outsider access, immutable snapshots, withdrawal and legacy approvals. `scripts/acceptance-pivot.ts` is the current live API acceptance script; the older `acceptance.ts` uses the previous consent shape and is not the pivot acceptance test.
+
+**Remaining owners:** Anusha's private workspace still needs to replace the old `/agent` screen and early global identity collection; Vernika's real local classification/evaluation remains pending. Do not describe either as completed by this integration.

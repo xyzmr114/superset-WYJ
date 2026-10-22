@@ -10,8 +10,9 @@ export const POST = route(async (req) => {
   const me = requireSession(req);
   const mine = db.cards.get(me.id);
   if (!mine) throw new HttpError(409, 'NO_CARD', 'Publish your card first.');
-  const others = [...db.cards.values()].filter((c) => c.eventId === me.eventId && c.id !== me.id && !findPair(me.id, c.id)?.declinedBy);
+  const others = [...db.cards.values()].filter((c) => c.eventId === me.eventId && c.id !== me.id && db.participants.get(c.id)?.tokenHash !== null && !findPair(me.id, c.id)?.declinedBy);
   for (const { candidate, score, sharedInterests } of rankCandidates(mine, others)) {
+    if (!sharedInterests.length) continue; // A shared direction is required for a founder proposal.
     if (findPair(me.id, candidate.id)) continue; // idempotent
     const domain = sharedInterests[0] ?? mine.interests[0]; // mapped tag; evidence search maps again and drops custom tags
     const evidence = await evidenceFor(domain);

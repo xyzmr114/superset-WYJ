@@ -30,3 +30,11 @@ Current product: see `PIVOT.md`. Roles and implementation ownership: see `WOULD_
 Local inference must really run on the user's device. Pseudonyms are not guaranteed anonymity. No contact is revealed before both approvals. The demo does not send external messages, book meetings, promise investment or claim a match predicts founder success.
 
 The current server store is process memory. Avoid restarting it between the two participants joining and revealing. Rehearse with actual independently controlled sessions; do not simulate the other person's consent.
+
+## Implemented match/reveal rehearsal
+
+Use `/matches` in independent browsers after publishing the briefs. Interested opens a preview without submitting consent. Enter the exact chosen name/contact, check the pair-specific approval, and submit. Show the waiting screen and optionally withdraw. Independently approve in the second browser; the first screen updates automatically. Use Introduced to focus the pair, then Build a joint pitch. Draft generation and export approval remain separate steps.
+
+Live API verification: `pnpm exec tsx scripts/acceptance-pivot.ts http://localhost:3002` creates isolated test participants and checks 21 conditions including one-sided JSON privacy, outsider denial, withdrawal, immutable snapshots and the pitch gate. It adds test briefs to the running in-memory room. Run only against your development server.
+
+The match/reveal browser walkthrough passed. The current `/agent` is still the legacy screen until Anusha lands the private workspace. Laya inference is not part of the verified walkthrough yet.

@@ -1,141 +1,41 @@
 "use client";
+import {useEffect,useState} from 'react';
 import Link from 'next/link';
-import type {MatchView} from '@/lib/contracts';
+import type {MatchView,IntroductionIdentity} from '@/lib/contracts';
 import type {CheckItem} from '@/lib/client/private-profile';
 import JumpChecklist from './JumpChecklist';
 import EvidenceList from './EvidenceList';
 import styles from './matches.module.css';
 
-// Renders one candidate: complementary skills, a source-linked opportunity,
-// uncertainties, the local checklist, and the consent/reveal controls.
-//
-// Reveal rule: `match.revealedContact` is shown ONLY when it is present on the
-// authorized match response. We never fetch identity early and hide it with CSS.
-// A reveal can still be *simulated* for offline demos when `onSimulateApproval`
-// is passed; that path is clearly badged SYNTHETIC via `synthetic`.
-export default function MatchCard({
-  match,
-  checklist,
-  synthetic,
-  onRequestIntro,
-  onDecline,
-  onSimulateApproval,
-  pitchHref,
-}: {
-  match: MatchView;
-  checklist: CheckItem[];
-  synthetic: boolean;
-  onRequestIntro: () => void;
-  onDecline: () => void;
-  onSimulateApproval?: () => void;
-  pitchHref?: string;
-}) {
-  const {candidate, score, opportunity, evidence, status, revealedContact} = match;
-
-  return (
-    <article>
-      <span className="badge">{score}/100 HEURISTIC FIT</span>
-      <h2>{candidate.alias}</h2>
-      <p>{candidate.approvedBlurb}</p>
-
-      <div className={styles.skills}>
-        <span><b>Offers</b>{candidate.offers.join(', ')}</span>
-        <span><b>Seeks</b>{candidate.seeks.join(', ')}</span>
-      </div>
-
-      <hr />
-
-      <h3>{opportunity.title}</h3>
-      <p>{opportunity.problemHypothesis}</p>
-
-      {opportunity.whyThisPair.length > 0 && (
-        <div className={styles.block}>
-          <h4>WHY THIS PAIR</h4>
-          <ul className={styles.list}>
-            {opportunity.whyThisPair.map((reason, i) => <li key={i}>{reason}</li>)}
-          </ul>
-        </div>
-      )}
-
-      {opportunity.unknowns.length > 0 && (
-        <div className={styles.block}>
-          <h4>STILL UNKNOWN</h4>
-          <ul className={styles.list}>
-            {opportunity.unknowns.map((unknown, i) => <li key={i}>{unknown}</li>)}
-          </ul>
-        </div>
-      )}
-
-      <div className={styles.block}>
-        <h4>FIRST EXPERIMENT</h4>
-        <p className="muted">{opportunity.nextExperiment}</p>
-      </div>
-
-      <EvidenceList evidence={evidence} />
-
-      <JumpChecklist items={checklist} />
-
-      <hr />
-
-      {status === 'suggested' && (
-        <div className={styles.cardActions}>
-          <button onClick={onRequestIntro}>Request an introduction</button>
-          <button className={styles.declineBtn} onClick={onDecline}>Not now</button>
-        </div>
-      )}
-
-      {status === 'pending' && !match.myIntroApproval && (
-        <>
-          <div className={styles.waiting}>
-            <strong>They&apos;d like an introduction.</strong>
-            <br />
-            Names and contact details are revealed to both of you only if you approve too.
-          </div>
-          <div className={styles.cardActions}>
-            <button onClick={onRequestIntro}>Approve introduction</button>
-            <button className={styles.declineBtn} onClick={onDecline}>Decline</button>
-          </div>
-        </>
-      )}
-
-      {status === 'pending' && match.myIntroApproval && (
-        <>
-          <div className={styles.waiting}>
-            <strong>Waiting for the other person…</strong>
-            <br />
-            You approved an introduction. Names and contact details stay hidden until they approve
-            too. Either of you can still decline before that happens.
-          </div>
-          <div className={styles.cardActions}>
-            {onSimulateApproval && (
-              <button type="button" className={styles.synthBtn} onClick={onSimulateApproval}>
-                ▷ Simulate their approval (synthetic demo)
-              </button>
-            )}
-            <button className={styles.declineBtn} onClick={onDecline}>Withdraw</button>
-          </div>
-        </>
-      )}
-
-      {status === 'revealed' && revealedContact && (
-        <div className={styles.revealed}>
-          <h4>INTRODUCTION {synthetic ? '· SYNTHETIC DEMO — NOT A REAL REVEAL' : 'APPROVED BY BOTH'}</h4>
-          <p>
-            <strong>{revealedContact.displayName}</strong>
-            <br />
-            {revealedContact.contact}
-          </p>
-          <p className="muted">
-            Once seen, an introduction can&apos;t be un-seen — we don&apos;t promise to erase it from
-            anyone&apos;s memory.
-          </p>
-          {pitchHref && !synthetic && <Link className="button" href={pitchHref}>Shape a joint pitch →</Link>}
-        </div>
-      )}
-
-      {status === 'declined' && (
-        <p className={styles.declined}>Introduction declined. This pairing won&apos;t be surfaced again.</p>
-      )}
-    </article>
-  );
+export default function MatchCard({match,checklist,onRequestIntro,onDecline,onWithdraw,pitchHref,busy=false}:{match:MatchView;checklist:CheckItem[];onRequestIntro:(identity:IntroductionIdentity)=>void;onDecline:()=>void;onWithdraw:()=>void;pitchHref?:string;busy?:boolean}){
+ const {candidate,opportunity,evidence,status,revealedContact}=match;
+ const [review,setReview]=useState(false);const [name,setName]=useState('');const [contact,setContact]=useState('');const [approved,setApproved]=useState(false);const [copied,setCopied]=useState(false);
+ useEffect(()=>{if(match.myIntroApproval||status==='declined'){setReview(false);setName('');setContact('');setApproved(false);}},[match.myIntroApproval,status]);
+ const title=status==='revealed'?'You both said yes':status==='declined'?'Passed':match.myIntroApproval?'Waiting for their yes':match.theirIntroApproval?'They’re interested':'Worth a conversation?';
+ async function copyAgenda(){await navigator.clipboard.writeText(`A 15-minute founder introduction\n\n1. What are we each trying to build?\n2. Where do our skills complement each other?\n3. What can we try together in 48 hours?\n\nSuggested experiment: ${opportunity.nextExperiment}`);setCopied(true);}
+ return <article className={styles.matchCard}>
+  <div className={styles.cardHeader}><span className="badge">{title}</span><span className="muted">Brief v{candidate.version}</span></div>
+  <p className="eyebrow">APPROVED FOUNDER BRIEF</p><h2>{candidate.alias}</h2><p className={styles.blurb}>{candidate.approvedBlurb}</p>
+  <div className={styles.tags}>{candidate.interests.map(tag=><span key={tag}>{tag}</span>)}</div>
+  <div className={styles.skills}><span><b>Brings</b>{candidate.offers.join(', ')}</span><span><b>Looking for</b>{candidate.seeks.join(', ')}</span><span><b>Time</b>{candidate.availability.replaceAll('_',' ')}</span></div>
+  <div className={styles.block}><h4>WHY MEET?</h4><ul className={styles.list}>{opportunity.whyThisPair.map((reason,i)=><li key={i}>{reason}</li>)}</ul></div>
+  <ol className={styles.consentSteps} aria-label="Introduction consent status"><li>✓ Brief shared</li><li>{match.myIntroApproval?'✓':'○'} Your approval</li><li>{match.theirIntroApproval?'✓':'○'} Their approval</li></ol>
+  {status!=='revealed'&&status!=='declined'&&<p className="muted">Names and contact details stay outside this match response until both of you approve.</p>}
+  {status==='pending'&&!match.myIntroApproval&&<p className={styles.waiting}>They would like to meet you. You decide whether to share your details for this introduction.</p>}
+  {(status==='suggested'||status==='pending'&&!match.myIntroApproval)&&!review&&<div className={styles.cardActions}><button disabled={busy} onClick={()=>setReview(true)}>Interested · review introduction →</button><button disabled={busy} className={styles.declineBtn} onClick={onDecline}>Pass</button></div>}
+  {review&&!match.myIntroApproval&&status!=='declined'&&<form className={styles.consentReview} onSubmit={e=>{e.preventDefault();if(approved&&name.trim()&&contact.trim())onRequestIntro({displayName:name.trim(),contact:contact.trim()});}}>
+   <p className="eyebrow">THIS INTRODUCTION ONLY</p><h3>Choose what {candidate.alias} can see.</h3>
+   <label htmlFor={'intro-name-'+match.id}>Name to reveal<input id={'intro-name-'+match.id} value={name} maxLength={80} autoComplete="off" required disabled={busy} onChange={e=>{setName(e.target.value);setApproved(false);}}/></label>
+   <label htmlFor={'intro-contact-'+match.id}>Contact to reveal<input id={'intro-contact-'+match.id} value={contact} maxLength={200} autoComplete="off" required disabled={busy} placeholder="An email, LinkedIn URL or contact you choose" onChange={e=>{setContact(e.target.value);setApproved(false);}}/></label>
+   <div className={styles.exactPreview}><strong>Exact details for this pairing</strong><p>{name.trim()||'Your chosen name'}<br/>{contact.trim()||'Your chosen contact'}</p><small>Recipient: {candidate.alias} · brief v{candidate.version}</small></div>
+   <label className="check"><input type="checkbox" checked={approved} disabled={busy} onChange={e=>setApproved(e.target.checked)}/>I approve revealing these exact details to {candidate.alias}, only if they approve this introduction too.</label>
+   <div className={styles.cardActions}><button disabled={busy||!approved||!name.trim()||!contact.trim()}>{busy?'Saving approval…':'Approve these details for this intro'}</button><button type="button" className={styles.quiet} disabled={busy} onClick={()=>{setReview(false);setName('');setContact('');setApproved(false);}}>Cancel</button></div>
+  </form>}
+  {status==='pending'&&match.myIntroApproval&&<div className={styles.waiting}><strong>Your approval is saved. Their details are still hidden.</strong><p>You can withdraw before they approve. Nothing has been sent outside WYJ.</p><button className={styles.quiet} disabled={busy} onClick={onWithdraw}>Withdraw my approval</button></div>}
+  {match.myConsent&&<details className={styles.details}><summary>Your consent receipt</summary><p className="muted">Scope: this pairing only · your brief v{match.myConsent.briefVersion}<br/>Fields: name and contact<br/>Approved: {new Date(match.myConsent.approvedAt).toLocaleString()}</p></details>}
+  {status==='revealed'&&revealedContact&&<div className={styles.revealed}><p className="eyebrow">MUTUAL INTRODUCTION</p><h3>{revealedContact.displayName}</h3><p className={styles.contact}>{revealedContact.contact}</p><p className="muted">These are the details they selected for this pairing. Your private goals remain on your device.</p><h4>Start with 15 minutes.</h4><p>Compare what you want to build, what each of you brings, and one experiment to try together.</p><div className={styles.cardActions}><button className={styles.quiet} onClick={()=>void copyAgenda().catch(()=>setCopied(false))}>{copied?'Agenda copied':'Copy intro agenda'}</button>{pitchHref&&<Link className="button" href={pitchHref}>Build a joint pitch →</Link>}</div><p className="muted">Arrange the meeting together. WYJ has not sent a message or booked a meeting.</p></div>}
+  {status==='declined'&&<p className={styles.declined}>This pairing is closed. No new identity details will be shared.</p>}
+  <details className={styles.details}><summary>A first experiment and public evidence</summary><h4>{opportunity.title}</h4><p>{opportunity.problemHypothesis}</p><p>{opportunity.nextExperiment}</p><EvidenceList evidence={evidence}/>{opportunity.unknowns.length>0&&<><h4>Questions to explore</h4><ul className={styles.list}>{opportunity.unknowns.map((unknown,i)=><li key={i}>{unknown}</li>)}</ul></>}</details>
+  <details className={styles.details}><summary>My private fit checklist · stays on this device</summary><JumpChecklist items={checklist}/></details>
+ </article>;
 }
