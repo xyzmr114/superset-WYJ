@@ -73,6 +73,6 @@ export default function PrivateWorkspace(){
     <div className={styles.bottom}><button className={styles.secondary} onClick={()=>advance(1)}>← Edit partner preferences</button><button disabled={!consent||!brief.alias.trim()||!ideaReady||busy} onClick={()=>void publish()}>{busy?'Publishing…':'Publish & find founders →'}</button></div>
     {error&&<p className={styles.error} role="alert">{error} <Link href="/plans">Plans</Link></p>}
    </article>}
-  </div><aside className={styles.preview}><div className={styles.previewTitle}><span>What other founders see</span><span>● Live preview</span></div><FounderProfile profile={brief} preview/><p className={styles.privacy}>Name and contact hidden until mutual approval.</p></aside></div>
+  </div><aside className={styles.preview}><div className={styles.previewTitle}><span>What other founders see</span><span>Updates as you type</span></div><FounderProfile profile={brief} preview/></aside></div>
  </section>;
 }

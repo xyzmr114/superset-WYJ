@@ -3,7 +3,6 @@
 .page {
   position: relative;
   z-index: 1;
-  --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
   padding-bottom: 0;
 }
 /* The descent: pale sky → sage haze → warm sand, full-bleed behind everything (incl. the header). */
@@ -15,11 +14,11 @@
   bottom: -56px;
   left: calc(50% - 50vw);
   width: 100vw;
-  background: linear-gradient(180deg, #cfdcd6 0%, #dfe7dc 14%, #eef0e1 34%, #f4f1e1 56%, #f6ecd2 78%, #f1e2bf 100%);
+  background: linear-gradient(180deg, #b3d0ec 0%, #c9dcf0 14%, #e4edf7 34%, #eef4fa 56%, #edf3fa 78%, #e6eef7 100%);
 }
 .page em {
   font-style: italic;
-  color: var(--primary);
+  color: inherit; /* one colour for the whole title, incl. "Jump?" */
 }
 .mono {
   margin: 0;
@@ -28,7 +27,7 @@
   font-weight: 500;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #4e5a4c;
+  color: #4a5566;
 }
 
 
@@ -41,7 +40,7 @@
   z-index: 3;
   transform: translateY(-50%);
   padding: 22px 0 22px 14px;
-  border-left: 1px solid #3f4a3e;
+  border-left: 1px solid #3b4656;
   font-family: var(--mono);
   text-transform: uppercase;
   pointer-events: none;
@@ -53,7 +52,7 @@
   display: block;
   font-size: 9.5px;
   letter-spacing: 0.14em;
-  color: #6b7466;
+  color: #677284;
 }
 .elevation b {
   display: block;
@@ -61,7 +60,7 @@
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.1em;
-  color: #19191a;
+  color: #0e1621;
   font-variant-numeric: tabular-nums;
 }
 
@@ -143,7 +142,7 @@
   margin: 18px 0 0;
   font-size: clamp(76px, 13vw, 210px);
   line-height: 0.88;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.02em;
 }
 .title em {
   display: block;
@@ -153,7 +152,7 @@
   margin: 40px auto 0;
   font-size: clamp(18px, 1.7vw, 22px);
   line-height: 1.45;
-  color: #2f352c;
+  color: #2a3240;
   z-index: 3 !important;
 }
 .byline {
@@ -163,7 +162,7 @@
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
-  color: #2f352c;
+  color: #2a3240;
 }
 .scroll {
   position: absolute;
@@ -178,7 +177,7 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   text-decoration: none;
-  color: #2f352c;
+  color: #2a3240;
 }
 .scroll::after {
   content: '';
@@ -209,7 +208,7 @@
   width: 100%;
   transform-origin: 50% 8%;
   animation: sway 3.4s ease-in-out infinite alternate;
-  filter: drop-shadow(0 14px 16px rgba(60, 70, 50, 0.16));
+  filter: drop-shadow(0 14px 16px rgba(40, 55, 80, 0.16));
 }
 @keyframes heroFall {
   0% { transform: translateY(-300px); opacity: 0; }
@@ -251,7 +250,7 @@
   margin: 0 0 22px;
   font-size: 18.5px;
   line-height: 1.62;
-  color: #2c3029;
+  color: #2a3240;
 }
 .lead {
   font-family: var(--serif);
@@ -264,15 +263,15 @@
   display: inline-block;
   margin: 0 0 26px;
   padding: 7px 12px 6px;
-  background: #cfe6d8;
-  color: #17372b;
+  background: #dbe5fb;
+  color: #1d35a3;
   font-family: var(--mono);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   transform: rotate(-1.5deg);
-  box-shadow: 0 1px 0 rgba(23, 55, 43, 0.15);
+  box-shadow: 0 1px 0 rgba(29, 53, 163, 0.15);
 }
 .h2 {
   margin: 0 0 26px;
@@ -286,7 +285,7 @@
   font-style: italic;
   font-size: clamp(22px, 2.2vw, 28px) !important;
   line-height: 1.3 !important;
-  color: #4b5443 !important;
+  color: #4a5465 !important;
 }
 .big {
   margin: 40px 0 24px;
@@ -297,7 +296,7 @@
 .big mark {
   padding: 0 0.12em;
   margin: 0 -0.04em;
-  background: linear-gradient(transparent 12%, #b9dcc8 12%, #b9dcc8 90%, transparent 90%);
+  background: linear-gradient(transparent 12%, #c9d7fb 12%, #c9d7fb 90%, transparent 90%);
   color: inherit;
   border-radius: 2px;
 }
@@ -311,7 +310,7 @@
   gap: 20px;
   font-size: 13.5px;
   line-height: 1.4;
-  color: #5d6458;
+  color: #5a6576;
 }
 .stats b {
   display: block;
@@ -355,7 +354,7 @@
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.16em;
-  color: #6b7466;
+  color: #677284;
 }
 .steps h3 {
   margin: 6px 0;
@@ -365,7 +364,7 @@
   margin: 0;
   font-size: 15px;
   line-height: 1.55;
-  color: #565c51;
+  color: #566172;
 }
 
 /* ---------- Figure panel ---------- */
@@ -382,7 +381,7 @@
   background:
     linear-gradient(rgba(25, 25, 26, 0.045) 1px, transparent 1px) 0 0 / 100% 44px,
     linear-gradient(90deg, rgba(25, 25, 26, 0.045) 1px, transparent 1px) 0 0 / 44px 100%,
-    rgba(251, 250, 244, 0.86);
+    rgba(255, 255, 255, 0.86);
   text-align: left;
 }
 .legend {
@@ -400,15 +399,15 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.legendA { background: #cfe6d8; color: #17372b; transform: rotate(-1.5deg); }
-.legendB { background: #f2dfc0; color: #5a3a17; transform: rotate(1deg); }
-.legendC { background: #19191a; color: #fffcf0; transform: rotate(-1deg); }
+.legendA { background: #dbe5fb; color: #1d35a3; transform: rotate(-1.5deg); }
+.legendB { background: #e9eef4; color: #2b3646; transform: rotate(1deg); }
+.legendC { background: #0e1621; color: #ffffff; transform: rotate(-1deg); }
 .figure figcaption {
   max-width: 520px;
   margin: 18px auto 0;
   font-size: 14.5px;
   line-height: 1.55;
-  color: #565c51;
+  color: #566172;
 }
 
 /* Who sees what (slider + card) */
@@ -435,7 +434,7 @@
   right: 0;
   top: 50%;
   height: 2px;
-  background: repeating-linear-gradient(90deg, #b9c4b1 0 6px, transparent 6px 12px);
+  background: repeating-linear-gradient(90deg, #b8c4d3 0 6px, transparent 6px 12px);
 }
 .track:focus-visible {
   outline: 2px solid var(--primary);
@@ -457,7 +456,7 @@
   margin: -6px 0 0 -6px;
   border-radius: 50%;
   background: var(--bg);
-  box-shadow: inset 0 0 0 2px #b9c4b1;
+  box-shadow: inset 0 0 0 2px #b8c4d3;
 }
 .tickOn {
   box-shadow: inset 0 0 0 2px var(--primary);
@@ -471,7 +470,7 @@
   margin: -15px 0 0 -15px;
   border-radius: 50%;
   background: var(--ink);
-  box-shadow: 0 0 0 6px #cfe6d8, 0 8px 18px -6px rgba(25, 25, 26, 0.5);
+  box-shadow: 0 0 0 6px #dbe5fb, 0 8px 18px -6px rgba(25, 25, 26, 0.5);
   transition: left 0.35s cubic-bezier(0.2, 0.7, 0.1, 1);
 }
 .stopLabels,
@@ -484,7 +483,7 @@
 .stopLabels button {
   flex: 1;
   background: none;
-  color: #6b7466;
+  color: #677284;
   padding: 4px 0;
   border-radius: 0;
   font: 600 14px var(--sans);
@@ -508,7 +507,7 @@
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #8a9183;
+  color: #8892a2;
 }
 .seeCard {
   background: #fff;
@@ -531,7 +530,7 @@
   margin: 18px 0 6px;
   font-size: 12px;
   font-weight: 700;
-  color: #6b7466;
+  color: #677284;
 }
 .seeCard p {
   margin: 0;
@@ -543,14 +542,14 @@
   from { opacity: 0; transform: translateY(4px); }
 }
 .draft {
-  color: #6b7466;
+  color: #677284;
   font-style: italic;
 }
 .hidden {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #a3a097;
+  color: #9aa3b0;
   font-size: 14px !important;
 }
 .redact {
@@ -558,14 +557,14 @@
   width: 72px;
   height: 10px;
   border-radius: 2px;
-  background: repeating-linear-gradient(135deg, #e3dfd2 0 4px, #efebdf 4px 8px);
+  background: repeating-linear-gradient(135deg, #dde3ea 0 4px, #eef1f5 4px 8px);
 }
 .receipt {
   display: inline-block;
   margin-top: 8px;
   padding: 3px 8px;
-  background: #cfe6d8;
-  color: #17372b;
+  background: #dbe5fb;
+  color: #1d35a3;
   font-family: var(--mono);
   font-size: 11px;
 }
@@ -590,13 +589,13 @@
 .ruleLine {
   margin: 20px 0 0;
   font-size: 19px;
-  color: #2c3029;
+  color: #2a3240;
 }
 .collage {
   width: 100%;
   max-width: 440px;
   justify-self: center;
-  filter: drop-shadow(0 18px 24px rgba(60, 70, 50, 0.18));
+  filter: drop-shadow(0 18px 24px rgba(40, 55, 80, 0.18));
   animation: float 7s ease-in-out infinite;
 }
 @keyframes float {
@@ -632,7 +631,7 @@
   font-family: var(--mono);
   font-size: 10.5px;
   letter-spacing: 0.04em;
-  color: #6b7466;
+  color: #677284;
 }
 .pairCards p {
   margin: 8px 0 0 !important;
@@ -665,7 +664,7 @@
   border: 1px solid var(--line);
   font-size: 12.5px !important;
   font-style: italic;
-  color: #6b7466 !important;
+  color: #677284 !important;
 }
 
 /* ---------- Never ---------- */
@@ -688,7 +687,7 @@
   display: block;
   margin-top: 2px;
   font-size: 14.5px;
-  color: #6b7466;
+  color: #677284;
 }
 
 /* ---------- Landing ---------- */
@@ -707,10 +706,11 @@
 .join {
   max-width: 480px;
   margin: 40px auto 0;
-  text-align: left;
+  text-align: center;
 }
 .joinRow {
   display: flex;
+  justify-content: center;
   gap: 10px;
   margin-top: 8px;
 }
@@ -733,7 +733,7 @@
 .joinNote {
   margin: 12px 0 0;
   font-size: 13px;
-  color: #5d6458;
+  color: #5a6576;
   text-align: center;
 }
 .ground {

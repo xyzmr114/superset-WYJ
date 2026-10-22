@@ -1,6 +1,6 @@
 .privatePanel {
-  border-color: #c7cdbb;
-  background: #f7faf4;
+  border-color: #c5ccd8;
+  background: #f5f8fd;
 }
 .publicPanel {
   border-color: var(--line);
@@ -106,14 +106,14 @@
 }
 .previewKey {
   min-width: 112px;
-  color: #6b7363;
+  color: #667180;
   font-weight: 600;
 }
 .previewVal {
   flex: 1;
 }
 .empty {
-  color: #a0a897;
+  color: #9aa3b0;
   font-style: italic;
 }
 .shareNote {

@@ -38,39 +38,39 @@ function Parachutist({id, className = styles.collage, decorative = false}: {id: 
     <svg className={className} viewBox="0 0 420 460" {...(decorative ? {'aria-hidden': true} : {role: 'img', 'aria-label': 'Illustration: a stick figure floats down under a parachute, holding two tags that both read Interested'})}>
       <defs>
         <pattern id={dots} width="7" height="7" patternUnits="userSpaceOnUse">
-          <circle cx="3.5" cy="3.5" r="2.1" fill="#2f8f6f" />
+          <circle cx="3.5" cy="3.5" r="2.1" fill="#2b4bd8" />
         </pattern>
         <pattern id={warm} width="6" height="6" patternUnits="userSpaceOnUse">
-          <circle cx="3" cy="3" r="1.7" fill="#c98a52" />
+          <circle cx="3" cy="3" r="1.7" fill="#e07a5f" />
         </pattern>
       </defs>
       {/* Canopy: sticker outline, then flat fill, then halftone. */}
-      <path d="M48 168 C60 70 150 22 212 22 C278 22 362 72 372 168 C330 150 300 152 262 166 C240 150 184 150 160 166 C120 152 90 150 48 168Z" fill="#fffcf0" stroke="#fffcf0" strokeWidth="22" strokeLinejoin="round" />
-      <path d="M48 168 C60 70 150 22 212 22 C278 22 362 72 372 168 C330 150 300 152 262 166 C240 150 184 150 160 166 C120 152 90 150 48 168Z" fill="#d7e8dd" />
+      <path d="M48 168 C60 70 150 22 212 22 C278 22 362 72 372 168 C330 150 300 152 262 166 C240 150 184 150 160 166 C120 152 90 150 48 168Z" fill="#ffffff" stroke="#ffffff" strokeWidth="22" strokeLinejoin="round" />
+      <path d="M48 168 C60 70 150 22 212 22 C278 22 362 72 372 168 C330 150 300 152 262 166 C240 150 184 150 160 166 C120 152 90 150 48 168Z" fill="#d9e4fb" />
       <path d="M48 168 C60 70 150 22 212 22 C278 22 362 72 372 168 C330 150 300 152 262 166 C240 150 184 150 160 166 C120 152 90 150 48 168Z" fill={`url(#${dots})`} opacity=".55" />
-      <path d="M160 166 C170 90 190 40 212 22 M262 166 C252 90 232 40 212 22" fill="none" stroke="#22694f" strokeWidth="2" opacity=".6" />
+      <path d="M160 166 C170 90 190 40 212 22 M262 166 C252 90 232 40 212 22" fill="none" stroke="#1d35a3" strokeWidth="2" opacity=".6" />
       {/* Lines */}
-      <path d="M52 166 L196 318 M160 166 L203 316 M262 166 L217 316 M368 166 L224 318" stroke="#19191a" strokeWidth="1.6" opacity=".7" />
+      <path d="M52 166 L196 318 M160 166 L203 316 M262 166 L217 316 M368 166 L224 318" stroke="#0e1621" strokeWidth="1.6" opacity=".7" />
       {/* Jumper */}
-      <g stroke="#fffcf0" strokeWidth="16" strokeLinecap="round" fill="none">
+      <g stroke="#ffffff" strokeWidth="16" strokeLinecap="round" fill="none">
         <path d="M210 330 L210 384 M210 340 L178 362 M210 340 L242 362 M210 384 L188 428 M210 384 L232 428" />
       </g>
-      <circle cx="210" cy="318" r="17" fill="#fffcf0" />
-      <g stroke="#19191a" strokeWidth="7" strokeLinecap="round" fill="none">
+      <circle cx="210" cy="318" r="17" fill="#ffffff" />
+      <g stroke="#0e1621" strokeWidth="7" strokeLinecap="round" fill="none">
         <path d="M210 330 L210 384 M210 340 L178 362 M210 340 L242 362 M210 384 L188 428 M210 384 L232 428" />
       </g>
-      <circle cx="210" cy="318" r="11" fill="#19191a" />
+      <circle cx="210" cy="318" r="11" fill="#0e1621" />
       {/* Consent tags */}
       <g transform="rotate(-8 92 370)">
-        <rect x="40" y="352" width="118" height="36" rx="6" fill="#fffcf0" stroke="#fffcf0" strokeWidth="12" />
-        <rect x="40" y="352" width="118" height="36" rx="6" fill="#e3efe6" />
-        <text x="99" y="375" textAnchor="middle" fontFamily="ui-monospace, Menlo, monospace" fontSize="12" fontWeight="700" fill="#22694f">INTERESTED ✓</text>
+        <rect x="40" y="352" width="118" height="36" rx="6" fill="#ffffff" stroke="#ffffff" strokeWidth="12" />
+        <rect x="40" y="352" width="118" height="36" rx="6" fill="#e4ebfb" />
+        <text x="99" y="375" textAnchor="middle" fontFamily="ui-monospace, Menlo, monospace" fontSize="12" fontWeight="700" fill="#1d35a3">INTERESTED ✓</text>
       </g>
       <g transform="rotate(7 328 370)">
-        <rect x="262" y="352" width="118" height="36" rx="6" fill="#fffcf0" stroke="#fffcf0" strokeWidth="12" />
-        <rect x="262" y="352" width="118" height="36" rx="6" fill="#f9efe2" />
+        <rect x="262" y="352" width="118" height="36" rx="6" fill="#ffffff" stroke="#ffffff" strokeWidth="12" />
+        <rect x="262" y="352" width="118" height="36" rx="6" fill="#eef2f7" />
         <rect x="262" y="352" width="118" height="36" rx="6" fill={`url(#${warm})`} opacity=".25" />
-        <text x="321" y="375" textAnchor="middle" fontFamily="ui-monospace, Menlo, monospace" fontSize="12" fontWeight="700" fill="#8a5a2b">INTERESTED ✓</text>
+        <text x="321" y="375" textAnchor="middle" fontFamily="ui-monospace, Menlo, monospace" fontSize="12" fontWeight="700" fill="#b03f22">INTERESTED ✓</text>
       </g>
     </svg>
   );
@@ -211,8 +211,8 @@ export default function Home() {
           </form>
         </div>
         <svg className={styles.ground} viewBox="0 0 1440 260" preserveAspectRatio="none" aria-hidden="true">
-          <path fill="#e3dcc0" d="M0 150 L120 110 L230 135 L350 80 L470 125 L590 95 L720 140 L850 85 L980 128 L1100 100 L1230 138 L1340 108 L1440 130 L1440 260 L0 260Z" />
-          <path fill="#d4cba8" d="M0 200 C240 170 420 210 720 186 C1000 166 1220 206 1440 184 L1440 260 L0 260Z" />
+          <path fill="#d6e2ee" d="M0 150 L120 110 L230 135 L350 80 L470 125 L590 95 L720 140 L850 85 L980 128 L1100 100 L1230 138 L1340 108 L1440 130 L1440 260 L0 260Z" />
+          <path fill="#c4d3e3" d="M0 200 C240 170 420 210 720 186 C1000 166 1220 206 1440 184 L1440 260 L0 260Z" />
         </svg>
       </section>
     </div>
