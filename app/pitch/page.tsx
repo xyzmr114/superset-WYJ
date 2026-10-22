@@ -1,1 +1,5 @@
-export default function Pitch(){return <section className="narrow"><p className="eyebrow">STEP 03 / BUILD THE CASE</p><h1>From a connection<br/>to a <em>first experiment.</em></h1><article><span className="badge">INTEGRATION PLACEHOLDER</span><h2>Your joint pitch will live here.</h2><p>Problem → customer → team → public evidence → validation experiment → super&#123;set&#125; fit hypothesis.</p><p>Identity reveal and export stay disabled until server-enforced mutual consent and exact-version approvals are implemented.</p><button disabled>Export requires both approvals</button></article></section>}
+import PitchWorkspace from '@/components/pitch/PitchWorkspace';
+export default async function Pitch({searchParams}:{searchParams:Promise<{pitchId?:string;matchId?:string}>}) {
+ const params=await searchParams;
+ return <PitchWorkspace pitchId={params.pitchId} matchId={params.matchId}/>;
+}

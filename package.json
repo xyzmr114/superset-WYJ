@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test lib/matching/index.test.ts"
+    "test": "tsx --test lib/matching/index.test.ts components/pitch/demo-state.test.ts"
   },
   "dependencies": {
     "next": "16.4.2",

@@ -26,11 +26,11 @@ Next.js App Router + TypeScript, React, TanStack Query v5, plain CSS, Zod. Plann
 
 ## What works
 
-Landing → join → private intake → explicitly approved demo card → deterministic synthetic matches → pitch placeholder. Private intake exists only while onboarding is mounted. Matching cards exist in app memory and reset on refresh. Public GitHub adapter is provided but not wired into the UI. Opportunity text is a labeled template without live evidence.
+Landing → join → private intake → explicitly approved demo card → deterministic synthetic matches → interactive pitch workspace. Private intake exists only while onboarding is mounted. Matching cards exist in app memory and reset on refresh. Public GitHub adapter is provided but not wired into the UI. Opportunity text is a labeled template without live evidence.
 
 ## What is deliberately disabled
 
-All API contract routes return 501. Authentication, persistence, actual publication, consent, identity reveal, pitch generation/approval/export are not implemented. Never treat the demo card checkbox as production consent enforcement. Do not collect real sensitive data until the backend is integrated.
+All API contract routes return 501. Authentication, persistence, actual publication, real consent, identity reveal, and server-side pitch generation/approval/export are not implemented. The pitch workspace supports a clearly labeled local approval/export simulation and has live API integration ready. Never treat the demo card checkbox as production consent enforcement. Do not collect real sensitive data until the backend is integrated.
 
 ## Team ownership
 
@@ -55,3 +55,7 @@ Use branches `feat/backend`, `feat/frontend`, `feat/matching`, `feat/integration
 Cut hosted model generation before cutting consent enforcement. Synthetic demo is the fallback; label it clearly.
 
 See [full handoff](WOULD_YOU_JUMP_HANDOFF.md) for exact API contracts and acceptance checks. This README's five-hour schedule supersedes that document's initial six-hour estimate.
+
+## Pitch workspace milestone
+
+Open `/pitch` for the synthetic local demo. Use `/pitch?matchId=ID` after a real mutual introduction, or `/pitch?pitchId=ID` for an existing draft. Includes editing, saved-version review, approval states, server-authorized export calls, and stale-version handling. See [pitch integration notes](components/pitch/README.md).
