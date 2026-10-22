@@ -38,10 +38,8 @@ export async function toView(m: Match, me: string): Promise<MatchView> {
     myIntroApproval: m.approvals.has(me),
   };
   // Identity is read only here, only on mutual approval.
-  if (revealed) {
-    const [id] = await q('select display_name, contact from identities where participant_id = $1', [other]);
-    view.revealedContact = id ? { displayName: id.display_name, contact: id.contact } : { displayName: candidate.alias, contact: 'not provided' };
-  }
+  // Only the snapshot the other person approved for this pair, never their current profile.
+  if (revealed) view.revealedContact = m.snapshots[other] ?? { displayName: candidate.alias, contact: 'not provided' };
   return view;
 }
 

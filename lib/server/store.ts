@@ -19,6 +19,8 @@ export type Match = {
   id: string; eventId: string; a: string; b: string; score: number;
   opportunity: Opportunity; evidence: Evidence[];
   approvals: Set<string>; declinedBy: string | null;
+  // participantId -> identity that person released for THIS pair, frozen at approval. Internal only.
+  snapshots: Record<string, Identity | null>;
 };
 export type Pitch = {
   id: string; matchId: string; version: number; markdown: string;
@@ -91,6 +93,7 @@ export const matchRow = (r: Row): Match => ({
   id: r.id, eventId: r.event_id, a: r.a, b: r.b, score: r.score, opportunity: r.opportunity, evidence: r.evidence,
   approvals: new Set([r.a_approved ? r.a : null, r.b_approved ? r.b : null].filter((x): x is string => !!x)),
   declinedBy: r.declined_by,
+  snapshots: { [r.a]: r.a_identity ?? null, [r.b]: r.b_identity ?? null },
 });
 
 export const pitchRow = (r: Row, m: Match): Pitch => ({

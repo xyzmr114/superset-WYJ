@@ -1,6 +1,8 @@
 // End-to-end backend acceptance checks for "Would You Jump?".
 // Usage: BASE_URL=http://localhost:3000 npx tsx scripts/acceptance.ts
 // Optional: EVENT_CODE (default SUPERSET). Requires a running server; no dependencies (Node 20 fetch).
+// Run against a clean event: leftover profiles from earlier runs tie with these and can push the
+// expected partner out of the top 3. On Supabase, clear first (db/README.md, "wipe the event").
 
 export {};
 
@@ -236,6 +238,53 @@ async function main() {
     check('10. A export -> 200', ex.status === 200, brief(ex));
     check("10. export contains B's contact (B proposed 'contact')", ex.text.includes(canaryB));
     check("10. export does NOT contain A's contact (B's 'them' ignored)", !ex.text.includes(canaryA));
+  }
+
+  // 11. Per-pair identity snapshots (handoff: introduction consent contract)
+  {
+    const D = new Jar('D');
+    const E = new Jar('E');
+    const aliasD = `Snap D ${RUN}`, aliasE = `Snap E ${RUN}`;
+    const dSnap = `D-SNAPSHOT-${RUN}`, dLater = `D-CHANGED-LATER-${RUN}`, dRetry = `D-RETRY-${RUN}`;
+    const eProfile = `E-PROFILE-${RUN}`, eLater = `E-CHANGED-LATER-${RUN}`;
+    for (const [j, alias, offers, seeks] of [[D, aliasD, ['engineering'], ['sales']], [E, aliasE, ['sales'], ['engineering']]] as const) {
+      require_(`11. ${j.label} joins`, (await j.post('/api/session', { eventCode: EVENT_CODE })).status === 200);
+      require_(`11. ${j.label} publishes card`, (await j.put('/api/me/card', {
+        alias, offers, seeks, interests: ['developer-tools'], availability: 'weekends',
+        approvedBlurb: `Snapshot test ${RUN}`, publishConsent: true,
+      })).status === 200);
+    }
+    const noId = await D.post('/api/matches/generate', {});
+    const dm = (noId.json?.matches ?? []).find((m: any) => m.candidate?.alias === aliasE);
+    require_('11. D and E are matched', !!dm, brief(noId));
+    const mp = `/api/matches/${enc(dm.id)}`;
+
+    const missing = await D.post(`${mp}/consent`, { decision: 'approve' });
+    check('11. approve with no identity anywhere -> 400 IDENTITY_REQUIRED', missing.status === 400 && missing.json?.error?.code === 'IDENTITY_REQUIRED', brief(missing));
+
+    const dApprove = await D.post(`${mp}/consent`, { decision: 'approve', identity: { displayName: 'D pair name', contact: dSnap } });
+    check('11. D approves with a pair-specific identity -> pending', dApprove.status === 200 && dApprove.json?.status === 'pending', brief(dApprove));
+    const eBefore = await E.get(mp);
+    check("11. E can't see D's snapshot after one approval", eBefore.status === 200 && !eBefore.text.includes(dSnap) && !('revealedContact' in (eBefore.json ?? {})), brief(eBefore));
+
+    const dChange = await D.put('/api/me/identity', { displayName: 'D changed', contact: dLater });
+    check('11. D changes global identity afterwards', dChange.status === 200, brief(dChange));
+    const dAgain = await D.post(`${mp}/consent`, { decision: 'approve', identity: { displayName: 'D retry', contact: dRetry } });
+    check('11. D approving again is a no-op (still pending)', dAgain.status === 200 && dAgain.json?.status === 'pending', brief(dAgain));
+
+    require_('11. E saves a profile identity', (await E.put('/api/me/identity', { displayName: 'E name', contact: eProfile })).status === 200);
+    const eApprove = await E.post(`${mp}/consent`, { decision: 'approve' }); // no identity: snapshot of E's profile now
+    check('11. E approves (profile snapshot) -> revealed', eApprove.status === 200 && eApprove.json?.status === 'revealed', brief(eApprove));
+    require_('11. E changes global identity after approving', (await E.put('/api/me/identity', { displayName: 'E changed', contact: eLater })).status === 200);
+
+    const eSees = await E.get(mp);
+    check("11. E sees D's approved snapshot", eSees.json?.revealedContact?.contact === dSnap, brief(eSees));
+    check("11. E doesn't see D's later profile change or retried identity", !eSees.text.includes(dLater) && !eSees.text.includes(dRetry), brief(eSees));
+    const dSees = await D.get(mp);
+    check("11. D sees E's profile as it was at approval", dSees.json?.revealedContact?.contact === eProfile, brief(dSees));
+    check("11. D doesn't see E's later profile change", !dSees.text.includes(eLater), brief(dSees));
+    const out = await C.get(mp);
+    check('11. outsider C still gets 404', out.status === 404 && !out.text.includes(dSnap), brief(out));
   }
 }
 

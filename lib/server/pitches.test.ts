@@ -23,6 +23,7 @@ test('server pitch draft uses the shared pitch sections and keeps identities out
     id: 'pitch-test-match', eventId: a.eventId, a: a.id, b: b.id, score: 90,
     opportunity: proposeOpportunity(a, b, evidence), evidence,
     approvals: new Set([a.id, b.id]), declinedBy: null,
+    snapshots: { [a.id]: { displayName: 'Real Name A', contact: 'a-private@example.invalid' }, [b.id]: { displayName: 'Real Name B', contact: 'b-private@example.invalid' } },
   };
   const md = await draftMarkdown(match);
   const headings = md.split('\n').filter(l => l.startsWith('## ')).map(l => l.slice(3));
