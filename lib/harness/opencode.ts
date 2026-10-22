@@ -31,7 +31,7 @@ export async function runOpenCode(input:AgentInput,emit:(event:AgentEvent)=>void
   const grant=registerHarnessRun(input,emit,signal,runtime);
   let server:Awaited<ReturnType<typeof startServer>>|undefined;
   try {
-    emit({type:'progress',message:'Starting the OpenCode harness'});
+    emit({type:'progress',message:'Planning your next move'});
     const provider=catalog[input.provider];const apiKey=provider?credentialFor(provider):undefined;
     if(!provider||!apiKey)throw new Error('Configure the selected model provider first.');
     const tools=Object.fromEntries(Object.keys(grant.run.tools).map(name=>['wyj_'+name,true]));

@@ -77,3 +77,10 @@ Selected messages and optionally the approved matching card go to the selected m
 ## Team integration
 
 Abhinav: replace example matching with participant-scoped data, and add durable user quotas before shared deployment. Anusha: `/agent` and `/pitch?from=agent` are ready to link from the main flow; real mutual matches use the existing joint pitch routes. Vernika: extend the shared tools in `createFounderRun`, which makes the same capability available to OpenCode and the direct diagnostic runner.
+
+
+## Goal workspace in WYJ
+
+Open `/agent`, describe the outcome in the goal box, connect LinkedIn, and click Start researching. The app streams tool activity, shows profiles discovered/read with expandable original evidence, and creates editable outreach cards. Prepare in browser fills the exact text into LinkedIn; the invitation/message/post button is a separate final action. Goal, research, conversation and drafts survive navigation in the same tab. The normal product flow requires no terminal interface.
+
+A supplied profile is researched before broader discovery. LinkedIn can hide search-result identities for the signed-in account; the app reports missing usable links and can continue from a pasted profile URL. The agent does not create invented prospects. Runs operate while the page stays open; durable background jobs and reply tracking are not implemented.

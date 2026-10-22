@@ -4,9 +4,9 @@ import {useQuery} from '@tanstack/react-query';
 import {useRouter} from 'next/navigation';
 import Link from 'next/link';
 import {useDemo} from '@/app/providers';
-import type {AgentEvent} from '@/lib/agent/schema';
+import type {AgentEvent,ResearchPerson} from '@/lib/agent/schema';
 import {CHAT_KEY,restoreConversation,openWorkingDraft} from '@/lib/agent/workspace';
-import BrowserDock from './BrowserDock';
+import BrowserDock,{useBrowserConnection} from './BrowserDock';
 import BrowserActionCard from './BrowserActionCard';
 import type {BrowserAction} from '@/lib/browser/contracts';
 import Markdown from '@/components/shared/Markdown';
@@ -28,6 +28,9 @@ const nextMoves=[
 
 export default function AgentChat(){
   const router=useRouter();
+  const connection=useBrowserConnection();
+  const [goal,setGoal]=useState('');
+  const [people,setPeople]=useState<ResearchPerson[]>([]);
   const {card}=useDemo();
   const [messages,setMessages]=useState<Message[]>([]);
   const [input,setInput]=useState('');
@@ -56,19 +59,21 @@ export default function AgentChat(){
   const canSend=ready&&!busy&&!!selectedProvider?.configured&&!!selectedModel;
 
   useEffect(()=>{
-    try {const saved=restoreConversation(sessionStorage);setMessages(saved.messages);setInput(saved.input);setMemo(saved.memo);setSources(saved.sources);setActions(saved.actions);}
+    try {const saved=restoreConversation(sessionStorage);setGoal(saved.goal);setPeople(saved.people);setEvents(saved.activity);setMessages(saved.messages);setInput(saved.input);setMemo(saved.memo);setSources(saved.sources);setActions(saved.actions);}
     catch {setStorageError('Local storage is unavailable in this tab.');}
     setReady(true);
     return ()=>abortRef.current?.abort();
   },[]);
   useEffect(()=>{
     if(!ready)return;
-    try {sessionStorage.setItem(CHAT_KEY,JSON.stringify({messages:messages.slice(-100),input,memo,sources,actions:actions.slice(-30)}));setStorageError('');}
+    try {sessionStorage.setItem(CHAT_KEY,JSON.stringify({goal,people:people.slice(-40),activity:events.slice(-100),messages:messages.slice(-100),input,memo,sources,actions:actions.slice(-30)}));setStorageError('');}
     catch {setStorageError('This tab can’t keep a local copy. Keep the page open and download your draft before leaving.');}
-  },[ready,messages,input,memo,sources,actions]);
+  },[ready,messages,input,memo,sources,actions,goal,people,events]);
   useEffect(()=>{if(messages.length)endRef.current?.scrollIntoView({block:'nearest',behavior:'smooth'});},[messages,busy]);
 
   function consume(event:AgentEvent){
+    if(event.type==='people')setPeople(old=>{const map=new Map(old.map(p=>[p.url,p]));for(const person of event.people)map.set(person.url,{...map.get(person.url),...person});return [...map.values()];});
+    if(event.type==='research_note')setEvents(old=>[...old,event.message]);
     if(event.type==='progress')setEvents(old=>[...old,event.message]);
     if(event.type==='sources')setSources(event.sources);
     if(event.type==='memo')setMemo(event.markdown);
@@ -107,17 +112,28 @@ export default function AgentChat(){
     try {openWorkingDraft(sessionStorage,memo);router.push('/pitch?from=agent');}
     catch {setError('Could not open the editor because this browser could not store the draft. Copy the preview below before leaving.');}
   }
-  function clearConversation(){setMessages([]);setInput('');setMemo('');setSources([]);setActions([]);setEvents([]);setError('');}
+  function clearConversation(){setGoal('');setPeople([]);setMessages([]);setInput('');setMemo('');setSources([]);setActions([]);setEvents([]);setError('');}
 
   return <section>
-    <p className="eyebrow">YOUR NEXT CHAPTER</p>
-    <h1>What would make<br/><em>you jump?</em></h1>
-    <p className="lead">A rough idea is enough. Let’s find a starting point, the person you need beside you, and a way to test it.</p>
+    <p className="eyebrow">WYJ · YOUR NEXT MOVE</p>
+    <h1>A goal. The right people.<br/><em>A first conversation.</em></h1>
+    <p className="lead">Tell WYJ what you’re trying to make happen. Research people, find a reason to connect, and prepare outreach here.</p>
+    <div className={styles.goalPanel}>
+      <form onSubmit={event=>{event.preventDefault();void send(goal,'outreach');}}>
+        <label htmlFor="outreach-goal">What do you want to achieve?</label>
+        <textarea id="outreach-goal" maxLength={4000} value={goal} disabled={busy} onChange={event=>setGoal(event.target.value)} placeholder="Find three hostel operators who could test group booking — or paste a LinkedIn profile to start with someone specific."/>
+        <div className={styles.actions}><button disabled={!canSend||!goal.trim()||!connection.data?.signedIn}>{busy?'Working on your goal…':actions.length?'Continue this goal →':'Start researching →'}</button><span className="muted">{connection.data?.signedIn?'● LinkedIn connected':'Connect LinkedIn below, then start your goal.'}</span>{busy&&<button type="button" className={styles.quiet} onClick={()=>abortRef.current?.abort()}>Stop</button>}</div>
+      </form>
+      <ol className={styles.steps}><li>1 · Set your goal</li><li>{connection.data?.signedIn?'✓':'2 ·'} Connect LinkedIn</li><li>{people.length?people.length+(people.length===1?' profile found':' profiles found'):'3 · Research people'}</li><li>{actions.length?actions.length+(actions.length===1?' draft to review':' drafts to review'):'4 · Review outreach'}</li></ol>
+    </div>
     <div className={styles.layout}>
       <div>
+        {(busy||events.length>0)&&<article className={styles.activity} aria-live="polite"><p className="eyebrow">{busy?'WORKING ON YOUR GOAL':'LATEST ACTIVITY'}</p><h3>{busy?'Research in progress':'Research trail'}</h3><ol>{events.map((event,index)=><li key={index}>{event}</li>)}</ol>{busy&&!events.length&&<p>Starting your research…</p>}{!busy&&events.length>0&&<p className="muted">{error?'Run stopped. See the message below.':actions.length?'Drafts are ready below. Review the text, then prepare it in LinkedIn.':'Run finished. Continue the conversation below.'}</p>}</article>}
+        {people.length>0&&<article><p className="eyebrow">PEOPLE RESEARCHED</p><div className={styles.people}>{people.map(person=><div className={styles.person} key={person.url}><h3><a href={person.url} target="_blank" rel="noreferrer">{person.name} ↗</a></h3><p className="muted">{person.text?'Profile read · available for personalization':'Found in LinkedIn search · profile not read yet'}</p>{person.text&&<details><summary>Read profile evidence</summary><p className={styles.profileText}>{person.text}</p></details>}</div>)}</div></article>}
+        {actions.length>0&&<div className={styles.actionList}><h2>Outreach to review</h2>{actions.map(action=><BrowserActionCard key={action.id} action={action} onConnection={url=>void send('Draft a short personalized LinkedIn connection invitation note (at most 200 characters) for '+url+'. Use our conversation and the profile we read; keep it as an editable connection card.','connection')} onEdit={next=>setActions(old=>old.map(current=>current.id===action.id?next:current))}/>)}</div>}
         <div className={styles.chat} aria-live="polite" aria-busy={busy}>
           {!messages.length&&<div className={styles.empty}>
-            <h2>What’s on your mind?</h2>
+            <h2>Work through it together.</h2>
             <p>Tell me what you can build, what’s pulling you toward it, or what’s holding you back.</p>
             {starters.map(text=><button key={text} disabled={!ready||busy} onClick={()=>setInput(text)}>{text}</button>)}
           </div>}
@@ -130,7 +146,6 @@ export default function AgentChat(){
         </div>
         {error&&<p role="alert" className={styles.error}>{error}</p>}
         {storageError&&<p role="status" className={styles.error}>{storageError}</p>}
-        {actions.length>0&&<div className={styles.actionList}><h2>Your next moves, ready to run.</h2>{actions.map(action=><BrowserActionCard key={action.id} action={action} onConnection={url=>void send('Draft a short personalized LinkedIn connection invitation note (at most 200 characters) for '+url+'. Use our conversation and the profile we read; keep it as an editable connection card.','connection')} onEdit={next=>setActions(old=>old.map(current=>current.id===action.id?next:current))}/>)}</div>}
         <form className={styles.composer} onSubmit={event=>{event.preventDefault();void send();}}>
           <label htmlFor="agent-message">Your message</label>
           <textarea id="agent-message" value={input} onChange={event=>setInput(event.target.value)} maxLength={8000} placeholder="I’ve been thinking about…"/>
@@ -164,7 +179,7 @@ export default function AgentChat(){
           <details className={styles.details}><summary>Read the draft here</summary><Markdown>{memo}</Markdown></details>
         </article>}
         {sources.length>0&&<article><h3>Sources</h3>{sources.map(source=><p key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.title} ↗</a></p>)}</article>}
-        {events.length>0&&<details className={styles.settings}><summary>Work completed</summary><ol>{events.map((event,index)=><li key={index}>{event}</li>)}</ol></details>}
+
         <details className={styles.settings}>
           <summary>Model & connection</summary>
           {catalog.isError&&<p>Catalog unavailable. <button onClick={()=>void catalog.refetch()}>Retry</button></p>}

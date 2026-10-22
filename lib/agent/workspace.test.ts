@@ -23,3 +23,14 @@ test('corrupt or missing tab state opens an empty workspace',()=>{
   const tab=storage();tab.setItem(CHAT_KEY,'not json');tab.setItem(DRAFT_KEY,'{}');
   assert.deepEqual(restoreConversation(tab).messages,[]);assert.equal(restoreWorkingDraft(tab),null);
 });
+
+test('goal and profile research survive navigation with older conversations still supported',()=>{
+  const tab=storage();
+  tab.setItem(CHAT_KEY,JSON.stringify({messages:[],input:'',memo:'',sources:[],goal:'Find a collaborator',activity:['Reading a LinkedIn profile'],people:[{name:'Abhinav',url:'https://www.linkedin.com/in/abhinav/',text:'Public profile evidence'}]}));
+  const result=restoreConversation(tab);
+  assert.equal(result.goal,'Find a collaborator');
+  assert.equal(result.people[0].text,'Public profile evidence');
+  assert.equal(result.activity.length,1);
+  tab.setItem(CHAT_KEY,JSON.stringify({messages:[],input:'',memo:'',sources:[]}));
+  assert.deepEqual(restoreConversation(tab).people,[]);
+});

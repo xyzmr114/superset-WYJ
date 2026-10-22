@@ -22,8 +22,8 @@ export default function BrowserDock(){
     catch(error){setError(error instanceof Error?error.message:'Connection failed.');}finally{setPending(false);}
   }
   return <article>
-    <p className="eyebrow">YOUR CONNECTED BROWSER</p><h3>Put the idea out there.</h3>
-    <p className="muted">{connection.data?.message??'Checking the local browser companion…'}</p>
+    <p className="eyebrow">LINKEDIN CONNECTION</p><h3>Your network, in WYJ.</h3>
+    <p className="muted">{connection.data?.message??'Checking your LinkedIn connection…'}</p>
     {connection.data?.available&&<div className={styles.actions}>
       <button disabled={pending} onClick={()=>void command('connect')}>{pending?'Opening…':connection.data.connected?'Show LinkedIn browser':'Connect LinkedIn'}</button>
       {connection.data.connected&&<button className={styles.quiet} disabled={pending} onClick={()=>void command('disconnect')}>Disconnect</button>}
