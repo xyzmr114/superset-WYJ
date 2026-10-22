@@ -13,7 +13,7 @@ export const SKILL_SUGGESTIONS = [
   'operations', 'finance', 'legal', 'content', 'community', 'research', 'hardware',
 ] as const;
 export const INTEREST_SUGGESTIONS = [
-  'developer-tools', 'payments', 'fintech', 'healthcare', 'climate', 'education',
+  'developer-tools', 'payments', 'travel', 'ai-agents', 'fintech', 'healthcare', 'climate', 'education',
   'e-commerce', 'logistics', 'productivity', 'social', 'gaming', 'enterprise SaaS',
   'consumer apps', 'AI', 'marketplaces', 'real estate', 'biotech', 'robotics',
   'cybersecurity', 'media',
