@@ -87,3 +87,37 @@ test('fixtures are six labeled synthetic profiles', () => {
     assert.ok(p.alias.length <= 40 && p.offers.length <= 5 && p.seeks.length <= 5 && p.interests.length <= 4 && p.approvedBlurb.length <= 240, p.alias);
   }
 });
+
+test('approved complementary soft strengths and shared preferences break otherwise equal scores', () => {
+  const preferences = { techStack: ['TypeScript'], strengths: ['technical depth'], partnerStrengths: ['communication'], workStyles: ['async-first'] };
+  const owner = { ...me, preferences };
+  const weak = { ...me, id: 'a-first', offers: ['sales'], seeks: ['engineering'] };
+  const complementary = { ...weak, id: 'z-match', preferences: { techStack: ['TypeScript'], strengths: ['communication'], partnerStrengths: ['technical depth'], workStyles: ['async-first'] } };
+  const ranked = rankCandidates(owner, [weak, complementary]);
+  assert.equal(ranked[0].candidate.id, complementary.id);
+  assert.equal(ranked[0].score, ranked[1].score, 'preferences do not inflate the score');
+  assert.ok(ranked[0].components.some(c => /communication.*wants in a partner/.test(c.reason)));
+  assert.ok(ranked[0].components.some(c => /typescript.*preferred tech stack/.test(c.reason)));
+  assert.ok(ranked[0].components.some(c => /async-first/.test(c.reason)));
+});
+
+test('shared direction filtering happens before the top-three cut', () => {
+  const owner = { ...me, interests: ['developer-tools', 'travel', 'payments', 'climate'] };
+  const unrelated = Array.from({ length: 3 }, (_, i) => ({ ...me, id: `unrelated-${i}`, interests: ['robotics'], offers: ['sales'], seeks: ['engineering'] }));
+  const relevant = { ...me, id: 'relevant', offers: ['design'], seeks: ['data'], interests: ['travel'], availability: 'full_time' as const };
+  const ranked = rankCandidates(owner, [...unrelated, relevant], { requireSharedInterest: true, minScore: 0 });
+  assert.deepEqual(ranked.map(s => s.candidate.id), ['relevant']);
+});
+
+test('unapproved extra fields and arbitrary preference strings cannot affect ranking', () => {
+  const p = { ...me, id: 'b', preferences: { techStack: ['No preference', 'secret employer'], strengths: ['inferred personality'], partnerStrengths: [], workStyles: [] }, rawProfile: 'secret' };
+  assert.equal(scorePair(me, p).preferenceScore, 0);
+  assert.ok(!JSON.stringify(scorePair(me, p).components).includes('secret'));
+});
+
+
+test('explicit unlimited mode returns every eligible founder beyond five without changing default cap', () => {
+  const partners = Array.from({ length: 8 }, (_, i) => ({ ...me, id: `unlimited-${i}`, offers: ['sales'], seeks: ['engineering'] }));
+  assert.equal(rankCandidates(me, partners, { limit: Infinity, requireSharedInterest: true }).length, 8);
+  assert.equal(rankCandidates(me, partners).length, MAX_MATCHES);
+});

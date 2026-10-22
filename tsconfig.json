@@ -39,6 +39,7 @@
     "node_modules",
     "tui",
     ".wyj-runtime",
-    ".wyj-browser"
+    ".wyj-browser",
+    ".wyj-local"
   ]
 }

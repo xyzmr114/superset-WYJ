@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { Evidence, MatchingCard, Opportunity } from '@/lib/contracts';
 import { EVIDENCE_CAVEAT } from '@/lib/evidence/caveat';
 import { mapTags, tagSet } from '@/lib/matching/tags';
+import { preferenceCompatibility } from '@/lib/matching';
 
 // Pure and safe to import from client components. The hosted-model path lives in
 // ./model.ts (server-only) and falls back to proposeOpportunity below.
@@ -91,11 +92,18 @@ export function proposeOpportunity(a: MatchingCard, b: MatchingCard, evidence: E
     bGives.length ? `${b.alias} offers ${list(bGives)}, which ${a.alias} is looking for.` : `${b.alias} offers ${list(uniq(b.offers)) || 'skills not yet listed'}.`,
   ];
   if (shared.length) whyThisPair.push(`Both listed ${tag} as ${agentTravel ? 'problem areas' : 'a problem area'} they want to work on.`);
+  const preferenceReasons = preferenceCompatibility(a, b).reasons;
+  if (preferenceReasons.length) whyThisPair.push(preferenceReasons.join(' '));
+  const approvedIdeas = [a, b].filter(card => card.approvedBlurb.trim());
+  const ideaSummary = approvedIdeas.map(card => `${card.alias}'s approved idea: “${card.approvedBlurb.trim()}”`).join(' ');
+  const experiment = approvedIdeas.length
+    ? 'within 48 hours, agree on one overlap between the two approved ideas, choose a specific user, and interview five people who fit. Split discovery and a small prototype between your stated strengths. Compare findings and independently decide whether to keep building together.'
+    : `within 48 hours, interview five ${d.interviewees}. Ask for a recent example, the current workaround, how often it happens and what it costs. Continue only if at least three describe the same problem without prompting.`;
   const evidenceIds = evidence.slice(0, MAX_EVIDENCE).map(e => e.id);
   return {
-    title: `${d.label} discovery`,
-    problemHypothesis: `${d.problem} This is a hypothesis, not validated demand.`,
-    targetUser: d.targetUser,
+    title: approvedIdeas.length ? 'Shared idea discovery' : `${d.label} discovery`,
+    problemHypothesis: `${ideaSummary || d.problem} This is a hypothesis, not validated demand.`,
+    targetUser: approvedIdeas.length ? 'Agree on a specific user from the two approved ideas during the first conversation' : d.targetUser,
     whyThisPair,
     evidenceIds,
     unknowns: [
@@ -104,7 +112,7 @@ export function proposeOpportunity(a: MatchingCard, b: MatchingCard, evidence: E
       `What time and money can each founder commit? Cards list ${a.availability.replace('_', ' ')} and ${b.availability.replace('_', ' ')}.`,
       'Willingness to pay is untested.',
     ],
-    nextExperiment: `${INTRO_STEP} Then, within 48 hours, interview five ${d.interviewees}. Ask for a recent example, the current workaround, how often it happens and what it costs. Continue only if at least three describe the same problem without prompting.`,
+    nextExperiment: `${INTRO_STEP} Then, ${experiment}`,
     generationMode: 'template',
   };
 }
@@ -171,7 +179,8 @@ export function buildPitchMarkdown(match: PitchMatch, opportunity: Opportunity, 
     md(opportunity.problemHypothesis),
     '',
     '## Proposed product',
-    `A narrowly scoped first version for the target customer below, focused only on the problem above. ${md(opportunity.title)} is a working name. Decide the product shape after the first experiment, not before.`,
+    `Start with the overlap in these approved ideas; agree on a narrowly scoped first version after your first conversation.`,
+    ...[a, b].filter(card => card.approvedBlurb.trim()).map(card => `- ${md(card.alias)}: ${md(card.approvedBlurb)}`),
     '',
     '## Target customer',
     `${md(opportunity.targetUser)}. The first buyer and budget are not yet validated.`,

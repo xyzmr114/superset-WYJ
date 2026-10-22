@@ -9,7 +9,7 @@ pnpm install
 pnpm dev -- --port 3002
 ```
 
-Core session, matching and consent APIs use process memory and need no model key. Keep one server process running for the demo. `.env.local` may still contain ignored credentials used by earlier experiments; do not copy them into client code or commits.
+Core session, matching and consent APIs need no model key. With `DATABASE_URL`, apply `pnpm db:migrate` for Postgres persistence (including ideas and trials). Without it, PGlite resets on restart and supports one server process. `.env.local` may still contain ignored credentials used by earlier experiments; do not copy them into client code or commits.
 
 ## Local Laya evaluation — Vernika
 

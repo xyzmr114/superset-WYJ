@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import type { ZodType } from 'zod';
-import { db, type Participant } from './store';
+import { q, type Participant } from './store';
 
 export const SESSION_COOKIE = 'wyj_session';
 
@@ -14,13 +14,12 @@ export const newToken = () => randomBytes(32).toString('base64url');
 export const newId = () => randomBytes(9).toString('base64url');
 
 /** Identity comes only from the HttpOnly cookie, never from IDs in the request. */
-export function requireSession(req: Request): Participant {
+export async function requireSession(req: Request): Promise<Participant> {
   const raw = req.headers.get('cookie') ?? '';
   const token = raw.split(';').map((c) => c.trim().split('=')).find(([k]) => k === SESSION_COOKIE)?.[1];
-  const id = token ? db.sessions.get(hashToken(decodeURIComponent(token))) : undefined;
-  const p = id ? db.participants.get(id) : undefined;
+  const [p] = token ? await q('select id, event_id from participants where token_hash = $1', [hashToken(decodeURIComponent(token))]) : [];
   if (!p) throw new HttpError(401, 'UNAUTHORIZED', 'Join the event first.');
-  return p;
+  return { id: p.id, eventId: p.event_id };
 }
 
 /** CSRF guard for mutations: a browser-sent Origin must match this host. Non-browser clients send none. */

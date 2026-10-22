@@ -1,26 +1,21 @@
-import {mutuallyApproved} from './intro-consent';
+import { mutuallyApproved } from './intro-consent';
 import type { PitchView } from '@/lib/contracts';
 import { buildPitchMarkdown } from '@/lib/generation';
-import { db, type Match, type Pitch } from './store';
+import { cardRow, pitchRow, q, type Match, type Pitch } from './store';
 import { HttpError, notFound } from './http';
+import { getMyMatch, otherOf } from './matches';
 
 export type Ctx = { params: Promise<{ id: string }> };
 
-export const isRevealed=mutuallyApproved;
-export const otherOf = (m: Match, me: string) => (m.a === me ? m.b : m.a);
+export const isRevealed = mutuallyApproved;
 export const conflict = (code: string, message: string) => new HttpError(409, code, message);
+export { getMyMatch as myMatch, otherOf };
 
-/** Match I'm in, or 404 (never reveal existence to outsiders). */
-export function myMatch(id: string, me: string): Match {
-  const m = db.matches.get(id);
-  if (!m || (m.a !== me && m.b !== me)) throw notFound();
-  return m;
-}
-
-export function myPitch(id: string, me: string): { pitch: Pitch; match: Match } {
-  const pitch = db.pitches.get(id);
-  if (!pitch) throw notFound();
-  return { pitch, match: myMatch(pitch.matchId, me) };
+export async function myPitch(id: string, me: string): Promise<{ pitch: Pitch; match: Match }> {
+  const [r] = await q('select * from pitches where id = $1', [id]);
+  if (!r) throw notFound();
+  const match = await getMyMatch(r.match_id, me); // 404 for anyone outside the match
+  return { pitch: pitchRow(r, match), match };
 }
 
 export function toView(p: Pitch, m: Match, me: string): PitchView {
@@ -33,8 +28,9 @@ export function toView(p: Pitch, m: Match, me: string): PitchView {
   };
 }
 
-/** Draft built only from matching cards (aliases), opportunity and evidence. No names or contacts. */
-export function draftMarkdown(m: Match): string {
-  // Cards exist for both sides of any match and are frozen once matched.
-  return buildPitchMarkdown({ founders: [db.cards.get(m.a)!, db.cards.get(m.b)!] }, m.opportunity, m.evidence);
+/** Draft built only from matching cards, opportunity and cited evidence (Vernika's builder). No names or contacts. */
+export async function draftMarkdown(m: Match): Promise<string> {
+  const rows = m.aCard && m.bCard ? [] : await q('select * from cards where participant_id = any($1)', [[m.a, m.b]]);
+  const card = (id: string) => (id === m.a ? m.aCard : m.bCard) ?? cardRow(rows.find((r) => r.participant_id === id));
+  return buildPitchMarkdown({ founders: [card(m.a), card(m.b)] }, m.opportunity, m.evidence);
 }
