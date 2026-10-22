@@ -35,7 +35,7 @@ export default function SiteFooter(){
   <div className={styles.top}><div className={styles.intro}><Link href="/" className={styles.brand}>WYJ<span>Would You Jump?</span></Link><p>A private idea.<br/>The right person.<br/>Your next chapter.</p><Link href="/agent" className={styles.cta}>Find your people <span aria-hidden>↗</span></Link></div>
    <nav className={styles.links} aria-label="Footer navigation">{links.map(column=><div key={column.title}><h2>{column.title}</h2>{column.items.map(([name,href])=><Link href={href} key={href}>{name}<span aria-hidden>↗</span></Link>)}</div>)}</nav>
   </div>
-  <div ref={stage} className={styles.stage} aria-label="Jump? Interactive glass wordmark"><div className={styles.lights} aria-hidden><i/><i/><i/></div><div className={styles.grid} aria-hidden/><div className={styles.word} aria-hidden>{['j','u','m','p','?'].map((letter,i)=><span data-letter key={i}>{letter}</span>)}</div><span className={styles.caption}>A LITTLE GRAVITY. A BIG LEAP.</span></div>
+  <div ref={stage} className={styles.stage} aria-label="WYJ interactive glass wordmark"><div className={styles.lights} aria-hidden><i/><i/><i/></div><div className={styles.grid} aria-hidden/><div className={styles.word} aria-hidden>{['W','Y','J'].map((letter,i)=><span data-letter key={i}>{letter}</span>)}</div><span className={styles.caption}>YOUR NEXT CHAPTER STARTS WITH A PERSON.</span></div>
   <div className={styles.bottom}><span>© {new Date().getFullYear()} WYJ · Built at super{'{set}'}</span><span>Your profile. Your permission.</span><button type="button" onClick={()=>window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'})}>Back to top ↑</button></div>
  </footer>;
 }
