@@ -88,3 +88,14 @@ test('pitch markdown states when no sources are attached and labels model drafts
   assert.match(md, /No public sources attached yet/);
   assert.match(md, /hosted model/);
 });
+
+test('template maps free-text cards onto the domain and keeps typed text for display', () => {
+  const a = { ...founderA, offers: ['Rust', 'Golang'], seeks: ['Account Exec'], interests: ['DevTools'] };
+  const b = { ...founderB, offers: ['BD', 'Product'], seeks: ['Backend'], interests: ['developer tools'] };
+  const o = proposeOpportunity(a, b);
+  assert.equal(o.title, 'Developer workflow discovery');
+  assert.ok(o.whyThisPair.some(w => w.includes('Builder offers Rust and Golang, which Signal is looking for')), o.whyThisPair.join(' / '));
+  assert.ok(o.whyThisPair.some(w => w.includes('Signal offers BD, which Builder is looking for')), o.whyThisPair.join(' / '));
+  const md = buildPitchMarkdown({ founders: [a, b] }, o, []);
+  assert.match(md, /Builder: offers Rust and Golang; seeks Account Exec/);
+});

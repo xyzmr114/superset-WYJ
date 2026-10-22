@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { Evidence, MatchingCard, Opportunity } from '@/lib/contracts';
 import { EVIDENCE_CAVEAT } from '@/lib/evidence/caveat';
+import { mapTags, tagSet } from '@/lib/matching/tags';
 
 // Pure and safe to import from client components. The hosted-model path lives in
 // ./model.ts (server-only) and falls back to proposeOpportunity below.
@@ -35,18 +36,22 @@ const DOMAINS: Record<string, Domain> = {
   },
 };
 
-const norm = (xs: string[]) => [...new Set(xs.map(x => x.trim().toLowerCase()).filter(Boolean))];
+// Display keeps what people typed; domain choice and pair reasons use the mapped tags.
+const uniq = (xs: string[]) => [...new Set(xs.map(x => x.trim()).filter(Boolean))];
 const list = (xs: string[]) => xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`;
-const covers = (offers: string[], seeks: string[]) => { const s = new Set(norm(seeks)); return norm(offers).filter(x => s.has(x)); };
+const covers = (offers: string[], seeks: string[]) => {
+  const wanted = new Set(tagSet(mapTags(seeks, 'skill')));
+  return uniq(mapTags(offers, 'skill').filter(m => wanted.has(m.tag)).map(m => m.original));
+};
 
 export function sharedDomain(a: MatchingCard, b: MatchingCard): string | null {
-  const bs = new Set(norm(b.interests));
-  return norm(a.interests).find(x => bs.has(x)) ?? null;
+  const bs = new Set(tagSet(mapTags(b.interests, 'interest')));
+  return tagSet(mapTags(a.interests, 'interest')).find(x => bs.has(x)) ?? null;
 }
 
 /** Deterministic opportunity from approved card fields. Always generationMode 'template'. */
 export function proposeOpportunity(a: MatchingCard, b: MatchingCard, evidence: Evidence[] = []): Opportunity {
-  const tag = sharedDomain(a, b) ?? norm([...a.interests, ...b.interests])[0] ?? null;
+  const tag = sharedDomain(a, b) ?? tagSet(mapTags([...a.interests, ...b.interests], 'interest'))[0] ?? null;
   const d = (tag && DOMAINS[tag]) || {
     label: tag ? `${tag} workflow` : 'Shared workflow',
     problem: `There may be a repeated, costly workflow in ${tag ?? 'a shared problem area'} that a two-person team could improve.`,
@@ -55,8 +60,8 @@ export function proposeOpportunity(a: MatchingCard, b: MatchingCard, evidence: E
   };
   const aGives = covers(a.offers, b.seeks), bGives = covers(b.offers, a.seeks);
   const whyThisPair = [
-    aGives.length ? `${a.alias} offers ${list(aGives)}, which ${b.alias} is looking for.` : `${a.alias} offers ${list(norm(a.offers)) || 'skills not yet listed'}.`,
-    bGives.length ? `${b.alias} offers ${list(bGives)}, which ${a.alias} is looking for.` : `${b.alias} offers ${list(norm(b.offers)) || 'skills not yet listed'}.`,
+    aGives.length ? `${a.alias} offers ${list(aGives)}, which ${b.alias} is looking for.` : `${a.alias} offers ${list(uniq(a.offers)) || 'skills not yet listed'}.`,
+    bGives.length ? `${b.alias} offers ${list(bGives)}, which ${a.alias} is looking for.` : `${b.alias} offers ${list(uniq(b.offers)) || 'skills not yet listed'}.`,
   ];
   if (sharedDomain(a, b)) whyThisPair.push(`Both listed ${tag} as a problem area they want to work on.`);
   const evidenceIds = evidence.slice(0, MAX_EVIDENCE).map(e => e.id);
@@ -129,7 +134,7 @@ export function buildPitchMarkdown(match: PitchMatch, opportunity: Opportunity, 
   const mode = opportunity.generationMode === 'model'
     ? 'Drafted by a hosted model from approved matching cards and public sources. Check every line before approving.'
     : 'Drafted from a fixed template using approved matching cards. No hosted model was used.';
-  const founder = (c: MatchingCard) => `- ${md(c.alias)}: offers ${md(list(norm(c.offers)) || 'nothing listed')}; seeks ${md(list(norm(c.seeks)) || 'nothing listed')}; availability ${c.availability.replace('_', ' ')}.`;
+  const founder = (c: MatchingCard) => `- ${md(c.alias)}: offers ${md(list(uniq(c.offers)) || 'nothing listed')}; seeks ${md(list(uniq(c.seeks)) || 'nothing listed')}; availability ${c.availability.replace('_', ' ')}.`;
   return [
     `# ${md(opportunity.title)}: joint pitch draft`,
     '',
