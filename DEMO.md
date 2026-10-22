@@ -2,21 +2,27 @@
 
 Laptop = **Founder A ("Builder")**. Phone = **Founder B ("Signal")**. Everyone else in the room list is a labeled synthetic profile.
 
-## Before you rely on this (status on 22 Oct)
+## Before you rely on this (re-checked on 22 Oct after merging into `main`)
 
-Re-check each item after the final merge. Fix the ones that are still open, or cut the steps that depend on them.
+Done:
 
-- [ ] **Screens call the API.** On `main`, join, onboarding and matches still run a local in-browser demo and do not call `/api/session`, `/api/me/card` or `/api/matches`. Until they do, steps 4 and 5 (the two-device reveal) cannot run through the UI.
-- [ ] **Event code agrees.** The join page defaults to `SUPERSET-DEMO`, but the server accepts `EVENT_CODE` (default `SUPERSET`). Make them match.
-- [ ] **One source of synthetic people.** The server loads the synthetic profiles at startup, and `pnpm seed` adds them again, so the room shows duplicates (Canvas twice in testing). Use one or the other.
-- [ ] **One server process.** State is in memory, so it resets on restart and does not work across multiple instances (for example serverless hosting). Run a single process.
-- [ ] **Privacy acceptance check passed.** Type `PRIVATE-RUNWAY-7731` into intake and confirm it appears in no request, log, pitch draft or export (DevTools → Network → search).
+- [x] **Screens call the API.** Join creates the session, onboarding publishes the card and identity, matches generates, polls every 3 seconds and sends consent, and the pitch link opens the server draft.
+- [x] **Journey works end to end through the API** (two test sessions): match with live evidence, pending with no identity after one approval, reveal after both, pitch refused before reveal, export refused until both approve, and an edit bumps the version and blocks export again. A third session gets 404 on that match.
+- [x] **Event code agrees.** Join defaults to `SUPERSET`, which is the server's default `EVENT_CODE`.
+- [x] **No synthetic copy of A or B.** The server pre-loads only the four distractors, so the real phone is the laptop's top match with no tie.
+
+Still open:
+
+- [ ] **Run it once on two real devices.** Everything above was checked through the API, not by tapping through the screens on a laptop and a phone.
+- [ ] **Don't run `pnpm seed` against this server.** It already pre-loads the four distractors, so seeding adds a second copy of each (Canvas showed up twice in testing). The seed script is for a server that doesn't pre-load them.
+- [ ] **One server process.** State is in memory, so it resets on restart and does not work across multiple instances (for example serverless hosting).
+- [ ] **Privacy acceptance check.** Type `PRIVATE-RUNWAY-7731` into intake and confirm it appears in no request, log, pitch draft or export (DevTools → Network → search).
 
 ## Two-device setup checklist (T-30 minutes)
 
 - [ ] **URL:** `__________________` (one `pnpm build && pnpm start` process, behind an HTTPS tunnel or on one long-running host).
 - [ ] **Env:** `EVENT_CODE` matches the code on the slide. Set `GITHUB_TOKEN`, because unauthenticated search allows only 10 requests a minute. `MODEL_API_URL` / `MODEL_API_KEY` / `MODEL_NAME` are optional; leave them empty unless the model path was rehearsed.
-- [ ] **Fresh state:** restart the server, then run `BASE_URL=<url> pnpm seed` and expect four `✓ Synthetic · …` lines. A rehearsal freezes cards and creates matches, so restart and seed again after every rehearsal.
+- [ ] **Fresh state:** restart the server. It comes back with the four labeled synthetic distractors and nothing else. A rehearsal freezes cards and creates matches, so restart after every rehearsal.
 - [ ] **Clean browsers:** open a private window on the laptop and a private tab on the phone, or clear cookies for the URL on both.
 - [ ] **Phone (B) ready first:** join, publish B's card (offers product + sales, seeks engineering, developer-tools, exploring) and fill in the identity fields. B must exist before A asks for matches.
 - [ ] **Laptop (A):** join page open, not submitted.
@@ -41,7 +47,7 @@ Re-check each item after the final merge. Fix the ones that are still open, or c
 
 - **GitHub down or rate-limited:** nothing to do. Evidence switches to the saved snapshot (Plane, Chatwoot, Sentry) and says so. Say: "GitHub is limiting us, so these are saved results, labeled as saved." Prevention: set `GITHUB_TOKEN`.
 - **Model down, slow or not configured:** nothing to do. After 15 seconds, or on any error, the opportunity comes from the fixed template and the draft says "Drafted from a fixed template". The template is the predictable choice for a live demo.
-- **Wifi down:** start the app on the laptop and connect the phone to the laptop's hotspot at `http://<laptop-ip>:3000`. Use `pnpm dev` for this, not `pnpm start`, because production session cookies require HTTPS. Then restart and seed as usual. If that fails too, play the backup video: one full rehearsal, 90 seconds or less, with captions. Narrate over it, and say it is a recording.
+- **Wifi down:** start the app on the laptop and connect the phone to the laptop's hotspot at `http://<laptop-ip>:3000`. Use `pnpm dev` for this, not `pnpm start`, because production session cookies require HTTPS. The server starts fresh with the distractors loaded. If that fails too, play the backup video: one full rehearsal, 90 seconds or less, with captions. Narrate over it, and say it is a recording.
 
 ## Opening hook (3 sentences)
 
@@ -74,6 +80,6 @@ Our hypothesis is that it gets complementary teams already formed around a speci
 | Public evidence | Real GitHub repository search, cached 15 minutes, with a labeled saved snapshot when it fails. |
 | Opportunity and pitch text | Fixed template by default. A model drafts it only when configured, and the draft is labeled either way. |
 | Sessions, cards, consent, reveal, pitch approval and export | Implemented as server routes with an in-memory store that resets on restart. |
-| Screens wired to those routes | Not yet on `main`. The screens run a local demo (see the status list at the top). |
-| Other people in the room | Synthetic and labeled "Synthetic". |
+| Screens wired to those routes | Yes. Join, onboarding, matches, consent, reveal and the pitch workspace call the server. |
+| Other people in the room | Four synthetic distractors, labeled "Synthetic". Founders A and B are real sessions on the two devices. |
 | Customers, demand, endorsements | None claimed. Everything is a hypothesis to test. |
