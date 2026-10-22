@@ -36,7 +36,7 @@ Optional DeepSeek enhancement is not configured. To enable it, set the server-on
 
 The prepared public weights and ONNX runtimes stay ignored by Git. A Drive archive is for teammate transfer/backup; the website serves the extracted files from public Blob storage. Preserve all four folders: `models/laya`, `models/bonsai`, `laya-runtime`, `bonsai-runtime`. Runtime versions must travel with their matching models.
 
-1. Prepare both model sets locally (`pnpm browser:prepare`, `pnpm bonsai:prepare`).
+1. Prepare both model sets locally (`pnpm browser:prepare`, `pnpm bonsai:prepare`), or restore the shared Drive bundle from the repo root: `mkdir -p public` then `tar -xzf /path/to/WYJ-browser-models.tar.gz -C public`. Verify the archive with the accompanying SHA-256 file before extracting. No Python companion or model conversion is needed when restoring the prepared bundle.
 2. `pnpm models:upload` is a dry run; it lists the fixed public assets and total size.
 3. Create a public Vercel Blob store. Put its `BLOB_READ_WRITE_TOKEN` in ignored `.env.local`, then run `pnpm models:upload --upload`. This uploads public weights/runtime files only, with stable paths under a versioned prefix. It does not upload `.env`, profiles, contacts or private notes. Existing names are not overwritten; choose a new `MODEL_ASSET_PREFIX` for a new runtime version.
 4. Set the printed `MODEL_ASSET_BASE_URL` in the Vercel project and redeploy. Next proxies only the four fixed asset directories, so existing same-origin workers and their restrictive GET-only asset rules remain intact. No token is needed for public downloads; the write token stays server-side/local.
