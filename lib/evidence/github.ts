@@ -1,22 +1,29 @@
 import { z } from 'zod';
 import { INTERESTS, type Evidence } from '@/lib/contracts';
 import { evidenceFixture, EVIDENCE_SNAPSHOT_AT } from '@/fixtures/evidence';
+export { EVIDENCE_CAVEAT } from './caveat';
 
 // Server-side only: may read GITHUB_TOKEN. Queries are built from a fixed table keyed by
 // approved interest tags, so no participant text or URL ever reaches the request.
 // Docs: https://docs.github.com/en/rest/search/search#search-repositories
 
-export const EVIDENCE_CAVEAT = 'Public repositories show that related tooling exists. They are not evidence of customer demand or willingness to pay.';
 export const CACHE_TTL_MS = 15 * 60 * 1000;
 const MAX_QUERIES = 2;
-const PER_QUERY = 3;
+const PER_QUERY = 5;
+const MAX_RESULTS = 5;
 const API_VERSION = '2026-03-10';
 
-const QUERY_BY_TAG: Record<(typeof INTERESTS)[number], string> = {
-  'developer-tools': 'topic:developer-tools archived:false',
-  payments: 'topic:payments archived:false',
-  healthcare: 'topic:healthcare archived:false',
-  climate: 'topic:climate-change archived:false',
+type Tag = (typeof INTERESTS)[number];
+// Narrow on purpose: each query targets tooling adjacent to the demo hypothesis for that
+// domain. developer-tools covers integration plumbing (webhooks) and customer feedback.
+const QUERIES_BY_TAG: Record<Tag, string[]> = {
+  'developer-tools': [
+    'webhooks service in:description topic:webhooks archived:false',
+    'topic:customer-feedback archived:false',
+  ],
+  payments: ['topic:payments archived:false'],
+  healthcare: ['topic:healthcare archived:false'],
+  climate: ['topic:climate-change archived:false'],
 };
 
 export type EvidenceMode = 'live' | 'cached' | 'fixture' | 'none';
@@ -51,11 +58,28 @@ type Entry = { at: number; evidence: Evidence[] };
 const cache = new Map<string, Entry>();
 export function clearEvidenceCache() { cache.clear(); }
 
-const isApprovedTag = (t: string): t is (typeof INTERESTS)[number] => (INTERESTS as readonly string[]).includes(t);
+const isApprovedTag = (t: string): t is Tag => (INTERESTS as readonly string[]).includes(t);
 
 /** Approved tags, deduplicated, in the order given, at most two. */
-export function approvedTags(tags: string[]): (typeof INTERESTS)[number][] {
+export function approvedTags(tags: string[]): Tag[] {
   return [...new Set(tags.map(t => t.trim().toLowerCase()))].filter(isApprovedTag).slice(0, MAX_QUERIES);
+}
+
+/** At most two fixed queries, taken round-robin across the approved tags. */
+export function queriesFor(tags: string[]): { tag: Tag; query: string }[] {
+  const lists = approvedTags(tags).map(tag => QUERIES_BY_TAG[tag].map(query => ({ tag, query })));
+  const out: { tag: Tag; query: string }[] = [];
+  for (let i = 0; out.length < MAX_QUERIES && lists.some(l => i < l.length); i++) {
+    for (const l of lists) if (i < l.length && out.length < MAX_QUERIES) out.push(l[i]);
+  }
+  return out;
+}
+
+// Alternate between query results so each query is represented in the top results.
+function interleave<T>(lists: T[][]): T[] {
+  const out: T[] = [];
+  for (let i = 0; lists.some(l => i < l.length); i++) for (const l of lists) if (i < l.length) out.push(l[i]);
+  return out;
 }
 
 // Repository text is untrusted: keep it short and single-line before it goes anywhere.
@@ -96,8 +120,9 @@ const FAILURE_LABEL: Record<FailureReason, string> = {
 };
 
 /**
- * Searches public GitHub repositories for up to two approved interest tags.
- * Never throws: on failure it returns the labeled saved snapshot for that tag.
+ * Searches public GitHub repositories with at most two fixed queries chosen by approved
+ * interest tags (pass the pair's shared interests). Returns up to five results.
+ * Never throws: a failed query is replaced by the labeled saved snapshot for its tag.
  */
 export async function searchPublicProjects(tags: string[], options: SearchOptions = {}): Promise<EvidenceResult> {
   if (typeof window !== 'undefined') throw new Error('searchPublicProjects is server-only');
@@ -107,13 +132,12 @@ export async function searchPublicProjects(tags: string[], options: SearchOption
     now: options.now ?? Date.now,
     timeoutMs: options.timeoutMs ?? 5000,
   };
-  const selected = approvedTags(tags);
+  const selected = queriesFor(tags);
   if (!selected.length) return { evidence: [], mode: 'none', notice: null, failures: [] };
 
   const sources = new Set<Exclude<EvidenceMode, 'none'>>();
   const failures: FailureReason[] = [];
-  const batches = await Promise.all(selected.map(async tag => {
-    const query = QUERY_BY_TAG[tag];
+  const batches = await Promise.all(selected.map(async ({ tag, query }) => {
     const hit = cache.get(query);
     if (hit && opts.now() - hit.at < CACHE_TTL_MS) {
       sources.add('cached');
@@ -132,7 +156,7 @@ export async function searchPublicProjects(tags: string[], options: SearchOption
   }));
 
   const seen = new Set<string>();
-  const evidence = batches.flat().filter(e => !seen.has(e.id) && seen.add(e.id));
+  const evidence = interleave(batches).filter(e => !seen.has(e.id) && seen.add(e.id)).slice(0, MAX_RESULTS);
   const mode = sources.has('fixture') ? 'fixture' : sources.has('cached') ? 'cached' : 'live';
   const notice = mode === 'fixture'
     ? `GitHub search was ${FAILURE_LABEL[failures[0]]}. Showing a saved snapshot from ${snapshotDate}, not live results.`
