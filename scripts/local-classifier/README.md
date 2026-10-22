@@ -47,3 +47,20 @@ Confidence is uncalibrated: the checkpoint warns that some temperatures are inva
 - If used at all, show `english` / 0.7 suggestions for offers and interests only. Leave sought skills and availability for the founder to enter.
 - The manual brief stays the main path. Say "suggested by a local classifier, check each one" on screen.
 - Ten snippets is a smoke test, not an accuracy claim.
+
+## Companion for the brief editor
+
+```sh
+HF_HUB_CACHE=.wyj-local/hf .wyj-local/venv/bin/python scripts/local-classifier/server.py
+```
+
+Each founder runs this on their own laptop. The browser calls it directly through `classifyLocally()` in `lib/private/classifier-contract.ts`, so profile text never reaches the shared Next server.
+
+- **Address:** binds `127.0.0.1:11435` only.
+- **Origin allowlist:** answers only origins listed in `WYJ_ORIGINS` (default `http://localhost:3000,http://localhost:3002`). A missing or other origin gets 403, and a Host other than 127.0.0.1 or localhost gets 421, which blocks DNS rebinding.
+- **Logging:** no request lines, bodies or labels are logged.
+- **Output:** `POST /classify {"text": "..."}` returns offered skills and interests only (`english`, threshold 0.7), always with status `needs_review`. Sought skills and availability are always empty or null for the founder to fill in.
+- **When Laya isn't ready:** while loading, or if Laya can't load, the answer is `503` with status `unavailable`. If the companion isn't running at all, the browser adapter returns `unavailable` itself. There is no other model and no cloud fallback.
+- **Status check:** `GET /health` returns `loading`, `ready` or `unavailable`.
+
+Checked on 22 October 2026: loading 503, ready, 403 without or with a foreign Origin, 421 for a foreign Host, browser preflight answered (including private-network access), 400 on bad JSON, 503 `unavailable` without Laya installed, and no input text in the log. Calls from a page served over an HTTPS tunnel to this http loopback address have not been tested.
