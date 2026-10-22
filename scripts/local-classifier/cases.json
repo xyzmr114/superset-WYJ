@@ -1,0 +1,55 @@
+{
+  "note": "Synthetic snippets written for this smoke test. Not real people or private input.",
+  "cases": [
+    {
+      "id": "travel-engineer",
+      "text": "I'm a backend engineer, eight years building APIs and booking integrations. I want to build an Expedia-style booking layer that AI agents can call. I need a cofounder who can handle product and distribution.",
+      "offers": ["engineering"], "seeks": ["product", "sales"], "interests": ["travel", "ai-agents"], "availability": "not_stated"
+    },
+    {
+      "id": "travel-product",
+      "text": "Product lead at a travel company. I've been exploring infrastructure for agents that plan and book trips. Looking for a strong engineer to build it with. Weekends for now.",
+      "offers": ["product"], "seeks": ["engineering"], "interests": ["travel", "ai-agents"], "availability": "weekends"
+    },
+    {
+      "id": "devtools-sales",
+      "text": "Ten years selling developer tools to engineering teams. I want to start something in developer workflow and need a technical cofounder.",
+      "offers": ["sales"], "seeks": ["engineering"], "interests": ["developer-tools"], "availability": "not_stated"
+    },
+    {
+      "id": "payments-data",
+      "text": "Data scientist working on fraud models at a fintech. Interested in payment reconciliation for small merchants. Can go full time next year.",
+      "offers": ["data"], "seeks": [], "interests": ["payments"], "availability": "full_time"
+    },
+    {
+      "id": "negated-engineer",
+      "text": "I'm not an engineer and I don't write code. I run customer interviews and product strategy for a clinic software company. I want to find someone technical to work on healthcare scheduling.",
+      "offers": ["product"], "seeks": ["engineering"], "interests": ["healthcare"], "availability": "not_stated"
+    },
+    {
+      "id": "designer-climate",
+      "text": "Product designer, mostly Figma and user flows. Climate is what I care about, especially energy reporting. Just exploring ideas at this point.",
+      "offers": ["design"], "seeks": [], "interests": ["climate"], "availability": "exploring"
+    },
+    {
+      "id": "negated-sales",
+      "text": "Full-stack developer. I have never done sales and don't want to. I'd like a partner who can sell. Healthcare or payments both interest me.",
+      "offers": ["engineering"], "seeks": ["sales"], "interests": ["healthcare", "payments"], "availability": "not_stated"
+    },
+    {
+      "id": "sparse",
+      "text": "Looking to meet people here.",
+      "offers": [], "seeks": [], "interests": [], "availability": "not_stated"
+    },
+    {
+      "id": "ml-agents",
+      "text": "Machine learning engineer. I build evaluation tooling for LLM agents and want to turn it into developer tools. Need help with go-to-market.",
+      "offers": ["engineering", "data"], "seeks": ["sales"], "interests": ["developer-tools", "ai-agents"], "availability": "not_stated"
+    },
+    {
+      "id": "designer-not-climate",
+      "text": "UX designer at a bank. People keep asking me about climate startups, but that's not my interest. I want to work on payments for freelancers, weekends only.",
+      "offers": ["design"], "seeks": [], "interests": ["payments"], "availability": "weekends"
+    }
+  ]
+}
