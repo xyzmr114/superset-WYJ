@@ -5,6 +5,7 @@ out/
 !.env.example
 *.tsbuildinfo
 .DS_Store
+*.crt
 .wyj-browser/
 .wyj-runtime/
 

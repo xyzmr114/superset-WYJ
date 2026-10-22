@@ -29,13 +29,13 @@ Current product: see `PIVOT.md`. Roles and implementation ownership: see `WOULD_
 
 Local inference must really run on the user's device. Pseudonyms are not guaranteed anonymity. No contact is revealed before both approvals. The demo does not send external messages, book meetings, promise investment or claim a match predicts founder success.
 
-The current server store is process memory. Avoid restarting it between the two participants joining and revealing. Rehearse with actual independently controlled sessions; do not simulate the other person's consent.
+With DATABASE_URL set, apply pnpm db:migrate before rehearsal. Without it, the PGlite fallback resets on restart; avoid restarting between participants joining and revealing. Rehearse with actual independently controlled sessions; do not simulate the other person's consent.
 
 ## Implemented match/reveal rehearsal
 
 Use `/matches` in independent browsers after publishing the briefs. Interested opens a preview without submitting consent. Enter the exact chosen name/contact, check the pair-specific approval, and submit. Show the waiting screen and optionally withdraw. Independently approve in the second browser; the first screen updates automatically. Use Introduced to focus the pair, then Build a joint pitch. Draft generation and export approval remain separate steps.
 
-Live API verification: `pnpm exec tsx scripts/acceptance-pivot.ts http://localhost:3002` creates isolated test participants and checks 41 conditions including one-sided JSON privacy, outsider denial, withdrawal, immutable snapshots and the pitch gate. It adds test briefs to the running in-memory room. Run only against your development server.
+Live API verification: `pnpm exec tsx scripts/acceptance-pivot.ts http://localhost:3002` creates isolated test participants and checks 41 conditions including one-sided JSON privacy, outsider denial, withdrawal, immutable snapshots and the pitch gate. It adds test briefs to the running development room. Run only against your development server.
 
 The match/reveal browser walkthrough passed. The current `/agent` now runs the private workspace with direct local Laya inference and manual review. A real browser run required correcting a travel-domain label.
 
@@ -46,4 +46,4 @@ The match/reveal browser walkthrough passed. The current `/agent` now runs the p
 3. After mutual reveal, propose a 48-hour working trial. Show the other founder sees their own contribution correctly, then approve independently in both browsers. Only two approvals activate it. Reflection is for after the trial; don't pretend an actual project was completed in the demo.
 4. Preview Premium (no payment), open `/premium`, select an approved idea and fill customer/problem/wedge/test answers. Generate an editable solution memo and review/copy/download. This uses local structured templates, not hosted generative inference.
 
-Start the local runtime using `scripts/local-classifier/README.md`. The teammate ten-snippet model smoke is not an accuracy claim; missing labels and wrong domains are expected review cases. The whole demo remains single-process with session-only plan state.
+Start the local runtime using `scripts/local-classifier/README.md`. The teammate ten-snippet model smoke is not an accuracy claim; missing labels and wrong domains are expected review cases. The PGlite fallback is single-process; configured Postgres persists room data and session plan previews.

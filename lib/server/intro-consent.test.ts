@@ -1,47 +1,85 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {db,type Match} from './store';
+import {q,matchRow} from './store';
 import {introDecision,decideIntroduction} from './intro-consent';
 import {getMyMatch,toView} from './matches';
 import {isRevealed} from './pitches';
 import {proposeOpportunity} from '@/lib/generation';
-import type {MatchingCard} from '@/lib/contracts';
+import {founderA,founderB} from '@/fixtures/profiles';
+delete process.env.DATABASE_URL;
 let sequence=0;
-function pair(){
- const suffix=++sequence;const a:MatchingCard={id:'consent-a-'+suffix,eventId:'consent-test',alias:'Quiet Pine',offers:['engineering'],seeks:['sales'],interests:['agent-travel'],availability:'weekends',approvedBlurb:'Agent travel booking',version:2};
- const b:MatchingCard={...a,id:'consent-b-'+suffix,alias:'Open Cedar',offers:['sales'],seeks:['engineering'],version:3};db.cards.set(a.id,a);db.cards.set(b.id,b);
- const m:Match={id:'consent-match-'+suffix,eventId:a.eventId,a:a.id,b:b.id,score:100,opportunity:proposeOpportunity(a,b),evidence:[],approvals:new Set(),declinedBy:null};db.matches.set(m.id,m);return {a,b,m};
+async function pair(){
+ const suffix=++sequence;
+ const a={...founderA,id:'consent-a-'+suffix,version:2},b={...founderB,id:'consent-b-'+suffix,version:3};
+ for(const c of [a,b]){
+  await q('insert into participants (id,event_id) values ($1,$2)',[c.id,c.eventId]);
+  await q('insert into cards (participant_id,event_id,alias,offers,seeks,interests,availability,approved_blurb,version) values ($1,$2,$3,$4,$5,$6,$7,$8,$9)',[c.id,c.eventId,c.alias,c.offers,c.seeks,c.interests,c.availability,c.approvedBlurb,c.version]);
+ }
+ const [row]=await q('insert into matches (id,event_id,a,b,score,opportunity,evidence) values ($1,$2,$3,$4,100,$5::jsonb,\'[]\') returning *',['consent-match-'+suffix,a.eventId,a.id,b.id,JSON.stringify(proposeOpportunity(a,b))]);
+ return {a,b,m:matchRow(row)};
 }
-const identityA={displayName:'Founder A',contact:'a-private@example.invalid'};const identityB={displayName:'Founder B',contact:'b-private@example.invalid'};
-test('two independent exact approvals gate identity in JSON and joint pitch access',()=>{
- const {a,b,m}=pair();assert.equal('revealedContact' in toView(m,a.id),false);
- decideIntroduction(m,a.id,{decision:'approve',identity:identityA});
- for(const me of [a.id,b.id]){const body=JSON.stringify(toView(m,me));assert.doesNotMatch(body,/a-private|b-private|Founder A|Founder B|revealedContact/);}
- assert.equal(isRevealed(m),false);assert.equal(toView(m,b.id).theirIntroApproval,true);
- decideIntroduction(m,b.id,{decision:'approve',identity:identityB});
- assert.deepEqual(toView(m,a.id).revealedContact,identityB);assert.deepEqual(toView(m,b.id).revealedContact,identityA);assert.equal(isRevealed(m),true);
+const identityA={displayName:'Founder A',contact:'a-private@example.invalid'},identityB={displayName:'Founder B',contact:'b-private@example.invalid'};
+test('persisted exact approvals gate JSON identity and pitch; retries preserve the receipt',async()=>{
+ const {a,b,m}=await pair();
+ const first=await decideIntroduction(m,a.id,{decision:'approve',identity:identityA});
+ for(const me of [a.id,b.id])assert.doesNotMatch(JSON.stringify(await toView(first,me)),/a-private|b-private|Founder A|Founder B|revealedContact/);
+ assert.equal(isRevealed(first),false);
+ assert.equal((await toView(first,b.id)).theirIntroApproval,true);
+ const retry=await decideIntroduction(first,a.id,{decision:'approve',identity:identityA});
+ assert.equal(retry.introConsents![a.id].approvedAt,first.introConsents![a.id].approvedAt);
+ await assert.rejects(()=>decideIntroduction(first,a.id,{decision:'approve',identity:{...identityA,contact:'changed'}}),/Withdraw/);
+ await q('insert into identities (participant_id,display_name,contact) values ($1,$2,$3)',[a.id,'Changed elsewhere','unapproved']);
+ await decideIntroduction(first,b.id,{decision:'approve',identity:identityB});
+ const persisted=await getMyMatch(m.id,a.id);
+ assert.equal(isRevealed(persisted),true);
+ assert.deepEqual((await toView(persisted,b.id)).revealedContact,identityA);
+ assert.deepEqual((await toView(persisted,a.id)).revealedContact,identityB);
+ assert.equal((await toView(persisted,a.id)).myConsent?.briefVersion,2);
+ await assert.rejects(()=>decideIntroduction(persisted,a.id,{decision:'withdraw'}),/cannot be recalled/);
 });
-test('approved identity snapshots cannot be replaced by global identity edits or repeated different approvals',()=>{
- const {a,b,m}=pair();decideIntroduction(m,a.id,{decision:'approve',identity:identityA});
- decideIntroduction(m,a.id,{decision:'approve',identity:identityA});
- const receipt=m.introConsents![a.id].approvedAt;
- assert.throws(()=>decideIntroduction(m,a.id,{decision:'approve',identity:{...identityA,contact:'changed@example.invalid'}}),/Withdraw/);
- db.identities.set(a.id,{displayName:'Changed elsewhere',contact:'not-approved@example.invalid'});
- decideIntroduction(m,b.id,{decision:'approve',identity:identityB});assert.deepEqual(toView(m,b.id).revealedContact,identityA);assert.equal(m.introConsents![a.id].approvedAt,receipt);assert.equal(toView(m,a.id).myConsent?.briefVersion,2);
+test('withdraw only clears the caller; decline prevents later disclosure',async()=>{
+ const {a,b,m}=await pair();
+ const first=await decideIntroduction(m,a.id,{decision:'approve',identity:identityA});
+ const withdrawn=await decideIntroduction(first,a.id,{decision:'withdraw'});
+ assert.equal((await toView(withdrawn,a.id)).status,'suggested');
+ const second=await decideIntroduction(withdrawn,b.id,{decision:'approve',identity:identityB});
+ assert.equal((await toView(second,a.id)).revealedContact,undefined);
+ const declined=await decideIntroduction(second,a.id,{decision:'decline'});
+ assert.equal((await toView(declined,b.id)).status,'declined');
+ await assert.rejects(()=>decideIntroduction(declined,a.id,{decision:'approve',identity:identityA}),/passed on/);
 });
-test('withdrawal clears consent without rejecting the pairing and decline blocks later disclosure',()=>{
- const {a,b,m}=pair();decideIntroduction(m,a.id,{decision:'approve',identity:identityA});decideIntroduction(m,a.id,{decision:'withdraw'});
- assert.equal(toView(m,a.id).status,'suggested');assert.equal(m.introConsents?.[a.id],undefined);
- decideIntroduction(m,b.id,{decision:'approve',identity:identityB});assert.equal(toView(m,a.id).revealedContact,undefined);
- decideIntroduction(m,a.id,{decision:'decline'});assert.throws(()=>decideIntroduction(m,a.id,{decision:'approve',identity:identityA}),/passed on/);assert.equal(toView(m,b.id).status,'declined');
-});
-test('outsiders cannot fetch or consent; missing exact details and forged consent fields fail validation',()=>{
- const {a,m}=pair();assert.throws(()=>getMyMatch(m.id,'outsider'),/Not found/);
- assert.throws(()=>decideIntroduction(m,'outsider',{decision:'approve',identity:identityA}),/Not found/);
+test('outsiders and invalid consent fail; legacy approval bits never reveal identity',async()=>{
+ const {a,b,m}=await pair();
+ await assert.rejects(()=>getMyMatch(m.id,'outsider'),/Not found/);
+ await assert.rejects(()=>decideIntroduction(m,'outsider',{decision:'approve',identity:identityA}),/Not found/);
  assert.equal(introDecision.safeParse({decision:'approve'}).success,false);
  assert.equal(introDecision.safeParse({decision:'approve',identity:identityA,participantId:a.id}).success,false);
+ await q('update matches set a_approved=true,b_approved=true where id=$1',[m.id]);
+ const legacy=await getMyMatch(m.id,a.id);
+ assert.equal(isRevealed(legacy),false);
+ assert.equal((await toView(legacy,a.id)).revealedContact,undefined);
 });
-test('legacy approval bits alone never release identity or unlock joint pitch',()=>{
- const {a,b,m}=pair();m.approvals.add(a.id);m.approvals.add(b.id);db.identities.set(b.id,identityB);
- assert.equal(toView(m,a.id).revealedContact,undefined);assert.equal(isRevealed(m),false);
+test('concurrent different approvals cannot replace the winning snapshot',async()=>{
+ const {a,m}=await pair();
+ const results=await Promise.allSettled([
+  decideIntroduction(m,a.id,{decision:'approve',identity:identityA}),
+  decideIntroduction(m,a.id,{decision:'approve',identity:{...identityA,contact:'different'}}),
+ ]);
+ assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
+ assert.equal(results.filter(r=>r.status==='rejected').length,1);
+});
+
+test('frozen idea briefs drive the match view and approval receipt after a new publication',async()=>{
+ const {a,b,m}=await pair();
+ const frozenA={...a,ideaId:'frozen-idea-a',alias:'Original A'},frozenB={...b,ideaId:'frozen-idea-b',alias:'Original B'};
+ await q('update matches set a_card=$2::jsonb,b_card=$3::jsonb where id=$1',[m.id,JSON.stringify(frozenA),JSON.stringify(frozenB)]);
+ await q('update cards set version=99,alias=$2 where participant_id=$1',[a.id,'Replacement A']);
+ await q('update cards set version=100,alias=$2 where participant_id=$1',[b.id,'Replacement B']);
+ const frozen=await getMyMatch(m.id,a.id);
+ const view=await toView(frozen,a.id);
+ assert.deepEqual(view.myBrief,frozenA);
+ assert.deepEqual(view.candidate,frozenB);
+ const approved=await decideIntroduction(frozen,a.id,{decision:'approve',identity:identityA});
+ assert.equal(approved.introConsents![a.id].briefVersion,a.version);
+ assert.equal((await toView(approved,a.id)).myConsent?.briefVersion,a.version);
 });

@@ -17,7 +17,7 @@ Private profile processing must not fall back to a hosted model. A model suggest
 
 ## Stack and run
 
-Next.js 16, React, TypeScript, TanStack Query and Zod. Existing matching and opportunity proposals are deterministic. The current backend uses single-process memory; no hosted database is required for the room demo. It resets when the server restarts.
+Next.js 16, React, TypeScript, TanStack Query and Zod. Existing matching and opportunity proposals are deterministic. The backend uses Postgres when `DATABASE_URL` is configured; otherwise it uses single-process PGlite and resets when the server restarts.
 
 ```sh
 pnpm install
@@ -29,6 +29,8 @@ pnpm build
 
 Copy `.env.example` to `.env.local` for optional provider keys. Core matching and consent do not require a hosted model. Never commit credentials.
 
+Next.js App Router + TypeScript, React, TanStack Query v5, plain CSS, Zod. Persistence: Supabase Postgres via `DATABASE_URL` (setup: [db/README.md](db/README.md)); in-memory PGlite when unset. One optional model provider. No TanStack Start migration during the hackathon. QueryClient is wired; live query hooks are an integration task. Private intake stays outside Query cache.
+
 Laya is a local classifier candidate, not yet validated for founder matching. On the integration laptop it is installed in ignored `.wyj-local/venv`; checkpoint evaluation and the client adapter belong to Vernika. Details and limits are in [PIVOT.md](PIVOT.md).
 
 ## Implementation status
@@ -39,6 +41,6 @@ Laya is a local classifier candidate, not yet validated for founder matching. On
 
 `/matches` supports independent contact previews/approvals, live status, withdrawal, immutable per-pair snapshots, and a versioned working trial after reveal. Both founders approve a trial before it activates. Continuation answers remain private; only mutual yes is shared. Joint pitch uses approved idea snapshots, with separate exact-version export approval.
 
-Local Laya English CPU inference is verified on the integration laptop; [companion setup](scripts/local-classifier/README.md) is required on each visitor's own device. The teammate's ten-snippet evaluation found substantial skill/domain errors and only one completely correct profile; every suggestion requires review. Sought skills and availability remain manual. Manual entry works if the local runtime is unavailable. No hosted fallback is used. The shared server and plan data remain process memory and reset on restart.
+Local Laya English CPU inference is verified on the integration laptop; [companion setup](scripts/local-classifier/README.md) is required on each visitor's own device. The teammate's ten-snippet evaluation found substantial skill/domain errors and only one completely correct profile; every suggestion requires review. Sought skills and availability remain manual. Manual entry works if the local runtime is unavailable. No hosted fallback is used. Shared ideas, plan previews, pair snapshots and working trials persist in Postgres; the PGlite fallback resets on restart. Run `pnpm db:migrate` before deploying this integration.
 
 Legacy browser outreach/OpenCode tools are outside the current product path.
