@@ -39,7 +39,7 @@ test('invalid or unavailable answers become an empty unavailable result', () => 
     assert.equal(r.status, 'unavailable');
     assert.deepEqual(r.suggested, { offers: [], seeks: [], interests: [], availability: null });
   }
-  assert.deepEqual(sanitizeClassification({ status: 'unavailable', suggested: { offers: ['sales'] } }), unavailableClassification('not_running'));
+  assert.deepEqual(sanitizeClassification({ status: 'unavailable', suggested: { offers: ['sales'] } }), unavailableClassification('not_ready'));
 });
 
 test('only plain-http loopback addresses are accepted', () => {
@@ -70,7 +70,7 @@ test('request posts the text to the loopback classifier and sanitizes the reply'
 test('network failure, 503, bad JSON and empty text are unavailable, never thrown', async () => {
   const down = stub(async () => { throw new TypeError('fetch failed'); });
   assert.equal((await requestLocalClassification('x', { fetchImpl: down })).status, 'unavailable');
-  assert.equal((await requestLocalClassification('x', { fetchImpl: reply({}, 503) })).message, unavailableClassification('not_running').message);
+  assert.equal((await requestLocalClassification('x', { fetchImpl: reply({}, 503) })).message, unavailableClassification('not_ready').message);
   assert.equal((await requestLocalClassification('x', { fetchImpl: stub(async () => new Response('not json')) })).status, 'unavailable');
   assert.equal((await requestLocalClassification('   ', { fetchImpl: down })).message, unavailableClassification('empty_input').message);
 });
@@ -80,4 +80,12 @@ test('classifyLocally refuses to run outside a browser', async () => {
   const r = await classifyLocally('profile', { fetchImpl: stub(async () => { called = true; return new Response('{}'); }) });
   assert.deepEqual(r, unavailableClassification('not_browser'));
   assert.equal(called, false);
+});
+
+test('companion down and companion loading give different messages', async () => {
+  const down = await requestLocalClassification('x', { fetchImpl: stub(async () => { throw new TypeError('fetch failed'); }) });
+  const loading = await requestLocalClassification('x', { fetchImpl: reply({ status: 'unavailable', message: 'The classifier is still loading.' }, 503) });
+  assert.match(down.message, /not running/);
+  assert.match(loading.message, /not ready/);
+  assert.equal(loading.status, 'unavailable');
 });
