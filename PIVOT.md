@@ -27,7 +27,7 @@ A service running on the organizer's laptop is not processing on every visitor's
 
 ## Core flow
 
-1. Join the room with a pseudonymous session.
+1. Start a pseudonymous session automatically when publishing; no room code.
 2. Enter your own profile and idea in the private panel.
 3. Run local classification; correct suggested labels. Unknown/unsupported labels remain unresolved.
 4. Preview a brief: alias, skills offered/sought, problem areas, coarse availability and an edited short idea blurb.
@@ -76,7 +76,7 @@ Verified with two independent browsers and `scripts/acceptance-pivot.ts` (21 che
 
 ## Intake, trials and plans integration
 
-Private intake includes self-submitted profile/idea and a separate constraints field that is not sent even to Laya. Fixed classification labels are reviewed; broad template prose and user edits form the approved idea. Self-described strengths, desired partner strengths, stack, availability and working styles are optional approved matching fields. No model personality assessment. The outgoing payload is visible before publishing; edits reset consent. Name/contact collection happens only inside pair-specific introduction review.
+Private intake includes an authored shareable idea and optional self-submitted background for local suggestions. There is no separate constraints field or category-template paragraph. Classification labels are reviewed. Self-described strengths, desired partner strengths, stack, availability and working styles are optional approved matching fields. No model personality assessment. The outgoing payload is visible before publishing; edits reset consent. Name/contact collection happens only inside pair-specific introduction review.
 
 Each session can publish separate immutable idea briefs. Free: five ideas, unlimited eligible founder matches. Premium: uncapped idea slots in development preview, structured idea refinement, solution memo and pitch planning. No billing integration or payment is claimed. Limits are per ephemeral room session, not durable paid accounts.
 
@@ -87,3 +87,13 @@ Matches store both exact idea snapshots; a later idea cannot change an earlier p
 The primary intake now calls `classifyInBrowser()` and a dedicated same-origin module worker. Profile and idea text cross only the worker message boundary. Only public model/runtime GETs leave it; private constraints never enter the classifier arguments. Browser cancellation terminates the worker; no loopback or hosted fallback is automatic. Generated quantized ONNX and runtime assets must be prepared on the deployment machine (`pnpm browser:prepare`) and deployed at the documented same-origin paths. They are ignored rather than committed to GitHub. First-load payload is about 630 MB, so manual brief entry stays available.
 
 Premium's optional generative refinement uses DeepSeek Flash. A separate checkbox approves the exact `approvedEnhancementInput()` preview. The browser submits only an owned idea reference, published version and consent; the server reads and projects the published brief. Raw profiles, private ideas/constraints, identity/contact and local studio answers are never in that request. The generated memo is an editable suggestion, not a new published matching brief. Existing local memo templates remain usable without a cloud call.
+
+## Current intake and free agent update — pull before editing
+
+The integration pass changed Anusha’s private workspace files and Vernika’s matching files; pull this commit before continuing. Ownership remains unchanged. Canonical flow: **Your idea → Your partner → Preview & publish**. No room code, private-constraints field, template idea paragraph or repeated partner questions. The founder authors the shareable idea. Optional background stays in tab memory; Laya suggestions fill visible skills/topics without overwriting existing choices. `components/founders/FounderProfile.tsx` is the shared dynamic profile renderer for intake, saved ideas and matches.
+
+Laya and Bonsai automatically warm in isolated browser workers while the founder writes; warmup contains no user text. Free Bonsai 1.7B rewrites only the entered idea after a click, with editable output and explicit adoption. It never publishes. Prepare both generated asset sets before deployment: `pnpm browser:prepare` and `pnpm bonsai:prepare` (about 950 MB total first visitor download). Manual entry remains usable throughout and on unsupported browsers. Premium DeepSeek still receives only separately approved saved briefs.
+
+Partner choices populate both seeks and partnerStrengths. New suggestions require a shared topic plus at least one requested skill/strength actually fulfilled by the other founder. Two engineers both requesting sales no longer qualify through similarity alone. Pending/revealed introductions are preserved.
+
+Next owner work: **Anusha** polish the three-step workspace/shared profile, preserving local-only input and separate approval; **Vernika** evaluate classifier quality and ranking against real reviewed examples; **Abhinav** preserve default code-free session creation, async Postgres and immutable pair snapshots; **You + Codex** verify local generation, automatic warmup and complete publication/mutual reveal.

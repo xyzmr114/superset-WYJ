@@ -16,13 +16,15 @@
     "classifier": "test -x .wyj-local/venv/bin/python && ls .wyj-local/hf/models--convaiinnovations--laya/snapshots/*/model.safetensors >/dev/null 2>&1 || { echo 'run pnpm classifier:setup first'; exit 1; }; HF_HUB_CACHE=.wyj-local/hf .wyj-local/venv/bin/python scripts/local-classifier/server.py",
     "tui": "bun --env-file=.env.local --tsconfig-override=tui/tsconfig.json tui/index.tsx",
     "typecheck:tui": "tsc --project tui/tsconfig.json --noEmit",
-    "browser:prepare": "sh scripts/browser-laya/setup.sh"
+    "browser:prepare": "sh scripts/browser-laya/setup.sh",
+    "bonsai:prepare": "node scripts/browser-bonsai/prepare.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.85",
     "@ai-sdk/google": "^4.0.102",
     "@ai-sdk/openai-compatible": "^3.0.75",
     "@electric-sql/pglite": "~0.3.16",
+    "@huggingface/transformers": "4.1.0",
     "@opencode-ai/sdk": "^1.19.3",
     "@opentui/core": "^0.6.6",
     "@opentui/react": "^0.6.6",

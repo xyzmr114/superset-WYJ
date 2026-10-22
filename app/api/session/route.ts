@@ -5,7 +5,7 @@ import { HttpError, SESSION_COOKIE, assertSameOrigin, hashToken, newId, newToken
 
 export const POST = route(async (req) => {
   assertSameOrigin(req);
-  const { eventCode } = await parseBody(req, z.object({ eventCode: z.string().min(1).max(64) }));
+  const { eventCode } = await parseBody(req, z.object({ eventCode: z.string().min(1).max(64).default(EVENT_CODE) }));
   if (eventCode.trim().toUpperCase() !== EVENT_CODE) throw new HttpError(404, 'NOT_FOUND', 'Unknown event code.');
   const id = newId();
   const token = newToken();

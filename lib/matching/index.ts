@@ -33,6 +33,7 @@ export type RankOptions = {
   minScore?: number;
   limit?: number;
   requireSharedInterest?: boolean;
+  requirePartnerFit?: boolean;
 };
 
 const list = (xs: string[]) => xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`;
@@ -121,6 +122,15 @@ export function preferenceCompatibility(a: MatchingCard, b: MatchingCard): { sco
   return { score: Math.min(stack.length, 2) + Math.min(styles.length, 2) + 2 * Math.min(aGives.length, 2) + 2 * Math.min(bGives.length, 2), reasons };
 }
 
+/** At least one person brings an explicitly requested skill or self-described strength. */
+export function hasPartnerFit(a:MatchingCard,b:MatchingCard):boolean{
+ const canHelp=(giver:MatchingCard,seeker:MatchingCard)=>{
+  const offered=new Set(tagSet(mapTags([...giver.offers,...(giver.preferences?.strengths??[])],'skill')));
+  return tagSet(mapTags([...seeker.seeks,...(seeker.preferences?.partnerStrengths??[])],'skill')).some(skill=>offered.has(skill));
+ };
+ return canHelp(a,b)||canHelp(b,a);
+}
+
 export function scorePair(me: MatchingCard, candidate: MatchingCard): ScoredCandidate {
   const { shared, ...interests } = interestComponent(me, candidate);
   const components = [interests, complementarityComponent(me, candidate), availabilityComponent(me, candidate)];
@@ -138,7 +148,7 @@ export function rankCandidates(me: MatchingCard, candidates: MatchingCard[], opt
   return candidates
     .filter(c => c.id !== me.id && c.eventId === me.eventId && !declined.has(c.id) && !seen.has(c.id) && seen.add(c.id))
     .map(c => scorePair(me, c))
-    .filter(s => s.score >= minScore && (!options.requireSharedInterest || s.sharedInterests.length > 0))
+    .filter(s => s.score >= minScore && (!options.requireSharedInterest || s.sharedInterests.length > 0) && (!options.requirePartnerFit || hasPartnerFit(me,s.candidate)))
     .sort((a, b) => b.score - a.score || b.preferenceScore - a.preferenceScore || a.candidate.id.localeCompare(b.candidate.id))
     .slice(0, limit);
 }
