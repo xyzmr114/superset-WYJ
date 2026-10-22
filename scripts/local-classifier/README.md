@@ -64,3 +64,10 @@ Each founder runs this on their own laptop. The browser calls it directly throug
 - **Status check:** `GET /health` returns `loading`, `ready` or `unavailable`.
 
 Checked on 22 October 2026: loading 503, ready, 403 without or with a foreign Origin, 421 for a foreign Host, browser preflight answered (including private-network access), 400 on bad JSON, 503 `unavailable` without Laya installed, and no input text in the log. Calls from a page served over an HTTPS tunnel to this http loopback address have not been tested.
+
+
+## Integration with the WYJ intake
+
+The intake compatibility wrapper in `lib/private/local-classifier.ts` accepts `(profile, idea)` and passes a labeled combination to this companion using its `{text}` protocol. It never accepts the separate private conditions field. Both this wrapper and the teammate adapter refuse server-side execution; browser requests omit cookies and have no hosted fallback. Sought skills, availability, personal strengths and working style remain explicit founder choices rather than model suggestions.
+
+The integration laptop starts the companion with `WYJ_ORIGINS=http://localhost:3002` and its existing Hugging Face cache, using the same downloaded English checkpoint. The ten-case evaluation and measured limitations above are preserved; the smaller earlier integration smoke is superseded by this teammate runtime. This is not a new accuracy claim.

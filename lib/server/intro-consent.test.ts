@@ -68,3 +68,18 @@ test('concurrent different approvals cannot replace the winning snapshot',async(
  assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
  assert.equal(results.filter(r=>r.status==='rejected').length,1);
 });
+
+test('frozen idea briefs drive the match view and approval receipt after a new publication',async()=>{
+ const {a,b,m}=await pair();
+ const frozenA={...a,ideaId:'frozen-idea-a',alias:'Original A'},frozenB={...b,ideaId:'frozen-idea-b',alias:'Original B'};
+ await q('update matches set a_card=$2::jsonb,b_card=$3::jsonb where id=$1',[m.id,JSON.stringify(frozenA),JSON.stringify(frozenB)]);
+ await q('update cards set version=99,alias=$2 where participant_id=$1',[a.id,'Replacement A']);
+ await q('update cards set version=100,alias=$2 where participant_id=$1',[b.id,'Replacement B']);
+ const frozen=await getMyMatch(m.id,a.id);
+ const view=await toView(frozen,a.id);
+ assert.deepEqual(view.myBrief,frozenA);
+ assert.deepEqual(view.candidate,frozenB);
+ const approved=await decideIntroduction(frozen,a.id,{decision:'approve',identity:identityA});
+ assert.equal(approved.introConsents![a.id].briefVersion,a.version);
+ assert.equal((await toView(approved,a.id)).myConsent?.briefVersion,a.version);
+});

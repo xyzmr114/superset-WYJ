@@ -30,7 +30,7 @@ export function toView(p: Pitch, m: Match, me: string): PitchView {
 
 /** Draft built only from matching cards, opportunity and cited evidence (Vernika's builder). No names or contacts. */
 export async function draftMarkdown(m: Match): Promise<string> {
-  const rows = await q('select * from cards where participant_id = any($1)', [[m.a, m.b]]);
-  const card = (id: string) => cardRow(rows.find((r) => r.participant_id === id));
+  const rows = m.aCard && m.bCard ? [] : await q('select * from cards where participant_id = any($1)', [[m.a, m.b]]);
+  const card = (id: string) => (id === m.a ? m.aCard : m.bCard) ?? cardRow(rows.find((r) => r.participant_id === id));
   return buildPitchMarkdown({ founders: [card(m.a), card(m.b)] }, m.opportunity, m.evidence);
 }

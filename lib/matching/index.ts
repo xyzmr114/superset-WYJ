@@ -1,4 +1,4 @@
-import type { MatchingCard } from '@/lib/contracts';
+import { TECH_STACK, STRENGTHS, WORK_STYLES, type MatchingCard } from '@/lib/contracts';
 import { mapTags, tagSet, type MappedTag } from './tags';
 
 export { normalizeTag, mapTag, mapTags, type MappedTag, type TagKind } from './tags';
@@ -11,7 +11,7 @@ export const DEFAULT_MIN_SCORE = 50;
 export const MAX_MATCHES = 3;
 
 export type ScoreComponent = {
-  key: 'interests' | 'complementarity' | 'availability';
+  key: 'interests' | 'complementarity' | 'availability' | 'preferences';
   points: number;
   max: number;
   reason: string;
@@ -22,6 +22,8 @@ export type ScoredCandidate = {
   score: number;
   components: ScoreComponent[];
   sharedInterests: string[];
+  /** Approved preferences break ties without inflating the 0–100 domain/skill score. */
+  preferenceScore: number;
 };
 
 export type RankOptions = {
@@ -30,6 +32,7 @@ export type RankOptions = {
   /** Candidates must reach this total (0-100). */
   minScore?: number;
   limit?: number;
+  requireSharedInterest?: boolean;
 };
 
 const list = (xs: string[]) => xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`;
@@ -96,22 +99,46 @@ function availabilityComponent(me: MatchingCard, other: MatchingCard): ScoreComp
   return { key: 'availability', points, max: 20, reason };
 }
 
+const approvedValues = (values: string[] | undefined, allowed: readonly string[]) => {
+  const allowedSet = new Set(allowed.map(value => value.toLowerCase()));
+  return [...new Set((values ?? []).map(value => value.trim().toLowerCase()))].filter(value => allowedSet.has(value) && value !== 'no preference');
+};
+const overlap = (a: string[], b: string[]) => a.filter(value => b.includes(value));
+
+/** Explicit approved answers only; shared style is a conversation starter, not a personality assessment. */
+export function preferenceCompatibility(a: MatchingCard, b: MatchingCard): { score: number; reasons: string[] } {
+  const ap = a.preferences, bp = b.preferences;
+  const stack = overlap(approvedValues(ap?.techStack, TECH_STACK), approvedValues(bp?.techStack, TECH_STACK));
+  const styles = overlap(approvedValues(ap?.workStyles, WORK_STYLES), approvedValues(bp?.workStyles, WORK_STYLES));
+  const aGives = overlap(approvedValues(ap?.strengths, STRENGTHS), approvedValues(bp?.partnerStrengths, STRENGTHS));
+  const bGives = overlap(approvedValues(bp?.strengths, STRENGTHS), approvedValues(ap?.partnerStrengths, STRENGTHS));
+  const reasons = [
+    ...(stack.length ? [`Both approved ${list(stack)} as a preferred tech stack.`] : []),
+    ...(styles.length ? [`Both prefer ${list(styles)} when working together.`] : []),
+    ...(aGives.length ? [`${a.alias} lists ${list(aGives)}, which ${b.alias} wants in a partner.`] : []),
+    ...(bGives.length ? [`${b.alias} lists ${list(bGives)}, which ${a.alias} wants in a partner.`] : []),
+  ];
+  return { score: Math.min(stack.length, 2) + Math.min(styles.length, 2) + 2 * Math.min(aGives.length, 2) + 2 * Math.min(bGives.length, 2), reasons };
+}
+
 export function scorePair(me: MatchingCard, candidate: MatchingCard): ScoredCandidate {
   const { shared, ...interests } = interestComponent(me, candidate);
   const components = [interests, complementarityComponent(me, candidate), availabilityComponent(me, candidate)];
-  return { candidate, score: components.reduce((sum, c) => sum + c.points, 0), components, sharedInterests: shared };
+  const preferences = preferenceCompatibility(me, candidate);
+  for (const reason of preferences.reasons) components.push({ key: 'preferences', points: 0, max: 0, reason: `Heuristic: ${reason}` });
+  return { candidate, score: components.reduce((sum, c) => sum + c.points, 0), components, sharedInterests: shared, preferenceScore: preferences.score };
 }
 
 /** Up to three candidates from the same event, best first. An empty result is a valid answer. */
 export function rankCandidates(me: MatchingCard, candidates: MatchingCard[], options: RankOptions = {}): ScoredCandidate[] {
   const declined = new Set(options.declinedIds ?? []);
   const minScore = options.minScore ?? DEFAULT_MIN_SCORE;
-  const limit = Math.min(options.limit ?? MAX_MATCHES, MAX_MATCHES);
+  const limit = options.limit === Infinity ? Infinity : Math.min(options.limit ?? MAX_MATCHES, MAX_MATCHES);
   const seen = new Set<string>();
   return candidates
     .filter(c => c.id !== me.id && c.eventId === me.eventId && !declined.has(c.id) && !seen.has(c.id) && seen.add(c.id))
     .map(c => scorePair(me, c))
-    .filter(s => s.score >= minScore)
-    .sort((a, b) => b.score - a.score || a.candidate.id.localeCompare(b.candidate.id))
+    .filter(s => s.score >= minScore && (!options.requireSharedInterest || s.sharedInterests.length > 0))
+    .sort((a, b) => b.score - a.score || b.preferenceScore - a.preferenceScore || a.candidate.id.localeCompare(b.candidate.id))
     .slice(0, limit);
 }

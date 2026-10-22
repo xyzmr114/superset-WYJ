@@ -6,6 +6,8 @@ import { proposeOpportunity } from '../generation';
 import { founderA, founderB } from '../../fixtures/profiles';
 import { evidenceFixture } from '../../fixtures/evidence';
 
+delete process.env.DATABASE_URL; // use PGlite before the first query
+
 test('server pitch draft uses the shared pitch sections and keeps identities out', async () => {
   delete process.env.DATABASE_URL; // in-memory PGlite; never touch a real database from tests
   const evidence = evidenceFixture['developer-tools'];
@@ -30,4 +32,10 @@ test('server pitch draft uses the shared pitch sections and keeps identities out
   assert.deepEqual(headings, ['Problem hypothesis', 'Proposed product', 'Target customer', 'Team complementarity', 'Public evidence', 'First 48-hour experiment', 'Why explore this with super{set}?', 'Open questions']);
   for (const leak of ['Real Name', 'private@example.invalid', a.id, b.id]) assert.ok(!md.includes(leak), leak);
   assert.ok(md.includes(a.alias) && md.includes(b.alias));
+  const frozenA = { ...a, ideaId: 'original-idea-a', alias: 'Frozen founder A', approvedBlurb: 'Build a compiler for durable agent travel workflows.' };
+  const frozenB = { ...b, ideaId: 'original-idea-b', alias: 'Frozen founder B' };
+  const frozenMd = await draftMarkdown({ ...match, aCard: frozenA, bCard: frozenB, opportunity: proposeOpportunity(frozenA, frozenB, evidence) });
+  assert.ok(frozenMd.includes(frozenA.alias) && frozenMd.includes(frozenB.alias));
+  assert.ok(frozenMd.includes(frozenA.approvedBlurb));
+  assert.ok(!frozenMd.includes(a.alias) && !frozenMd.includes(b.alias));
 });

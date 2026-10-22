@@ -18,6 +18,7 @@ export type Identity = { displayName: string; contact: string };
 export type Match = {
   id: string; eventId: string; a: string; b: string; score: number;
   opportunity: Opportunity; evidence: Evidence[];
+  aCard?:MatchingCard; bCard?:MatchingCard;
   introConsents?: Record<string,{identity:Identity;briefVersion:number;approvedAt:string}>;
   approvals: Set<string>; declinedBy: string | null;
   // participantId -> identity that person released for THIS pair, frozen at approval. Internal only.
@@ -32,7 +33,7 @@ export type Pitch = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = any;
 export type Q = (text: string, params?: unknown[]) => Promise<Row[]>;
-export type Db = { q: Q; exec: (sql: string) => Promise<unknown>; end: () => Promise<void> };
+export type Db = { q: Q; exec: (sql: string) => Promise<unknown>; end: () => Promise<void>; transaction: <T>(fn: (query: Q) => Promise<T>) => Promise<T> };
 
 export function connect(url: string): Db {
   const u = new URL(url);
@@ -43,14 +44,31 @@ export function connect(url: string): Db {
   const ca = process.env.DATABASE_CA_CERT?.trim();
   const ssl = local ? false : { rejectUnauthorized: true, ...(ca && { ca: ca.includes('BEGIN CERTIFICATE') ? ca.replace(/\\n/g, '\n') : readFileSync(ca, 'utf8') }) };
   const pool = new pg.Pool({ connectionString: u.toString(), ssl, max: 5 });
-  return { q: async (t, p) => (await pool.query(t, p)).rows, exec: (sql) => pool.query(sql), end: () => pool.end() };
+  return {
+    q: async (t, p) => (await pool.query(t, p)).rows, exec: (sql) => pool.query(sql), end: () => pool.end(),
+    transaction: async fn => {
+      const client = await pool.connect();
+      try {
+        await client.query('begin');
+        const result = await fn(async (t, p) => (await client.query(t, p)).rows);
+        await client.query('commit');
+        return result;
+      } catch (error) {
+        await client.query('rollback');
+        throw error;
+      } finally { client.release(); }
+    },
+  };
 }
 
 async function memory(): Promise<Db> {
   console.warn('[wyj] DATABASE_URL not set: using in-memory PGlite. Data resets on restart.');
   const { PGlite } = await import('@electric-sql/pglite');
   const lite = new PGlite();
-  const db: Db = { q: async (t, p) => (await lite.query<Row>(t, p)).rows, exec: (sql) => lite.exec(sql), end: () => lite.close() };
+  const db: Db = {
+    q: async (t, p) => (await lite.query<Row>(t, p)).rows, exec: (sql) => lite.exec(sql), end: () => lite.close(),
+    transaction: fn => lite.transaction(tx => fn(async (t, p) => (await tx.query<Row>(t, p)).rows)),
+  };
   await migrate(db);
   await seed(db);
   return db;
@@ -84,14 +102,17 @@ export async function seed(db: Db) {
 const g = globalThis as unknown as { __wyjDb?: Promise<Db> };
 const getDb = () => (g.__wyjDb ??= process.env.DATABASE_URL ? Promise.resolve(connect(process.env.DATABASE_URL)) : memory());
 export const q: Q = async (text, params) => (await getDb()).q(text, params);
+export const transaction = async <T>(fn: (query: Q) => Promise<T>): Promise<T> => (await getDb()).transaction(fn);
 
 export const cardRow = (r: Row): MatchingCard => ({
   id: r.participant_id, eventId: r.event_id, alias: r.alias, offers: r.offers, seeks: r.seeks,
   interests: r.interests, availability: r.availability, approvedBlurb: r.approved_blurb, version: r.version,
+  ...(r.idea_id ? { ideaId: r.idea_id } : {}), ...(r.preferences ? { preferences: r.preferences } : {}),
 });
 
 export const matchRow = (r: Row): Match => ({
   id: r.id, eventId: r.event_id, a: r.a, b: r.b, score: r.score, opportunity: r.opportunity, evidence: r.evidence,
+  ...(r.a_card ? { aCard: r.a_card } : {}), ...(r.b_card ? { bCard: r.b_card } : {}),
   approvals: new Set([r.a_approved ? r.a : null, r.b_approved ? r.b : null].filter((x): x is string => !!x)),
   declinedBy: r.declined_by,
   snapshots: { [r.a]: r.a_identity ?? null, [r.b]: r.b_identity ?? null },

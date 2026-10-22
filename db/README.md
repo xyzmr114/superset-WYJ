@@ -3,6 +3,7 @@
 # Database (Supabase Postgres)
 
 Schema: `db/migrations/*.sql`, applied in name order by `pnpm db:migrate`. Server code: `lib/server/store.ts`.
+Migration `005_ideas_and_trials.sql` adds immutable idea-pair briefs, idea collections, preview plans and working trials. It preserves existing matches and backfills their brief snapshots. Apply it before starting the updated app; new tables also block the Supabase public REST API through RLS.
 The app uses plain Postgres through the `pg` driver. It doesn't use the supabase-js client or Supabase keys.
 
 - **`DATABASE_URL` set** → the app uses that Postgres (Supabase).

@@ -16,10 +16,10 @@ export async function decideIntroduction(m:Match,me:string,input:z.infer<typeof 
   // The conditional update freezes the first complete snapshot, even for concurrent requests.
   const [row]=await q(
    `update matches set ${side}_approved=true, ${side}_identity=$2::jsonb, ${side}_approved_at=now(),
-      ${side}_card_version=(select version from cards where participant_id=$3)
+      ${side}_card_version=coalesce((${side}_card->>'version')::integer,(select version from cards where participant_id=$3))
     where id=$1 and declined_by is null
       and (not ${side}_approved or ${side}_identity is null or ${side}_approved_at is null or ${side}_card_version is null)
-      and exists (select 1 from cards where participant_id=$3) returning *`,
+      and (${side}_card is not null or exists (select 1 from cards where participant_id=$3)) returning *`,
    [m.id,JSON.stringify(input.identity),me]);
   if(row)return matchRow(row);
   const [stored]=await q('select * from matches where id=$1',[m.id]);

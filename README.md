@@ -35,6 +35,12 @@ Laya is a local classifier candidate, not yet validated for founder matching. On
 
 ## Implementation status
 
-Reusable code already includes private browser-memory intake, a reviewed matching card, session-scoped APIs, matching, mutual reveal and versioned joint pitch approvals. The match/reveal integration now includes exact per-pair identity snapshots, a review checkbox, withdrawal before mutual reveal, live status polling and a gated joint pitch. The new private workspace and actual local classifier path remain assigned in the handoff.
+`/agent` and `/onboarding` now use the private founder workspace: own profile/idea in tab memory, direct own-device Laya suggestions, manual correction, explicit strengths/partner preferences/stack/work style, exact outgoing payload and publication consent. No name or contact is collected during intake. The public blurb starts from a broad category template; private prose is never automatically copied into it.
 
-The existing `/agent` page still shows the previous outreach product until the new workspace replaces it. Browser automation, reply monitoring, OpenCode/OpenTUI and social posting are legacy code outside the new critical path.
+`/ideas` keeps separate approved ideas. Free permits five published ideas per room session and unlimited eligible founder matches. `/plans` selects Free or Premium preview; billing is not connected and no payment is taken. `/premium` reuses WYJ's solution memo and founder-review tools for a structured idea-refinement workspace using approved ideas and explicitly entered answers. Premium preview has no idea-count cap. These are session-level demo allowances, not paid or persistent account entitlements.
+
+`/matches` supports independent contact previews/approvals, live status, withdrawal, immutable per-pair snapshots, and a versioned working trial after reveal. Both founders approve a trial before it activates. Continuation answers remain private; only mutual yes is shared. Joint pitch uses approved idea snapshots, with separate exact-version export approval.
+
+Local Laya English CPU inference is verified on the integration laptop; [companion setup](scripts/local-classifier/README.md) is required on each visitor's own device. The teammate's ten-snippet evaluation found substantial skill/domain errors and only one completely correct profile; every suggestion requires review. Sought skills and availability remain manual. Manual entry works if the local runtime is unavailable. No hosted fallback is used. Shared ideas, plan previews, pair snapshots and working trials persist in Postgres; the PGlite fallback resets on restart. Run `pnpm db:migrate` before deploying this integration.
+
+Legacy browser outreach/OpenCode tools are outside the current product path.

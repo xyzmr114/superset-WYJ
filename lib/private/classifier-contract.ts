@@ -29,10 +29,11 @@ export const DEFAULT_TIMEOUT_MS = 8000;
 const LIMITS = { offers: 5, seeks: 5, interests: 4 } as const;
 const AVAILABILITY = ['exploring', 'weekends', 'full_time'] as const;
 
-export type UnavailableReason = 'not_running' | 'not_loopback' | 'invalid_response' | 'empty_input' | 'not_browser';
+export type UnavailableReason = 'not_running' | 'not_ready' | 'not_loopback' | 'invalid_response' | 'empty_input' | 'not_browser';
 const MESSAGES = {
   needs_review: 'Suggested by the classifier on this device. Check each label before you publish; nothing is published automatically.',
   not_running: 'The classifier is not running on this device, so nothing was classified. Fill in your brief yourself.',
+  not_ready: 'The classifier on this device is not ready (still loading, or Laya is not installed), so nothing was classified. Fill in your brief yourself or try again in a minute.',
   not_loopback: 'The classifier address is not on this device, so nothing was sent. Fill in your brief yourself.',
   invalid_response: 'The classifier on this device returned an unexpected answer, so it was ignored. Fill in your brief yourself.',
   empty_input: 'There is no profile text to classify yet.',
@@ -65,7 +66,7 @@ const allowed = <T extends string>(values: string[] | undefined, allow: readonly
 export function sanitizeClassification(raw: unknown): LocalClassification {
   const parsed = response.safeParse(raw);
   if (!parsed.success) return unavailableClassification('invalid_response');
-  if (parsed.data.status === 'unavailable') return unavailableClassification('not_running');
+  if (parsed.data.status === 'unavailable') return unavailableClassification('not_ready');
   if (parsed.data.status !== 'ready' && parsed.data.status !== 'needs_review') return unavailableClassification('invalid_response');
   const s = parsed.data.suggested ?? {};
   const availability = (AVAILABILITY as readonly string[]).includes(s.availability ?? '') ? s.availability as MatchingCard['availability'] : null;
@@ -113,7 +114,8 @@ export async function requestLocalClassification(text: string, options: Classify
   } catch {
     return unavailableClassification('not_running');
   }
-  if (!res.ok) return unavailableClassification(res.status === 503 ? 'not_running' : 'invalid_response');
+  // 503: the companion is up but Laya is loading or failed to load.
+  if (!res.ok) return unavailableClassification(res.status === 503 ? 'not_ready' : 'invalid_response');
   return sanitizeClassification(await res.json().catch(() => null));
 }
 

@@ -1,9 +1,15 @@
-export type MatchingCard = { id: string; eventId: string; alias: string; offers: string[]; seeks: string[]; interests: string[]; availability: 'exploring' | 'weekends' | 'full_time'; approvedBlurb: string; version: number };
+export const TECH_STACK = ['TypeScript','Python','React','Node.js','Go','Rust','SQL','No preference'] as const;
+export const STRENGTHS = ['communication','customer discovery','sales','execution','technical depth','design','community','conflict resolution'] as const;
+export const WORK_STYLES = ['async-first','talk it through','rapid experiments','plan before building','direct feedback','structured check-ins'] as const;
+export type FounderPreferences = {techStack:string[];strengths:string[];partnerStrengths:string[];workStyles:string[]};
+export type MatchingCard = { ideaId?:string; id: string; eventId: string; alias: string; offers: string[]; seeks: string[]; interests: string[]; availability: 'exploring' | 'weekends' | 'full_time'; approvedBlurb: string; preferences?:FounderPreferences; version: number };
+export type TrialPlan={goal:string;deliverable:string;myContribution:string;theirContribution:string;deadline:string};
+export type TrialView={version:number;plan:TrialPlan;myApproval:boolean;theirApproval:boolean;status:'proposed'|'active'|'complete';myFeedback?:'continue'|'pass';bothWantContinue:boolean};
 export type Evidence = { id: string; provider: 'github'; title: string; url: string; excerpt: string; fetchedAt: string; cached: boolean };
 export type Opportunity = { title: string; problemHypothesis: string; targetUser: string; whyThisPair: string[]; evidenceIds: string[]; unknowns: string[]; nextExperiment: string; generationMode: 'model' | 'template' };
 export type IntroductionIdentity={displayName:string;contact:string};
 export type IntroConsentReceipt={approvedAt:string;briefVersion:number;fields:readonly ['displayName','contact']};
-export type MatchView = { id: string; candidate: MatchingCard; score: number; opportunity: Opportunity; evidence: Evidence[]; status: 'suggested' | 'pending' | 'revealed' | 'declined'; myIntroApproval: boolean; theirIntroApproval?:boolean; myConsent?:IntroConsentReceipt; revealedContact?: { displayName: string; contact: string } };
+export type MatchView = { myBrief?:MatchingCard; id: string; candidate: MatchingCard; score: number; opportunity: Opportunity; evidence: Evidence[]; status: 'suggested' | 'pending' | 'revealed' | 'declined'; myIntroApproval: boolean; theirIntroApproval?:boolean; myConsent?:IntroConsentReceipt; revealedContact?: { displayName: string; contact: string } };
 export type PitchView = { id: string; matchId: string; version: number; markdown: string; proposedIdentityFields: Record<string,string[]>; myApproval: boolean; bothApproved: boolean; exportable: boolean };
 export type ApiError = { error: { code: string; message: string } };
 export const SKILLS = ['engineering','sales','product','design','data'] as const;

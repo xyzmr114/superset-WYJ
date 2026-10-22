@@ -31,10 +31,12 @@ export async function getMyMatch(id: string, me: string): Promise<Match> {
 
 export async function toView(m: Match, me: string): Promise<MatchView> {
   const other = otherOf(m, me);
-  const candidate = cardRow((await q('select * from cards where participant_id = $1', [other]))[0]);
+  const cards = m.aCard && m.bCard ? [] : await q('select * from cards where participant_id = any($1)', [[m.a, m.b]]);
+  const card = (id: string) => (id === m.a ? m.aCard : m.bCard) ?? cardRow(cards.find(r => r.participant_id === id));
+  const candidate = card(other);
   const revealed = mutuallyApproved(m);
   const view: MatchView = {
-    id: m.id, candidate, score: m.score, opportunity: m.opportunity, evidence: m.evidence,
+    id: m.id, myBrief: card(me), candidate, score: m.score, opportunity: m.opportunity, evidence: m.evidence,
     status: m.declinedBy ? 'declined' : revealed ? 'revealed' : m.approvals.size > 0 ? 'pending' : 'suggested',
     myIntroApproval: !!m.introConsents?.[me] && m.approvals.has(me),
     theirIntroApproval: !!m.introConsents?.[other] && m.approvals.has(other),
