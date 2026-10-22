@@ -28,7 +28,7 @@ test('migration upgrades existing pairs without losing cards, consent receipts o
   const originalReceipt=matchRow(original).introConsents;
   const applied:string[]=[];
   await migrate(db,name=>applied.push(name));
-  assert.deepEqual(applied,['005_ideas_and_trials.sql']);
+  assert.deepEqual(applied,['005_ideas_and_trials.sql','006_idea_publication.sql']);
   const [upgraded]=await query("select * from matches where id='upgrade-match'");
   const match=matchRow(upgraded);
   assert.deepEqual(match.aCard,originalCards[0]);
@@ -42,7 +42,7 @@ test('migration upgrades existing pairs without losing cards, consent receipts o
   assert.deepEqual(await query('select markdown,a_approved_version from pitches'),[{markdown:'Existing reviewed draft',a_approved_version:1}]);
   await query("update cards set alias='Replacement',version=8 where participant_id='upgrade-a'");
   await migrate(db,name=>applied.push(name));
-  assert.deepEqual(applied,['005_ideas_and_trials.sql']);
+  assert.deepEqual(applied,['005_ideas_and_trials.sql','006_idea_publication.sql']);
   assert.deepEqual(matchRow((await query("select * from matches where id='upgrade-match'"))[0]).aCard,originalCards[0]);
  }finally{await db.end();}
 });

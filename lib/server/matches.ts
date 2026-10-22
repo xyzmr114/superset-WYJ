@@ -3,6 +3,7 @@ import type { Evidence, MatchView } from '@/lib/contracts';
 import { searchPublicProjects } from '@/lib/evidence/github';
 import { cardRow, matchRow, q, type Match } from './store';
 import { notFound } from './http';
+import {isIdeaPublished} from './ideas';
 
 /** Public evidence for approved tags. Vernika's adapter caches 15 min and falls back to a labeled
  *  snapshot itself; any unexpected failure still yields [] (never invented evidence). */
@@ -26,7 +27,9 @@ export const myMatches = async (me: string) =>
 export async function getMyMatch(id: string, me: string): Promise<Match> {
   const [r] = await q('select * from matches where id = $1 and (a = $2 or b = $2)', [id, me]);
   if (!r) throw notFound();
-  return matchRow(r);
+  const match=matchRow(r);
+  if(!mutuallyApproved(match)&&(!await isIdeaPublished(match.a,match.aCard?.ideaId)||!await isIdeaPublished(match.b,match.bCard?.ideaId)))throw notFound();
+  return match;
 }
 
 export async function toView(m: Match, me: string): Promise<MatchView> {
@@ -48,4 +51,8 @@ export async function toView(m: Match, me: string): Promise<MatchView> {
   return view;
 }
 
-export const views = (ms: Match[], me: string) => Promise.all(ms.map((m) => toView(m, me)));
+export async function views(ms:Match[],me:string){
+ const eligible=await Promise.all(ms.map(async m=>mutuallyApproved(m)||
+  await isIdeaPublished(m.a,m.aCard?.ideaId)&&await isIdeaPublished(m.b,m.bCard?.ideaId)));
+ return Promise.all(ms.filter((_,index)=>eligible[index]).map(m=>toView(m,me)));
+}

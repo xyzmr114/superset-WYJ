@@ -1,0 +1,172 @@
+{
+  "format": 1,
+  "createdAt": "2026-10-22T22:39:45.637Z",
+  "totalBytes": 1033571038,
+  "files": [
+    {
+      "file": "bonsai-runtime/ORT-LICENSE",
+      "bytes": 1073,
+      "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c"
+    },
+    {
+      "file": "bonsai-runtime/TRANSFORMERS-LICENSE",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "file": "bonsai-runtime/ort-wasm-simd-threaded.asyncify.mjs",
+      "bytes": 47389,
+      "sha256": "718f08970456a0843a1281be041fa4520e4df67ba09f0264f72818b2ca987590"
+    },
+    {
+      "file": "bonsai-runtime/ort-wasm-simd-threaded.asyncify.wasm",
+      "bytes": 23543806,
+      "sha256": "1d6ee4ff60d7f0e6b6efa34469157d3bdcbe2f3b0dbcea2a645bb41361a85973"
+    },
+    {
+      "file": "bonsai-runtime/ort-wasm-simd-threaded.jsep.mjs",
+      "bytes": 46490,
+      "sha256": "18e4399d2c6998ed06bce49c4b7476984e77be43205f758607bc779344a804a6"
+    },
+    {
+      "file": "bonsai-runtime/ort-wasm-simd-threaded.jsep.wasm",
+      "bytes": 26077263,
+      "sha256": "12017c384fc3f11f9fcbac694c373e31f62a87c37d14a823fe884b40b8392706"
+    },
+    {
+      "file": "bonsai-runtime/ort-wasm-simd-threaded.jspi.mjs",
+      "bytes": 44518,
+      "sha256": "4e896318b9e7658940763c84c0c0206813e40bd8f855c12ec466f1f5edf85a04"
+    },
+    {
+      "file": "bonsai-runtime/ort-wasm-simd-threaded.jspi.wasm",
+      "bytes": 14542763,
+      "sha256": "2c8a12bce76a7062c0df9b1da6220a65872734a215863eed4529644825f63b27"
+    },
+    {
+      "file": "bonsai-runtime/ort-wasm-simd-threaded.mjs",
+      "bytes": 24180,
+      "sha256": "f1e8f64a690e67e2c37ff49967b847a9efeb1bb73ab39138d2d722f9be911bf3"
+    },
+    {
+      "file": "bonsai-runtime/ort-wasm-simd-threaded.wasm",
+      "bytes": 12930386,
+      "sha256": "d84922f85dda684adc8f2afd7a5e954676b28afc8db48528677a4db7f256b213"
+    },
+    {
+      "file": "bonsai-runtime/worker.mjs",
+      "bytes": 1216680,
+      "sha256": "e12922d4d4ec83de139fe0a8fb2dd9e6a8bb064f582276ef112a01d712ec4cff"
+    },
+    {
+      "file": "laya-runtime/LAYA-LICENSE",
+      "bytes": 10173,
+      "sha256": "a6cba85bc92e0cff7a450b1d873c0eaa2e9fc96bf472df0247a26bec77bf3ff9"
+    },
+    {
+      "file": "laya-runtime/ORT-LICENSE",
+      "bytes": 1073,
+      "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c"
+    },
+    {
+      "file": "laya-runtime/laya.js",
+      "bytes": 196512,
+      "sha256": "b52aee99a4d7a8352c0cd645e8e2fecb0315637c257296ba51816a4a0e49a84a"
+    },
+    {
+      "file": "laya-runtime/ort-wasm-simd-threaded.asyncify.mjs",
+      "bytes": 48533,
+      "sha256": "dee69056fbfedf946ba0d9026e191c1361c5455895355e03f4346bf9308e58eb"
+    },
+    {
+      "file": "laya-runtime/ort-wasm-simd-threaded.asyncify.wasm",
+      "bytes": 27190919,
+      "sha256": "f33595b9f7ea51aa6f646dd5a2bde6fbb1c7bcde0b9d2b5f240011a09c1830d0"
+    },
+    {
+      "file": "laya-runtime/ort-wasm-simd-threaded.jsep.mjs",
+      "bytes": 46595,
+      "sha256": "9a99acd12acc495184c9ea4d458ac9424f8180aacfbc7b8371ed64f9351e4a81"
+    },
+    {
+      "file": "laya-runtime/ort-wasm-simd-threaded.jsep.wasm",
+      "bytes": 25014754,
+      "sha256": "2e0a3d0e3f6b7c13ecfaba38c13691fd19c9ed470e72f9d7d8416ca59ab6dbcd"
+    },
+    {
+      "file": "laya-runtime/ort.webgpu.bundle.min.mjs",
+      "bytes": 113927,
+      "sha256": "4aa071e26a290e5147a07b39834fe923f1e810eb69a26faa7ca66ad811ba8ffd"
+    },
+    {
+      "file": "laya-runtime/worker.mjs",
+      "bytes": 4756,
+      "sha256": "9f743b3a7a84b6c19042fb5a429f238fb422d6239c545e3c331fdde9610803bd"
+    },
+    {
+      "file": "models/bonsai/Bonsai-1.7B-ONNX/chat_template.jinja",
+      "bytes": 4063,
+      "sha256": "30a75d10e60b57e2f260420163dd59720dacf9f63b9a8de070d65dd80a7b30f7"
+    },
+    {
+      "file": "models/bonsai/Bonsai-1.7B-ONNX/config.json",
+      "bytes": 1981,
+      "sha256": "350e2a749fdd4ad38923b6a74e8d93facac09412812f548d212f42313aff86a1"
+    },
+    {
+      "file": "models/bonsai/Bonsai-1.7B-ONNX/generation_config.json",
+      "bytes": 290,
+      "sha256": "43cf14e5ad6d0091ca997355a685b90bfcac78e7a3d438c9f58aeb5e97251e88"
+    },
+    {
+      "file": "models/bonsai/Bonsai-1.7B-ONNX/manifest.json",
+      "bytes": 644,
+      "sha256": "3593495ea05d1aa8586b11c541e9185a8b6df84cd562ebfe5b73788fdea0f519"
+    },
+    {
+      "file": "models/bonsai/Bonsai-1.7B-ONNX/onnx/model_q1.onnx",
+      "bytes": 503681,
+      "sha256": "4218d8b0977f7d6aee1721b9e53154c2cac093bb781aa23f2fe0024d6f06693e"
+    },
+    {
+      "file": "models/bonsai/Bonsai-1.7B-ONNX/onnx/model_q1.onnx_data",
+      "bytes": 290552764,
+      "sha256": "a0eab4c2b960f72f6061615c3094076e8bcb834871ddf7bdad14cd1d37839be0"
+    },
+    {
+      "file": "models/bonsai/Bonsai-1.7B-ONNX/tokenizer.json",
+      "bytes": 9117036,
+      "sha256": "40ae5d1ee027b985684a3bbeef4ee16b2b5697d1d90658bec5bc5d2a73018bd7"
+    },
+    {
+      "file": "models/bonsai/Bonsai-1.7B-ONNX/tokenizer_config.json",
+      "bytes": 4598,
+      "sha256": "a8342e0e0e791a478f628dd1adf825ab1f9afe4a1075959ad32d77f1318b9841"
+    },
+    {
+      "file": "models/laya/encoder.onnx",
+      "bytes": 552973890,
+      "sha256": "bdc8b9f95c13803fb1eff73e9796313729e8ccf687b96c41f9c07e9b601c59a7"
+    },
+    {
+      "file": "models/laya/head.onnx",
+      "bytes": 45714153,
+      "sha256": "ffb55f124ffbfb46bd0a9a2e5d8abfc889a0caa9008770f91659df5794c779b9"
+    },
+    {
+      "file": "models/laya/manifest.json",
+      "bytes": 817,
+      "sha256": "f2e492df8bd4fd0adb4f82116ae9f32919017dfa2560d809da493eed543acb94"
+    },
+    {
+      "file": "models/laya/rl_agent_config.json",
+      "bytes": 745,
+      "sha256": "ae287b56bbcf5f8c4f4541ae9dfd00c914c4c48b940b8398c3058af37ba92bbd"
+    },
+    {
+      "file": "models/laya/tokenizer.json",
+      "bytes": 3583228,
+      "sha256": "6c8aaa9a542084f2457eab775d4eeb51f92a70c0fd9de28d5edb0ddec3c08d30"
+    }
+  ]
+}

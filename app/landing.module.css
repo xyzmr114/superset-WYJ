@@ -747,3 +747,6 @@
   .letter { transition: none; }
   .thumb, .trackFill { transition: none; }
 }
+/* The privacy diagram remains readable without relying on faint text. */
+.figure figcaption{color:#56534e}.betweenLabels{font-size:12px;color:#5d5852;letter-spacing:.04em}.seeCard .seeWho{font-size:12px;letter-spacing:.07em}.seeCard h4{font-size:14px;color:#57544f}.hidden{color:#615b54}.receipt{font-size:12px}.stopLabels button{font-size:14px}
+@media(max-width:760px){.betweenLabels{font-size:11px;letter-spacing:0}.stopLabels button{font-size:12px}}

@@ -97,3 +97,79 @@ test('server publication schema accepts bounded custom preferences but rejects p
  assert.equal(Card.safeParse({...brief(),preferences:{techStack:['Equestrian robotics'],strengths:[],partnerStrengths:[],workStyles:[]}}).success,true);
  assert.equal(Card.safeParse({...brief(),preferences:{techStack:['x'.repeat(41)],strengths:[],partnerStrengths:[],workStyles:[]}}).success,false);
 });
+
+test('withdrawal retains owner history, cancels pending pairs and never resurrects via legacy cards',async()=>{
+ const {savedIdeasFor,isIdeaPublished,setIdeaPublished}=await import('./ideas');
+ const a=await participant('withdrawal-test'),b=await participant('withdrawal-test');
+ const card=await publishIdea(a,brief('Withdraw me'));
+ await publishIdea(b,{...brief('Partner'),offers:['sales'],seeks:['engineering']});
+ await generate(request(a.id),undefined);
+ const [before]=await q('select * from matches where a=$1 or b=$1',[a.id]);
+ assert.ok(before);
+ const match=await getMyMatch(before.id,a.id);
+ await decideIntroduction(match,a.id,{decision:'approve',identity:{displayName:'Private A',contact:'a@example.invalid'}});
+ const [receipt]=await q('select a_identity,b_identity,a_approved_at,b_approved_at from matches where id=$1',[before.id]);
+ await setIdeaPublished(a,card.ideaId!,false);
+ assert.equal((await ideasFor(a.id)).length,0);
+ assert.equal((await savedIdeasFor(a.id))[0].publicationStatus,'unpublished');
+ assert.equal(await isIdeaPublished(a.id,card.ideaId),false);
+ const [after]=await q('select * from matches where id=$1',[before.id]);
+ assert.equal(after.declined_by,a.id);
+ assert.deepEqual({a_identity:after.a_identity,b_identity:after.b_identity,a_approved_at:after.a_approved_at,b_approved_at:after.b_approved_at},receipt);
+ const republished=await setIdeaPublished(a,card.ideaId!,true);
+ assert.equal(republished.publicationStatus,'published');
+ assert.equal(await isIdeaPublished(a.id,card.ideaId),true);
+ assert.deepEqual((await ideasFor(a.id))[0],card);
+ assert.equal((await q('select declined_by from matches where id=$1',[before.id]))[0].declined_by,a.id);
+});
+
+test('owner-only publication route rejects outsider and cross-origin, republish honors active quota',async()=>{
+ const {PATCH}=await import('@/app/api/me/ideas/[ideaId]/route');
+ const {setIdeaPublished,savedIdeasFor}=await import('./ideas');
+ const a=await participant(),outsider=await participant();
+ const card=await publishIdea(a,brief());
+ const ctx={params:Promise.resolve({ideaId:card.ideaId!})};
+ const patch=(id:string,published:boolean,origin?:string)=>new Request('http://localhost/api/me/ideas/'+card.ideaId,{method:'PATCH',headers:{host:'localhost',cookie:'wyj_session='+id,'content-type':'application/json',...(origin?{origin}:{})},body:JSON.stringify({published})});
+ assert.equal((await PATCH(patch(outsider.id,false),ctx)).status,404);
+ assert.equal((await PATCH(patch(a.id,false,'https://evil.invalid'),ctx)).status,403);
+ assert.equal((await PATCH(patch(a.id,false,'http://localhost'),ctx)).status,200);
+ for(let i=0;i<5;i++)await publishIdea(a,brief('Replacement '+i));
+ assert.equal((await planFor(a.id)).ideaCount,5);
+ assert.equal((await savedIdeasFor(a.id)).length,6);
+ assert.equal((await PATCH(patch(a.id,true),ctx)).status,409);
+ assert.equal((await ideasFor(a.id)).length,5);
+ await setIdeaPublished(a,(await ideasFor(a.id))[0].ideaId!,false);
+ assert.equal((await PATCH(patch(a.id,true),ctx)).status,200);
+});
+
+test('legacy brief can be withdrawn and explicitly republished without card fallback',async()=>{
+ const {setIdeaPublished,savedIdeasFor,isIdeaPublished}=await import('./ideas');
+ const me=await participant();
+ assert.equal((await legacyPut(request(me.id,brief('Legacy')),undefined)).status,200);
+ assert.equal(await isIdeaPublished(me.id,'legacy'),true);
+ await setIdeaPublished(me,'legacy',false);
+ assert.equal((await ideasFor(me.id)).length,0);
+ assert.equal(await isIdeaPublished(me.id,'legacy'),false);
+ assert.equal((await savedIdeasFor(me.id))[0].publicationStatus,'unpublished');
+ assert.equal((await legacyPut(request(me.id,brief('Sneaky replacement')),undefined)).status,409);
+ await setIdeaPublished(me,'legacy',true);
+ assert.equal((await ideasFor(me.id))[0].alias,'Legacy');
+});
+
+test('unpublishing cannot erase contacts already mutually revealed or shared pitch history',async()=>{
+ const {setIdeaPublished}=await import('./ideas');
+ const a=await participant('revealed-withdrawal'),b=await participant('revealed-withdrawal');
+ const ca=await publishIdea(a,brief('A revealed'));
+ await publishIdea(b,{...brief('B revealed'),offers:['sales'],seeks:['engineering']});
+ await generate(request(a.id),undefined);
+ const [row]=await q('select * from matches where a=$1 or b=$1',[a.id]);
+ await decideIntroduction(await getMyMatch(row.id,a.id),a.id,{decision:'approve',identity:{displayName:'A',contact:'a@example.invalid'}});
+ await decideIntroduction(await getMyMatch(row.id,b.id),b.id,{decision:'approve',identity:{displayName:'B',contact:'b@example.invalid'}});
+ await q('insert into pitches (id,match_id,markdown) values ($1,$2,$3)',['retained-pitch-'+seq,row.id,'Existing shared work']);
+ const before=await toView(await getMyMatch(row.id,a.id),a.id);
+ await setIdeaPublished(a,ca.ideaId!,false);
+ const after=await toView(await getMyMatch(row.id,a.id),a.id);
+ assert.equal(after.status,'revealed');
+ assert.deepEqual(after.revealedContact,before.revealedContact);
+ assert.equal((await q('select markdown from pitches where match_id=$1',[row.id]))[0].markdown,'Existing shared work');
+});

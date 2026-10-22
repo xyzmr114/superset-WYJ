@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { q } from '@/lib/server/store';
+import { q,transaction } from '@/lib/server/store';
 import { HttpError, assertSameOrigin, newId, requireSession, route } from '@/lib/server/http';
 import { evidenceFor, myMatches, pairKey, views } from '@/lib/server/matches';
 import { rankCandidates,scorePair,hasPartnerFit } from '@/lib/matching';
 import { proposeOpportunity } from '@/lib/generation';
-import {ideasFor} from '@/lib/server/ideas';
+import {ideasFor,isIdeaPublished} from '@/lib/server/ideas';
 import type {MatchingCard} from '@/lib/contracts';
 
 export const POST = route(async (req) => {
@@ -31,9 +31,13 @@ export const POST = route(async (req) => {
    if(known.has(key))continue;
    const evidence=await evidenceFor(sharedInterests);
    const opportunity=proposeOpportunity(idea,candidate,evidence);
-   await q(`insert into matches (id,event_id,a,b,score,opportunity,evidence,a_card,b_card,a_idea_id,b_idea_id)
+   await transaction(async query=>{
+    await query('select id from participants where id=any($1) order by id for update',[[a,b]]);
+    if(!await isIdeaPublished(a,aCard.ideaId,query)||!await isIdeaPublished(b,bCard.ideaId,query))return;
+    await query(`insert into matches (id,event_id,a,b,score,opportunity,evidence,a_card,b_card,a_idea_id,b_idea_id)
     values ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8::jsonb,$9::jsonb,$10,$11) on conflict (a,b,a_idea_id,b_idea_id) do nothing`,
     [newId(),me.eventId,a,b,score,JSON.stringify(opportunity),JSON.stringify(evidence),JSON.stringify(aCard),JSON.stringify(bCard),aIdea,bIdea]);
+   });
    known.add(key);
   }
  }
