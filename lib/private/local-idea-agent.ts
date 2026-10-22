@@ -1,3 +1,4 @@
+import {identifyingDetails} from './brief';
 export const LOCAL_IDEA_MODEL = 'Bonsai 1.7B · on-device';
 export type LocalIdeaImprovement = { text: string; model: string };
 export type LocalIdeaProgress = (message: string) => void;
@@ -19,7 +20,7 @@ export function validateLocalIdea(idea:string):string {
   return text;
 }
 
-function request(type:'warm'|'generate', idea:string|undefined, onProgress?:LocalIdeaProgress, signal?:AbortSignal):Promise<unknown> {
+function request(type:'warm'|'generate'|'name', idea:string|undefined, onProgress?:LocalIdeaProgress, signal?:AbortSignal):Promise<unknown> {
   if(typeof window==='undefined' || typeof Worker==='undefined') return Promise.reject(new Error('Local idea assistance runs only in your browser.'));
   if(signal?.aborted) return Promise.reject(new Error('Local idea assistance stopped.'));
   return new Promise((resolve,reject)=>{
@@ -53,4 +54,11 @@ export async function warmLocalIdeaAgent(onProgress?:LocalIdeaProgress,signal?:A
 /** Free local generation. The returned draft is never automatically published or applied. */
 export async function improveIdeaLocally(idea:string,onProgress?:LocalIdeaProgress,signal?:AbortSignal):Promise<LocalIdeaImprovement> {
   return await request('generate',validateLocalIdea(idea),onProgress,signal) as LocalIdeaImprovement;
+}
+
+/** Playful project alias from the idea only, generated on this device. */
+export async function nameProjectLocally(idea:string,onProgress?:LocalIdeaProgress,signal?:AbortSignal):Promise<LocalIdeaImprovement>{
+ const result=await request('name',validateLocalIdea(idea),onProgress,signal) as LocalIdeaImprovement;
+ if(identifyingDetails(result.text)||!/^[\p{L}\p{N}][\p{L}\p{N} '’!&-]{1,39}$/u.test(result.text)||result.text.split(/\s+/).length>4)throw new Error('That name did not quite land. Give it another spin.');
+ return result;
 }

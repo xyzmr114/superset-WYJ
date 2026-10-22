@@ -162,3 +162,7 @@ Local development is now disk-backed PGlite (`.wyj-local/data`, ignored, private
 The private workspace saves matching-field drafts in localStorage, restores the current step/name/custom choices, and separately remembers publication IDs. It never stores pasted background, contacts or publication consent. Reload always requires fresh publication approval. Start a new idea explicitly clears the active draft. Never clear `.wyj-local/data` as a routine restart fix.
 
 Localhost sessions now use port-specific cookie names (with legacy-cookie migration) so another local app/port cannot replace the active session. Cookies remain HttpOnly, SameSite=Lax and Secure in production.
+
+## Project nicknames
+
+Browser Bonsai now has a dedicated local nickname task. The preview step automatically replaces untouched Founder-number placeholders, while Give me a fun name rerolls explicitly. It sees only the entered project idea; results stay editable and reset publication consent. Manual names edited during generation are preserved. The warm Bonsai worker stays alive across intake steps and is released when leaving intake. Rebuild with `pnpm bonsai:prepare` after restoring the original model archive to refresh worker code; existing weights are reused without downloading again.
