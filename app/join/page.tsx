@@ -1,8 +1,63 @@
 "use client";
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useRouter} from 'next/navigation';
+import {usePrivateProfile} from '@/lib/client/private-profile';
 import {api} from '@/lib/client/api';
-export default function Join(){const router=useRouter();const [error,setError]=useState('');const [busy,setBusy]=useState(false);
-// QR codes point at /join?code=EVENT; read it at click time so the page stays static.
-const join=async()=>{setBusy(true);setError('');try{const code=new URLSearchParams(window.location.search).get('code') ?? 'SUPERSET';await api.createSession(code);router.push('/onboarding');}catch(e){setError(e instanceof Error?e.message:'Could not join.');setBusy(false);}};
-return <section className="narrow"><p className="eyebrow">FIND YOUR PEOPLE</p><h1>Meet your<br/>next possibility.</h1><p className="lead">Start with what you bring, what you need, and the problems you want to solve.</p><article><h3>Your ambition. Your terms.</h3><p>Joining creates an anonymous session on this device. No account, no name yet. Keep personal conditions to yourself and choose what to share for matching.</p><button onClick={join} disabled={busy}>{busy?'Joining…':'Join the event →'}</button>{error&&<p className="muted" role="alert">{error}</p>}</article></section>;}
+
+export default function Join() {
+  const router = useRouter();
+  const {clear} = usePrivateProfile();
+  const [eventCode, setEventCode] = useState('SUPERSET');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  // QR codes point at /join?code=EVENT; prefill from it after mount.
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get('code');
+    if (code) setEventCode(code);
+  }, []);
+
+  // Creates an anonymous server session (HttpOnly cookie), wipes any lingering
+  // private notes, then moves to intake.
+  const start = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      await api.createSession(eventCode);
+      clear();
+      router.push('/onboarding');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not join.');
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="narrow">
+      <p className="eyebrow">THE ROOM</p>
+      <h1>
+        Meet your<br />next possibility.
+      </h1>
+      <p className="lead">
+        Scan the event code to join anonymously. Names stay hidden until two people both approve an
+        introduction.
+      </p>
+      <article>
+        <h3>Start an anonymous session</h3>
+        <p>
+          No account, no resume. Your private intake lives only in this browser tab and is erased
+          when you refresh or leave.
+        </p>
+        <form onSubmit={start}>
+          <label>
+            Event code
+            <input value={eventCode} onChange={e => setEventCode(e.target.value)} required />
+          </label>
+          <button type="submit" disabled={busy}>{busy ? 'Joining…' : 'Join this event →'}</button>
+          {error && <p className="muted" role="alert">{error}</p>}
+        </form>
+      </article>
+    </section>
+  );
+}

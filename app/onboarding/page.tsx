@@ -3,11 +3,74 @@ import {useState} from 'react';
 import {useRouter} from 'next/navigation';
 import Link from 'next/link';
 import {useDemo} from '@/app/providers';
-import {SKILLS,INTERESTS} from '@/lib/contracts';
-import type {PrivateProfile} from '@/lib/client/private-profile';
-import {api,ApiFailure} from '@/lib/client/api';
-type Availability='exploring'|'weekends'|'full_time';
-export default function Onboarding(){const router=useRouter();const {setCard}=useDemo();const [notes,setNotes]=useState<PrivateProfile>({ambition:'',conditions:''});const [alias,setAlias]=useState('Builder');const [offers,setOffers]=useState('engineering');const [seeks,setSeeks]=useState('sales');const [interest,setInterest]=useState('developer-tools');const [availability,setAvailability]=useState<Availability>('weekends');const [blurb,setBlurb]=useState('Exploring a weekend collaboration.');const [displayName,setDisplayName]=useState('');const [contact,setContact]=useState('');const [approved,setApproved]=useState(false);const [error,setError]=useState<{message:string;join?:boolean}|null>(null);const [busy,setBusy]=useState(false);
-// Only the card and identity are sent. `notes` never leaves this component.
-const submit=async(e:React.FormEvent)=>{e.preventDefault();setBusy(true);setError(null);try{const card=await api.publishCard({alias,offers:[offers],seeks:[seeks],interests:[interest],availability,approvedBlurb:blurb});await api.putIdentity(displayName,contact);setCard(card);router.push('/matches');}catch(err){if(err instanceof ApiFailure&&err.code==='CARD_FROZEN'){router.push('/matches');return;}setError({message:err instanceof Error?err.message:'Could not publish your card.',join:err instanceof ApiFailure&&err.status===401});setBusy(false);}};
-return <section><p className="eyebrow">STEP 01 / YOUR TERMS</p><h1>A little context.<br/><em>Your choice to share.</em></h1><form onSubmit={submit}><div className="grid"><article><span className="badge">PRIVATE · THIS SCREEN ONLY</span><h2>What would make you jump?</h2><label>Your ambition<textarea value={notes.ambition} onChange={e=>setNotes({...notes,ambition:e.target.value})} placeholder="The company I've always wanted to build…"/></label><label>Your conditions<textarea value={notes.conditions} onChange={e=>setNotes({...notes,conditions:e.target.value})} placeholder="What would need to be true first?"/></label><p className="muted">Just for you. Never sent anywhere; these notes clear when you leave this screen.</p></article><article><span className="badge">YOUR MATCHING CARD</span><h2>What others could see</h2><label>Alias<input required maxLength={40} value={alias} onChange={e=>setAlias(e.target.value)}/></label><label>I offer<select value={offers} onChange={e=>setOffers(e.target.value)}>{SKILLS.map(s=><option key={s}>{s}</option>)}</select></label><label>I need<select value={seeks} onChange={e=>setSeeks(e.target.value)}>{SKILLS.map(s=><option key={s}>{s}</option>)}</select></label><label>Problem area<select value={interest} onChange={e=>setInterest(e.target.value)}>{INTERESTS.map(s=><option key={s}>{s}</option>)}</select></label><label>Availability<select value={availability} onChange={e=>setAvailability(e.target.value as Availability)}><option value="exploring">exploring</option><option value="weekends">weekends</option><option value="full_time">full time</option></select></label><label>One line about you<input required maxLength={280} value={blurb} onChange={e=>setBlurb(e.target.value)}/></label><p className="muted">Shared with other participants in this event. Anonymous cards can still be recognizable in a small room.</p><hr/><span className="badge">REVEALED ONLY AFTER YOU BOTH SAY YES</span><label>Your name<input required maxLength={80} value={displayName} onChange={e=>setDisplayName(e.target.value)}/></label><label>How to reach you<input required maxLength={200} value={contact} onChange={e=>setContact(e.target.value)} placeholder="Email, LinkedIn or phone"/></label><label className="check"><input type="checkbox" required checked={approved} onChange={e=>setApproved(e.target.checked)}/>Publish this card for matching. My name and contact stay hidden until we both approve an introduction.</label><button disabled={!approved||busy}>{busy?'Publishing…':'Find my counterparts →'}</button>{error&&<p className="muted" role="alert">{error.message}{error.join&&<> <Link href="/join">Join the event first →</Link></>}</p>}</article></div></form></section>}
+import type {MatchingCard} from '@/lib/contracts';
+import {api, ApiFailure} from '@/lib/client/api';
+import PrivateIntake from '@/components/onboarding/PrivateIntake';
+import CardEditor from '@/components/onboarding/CardEditor';
+
+export default function Onboarding() {
+  const router = useRouter();
+  const {setCard} = useDemo();
+  const [displayName, setDisplayName] = useState('');
+  const [contact, setContact] = useState('');
+  const [error, setError] = useState<{message: string; join?: boolean} | null>(null);
+
+  // Only the approved card and the identity are sent. Private intake never leaves PrivateIntake.
+  const publish = async ({alias, offers, seeks, interests, availability, approvedBlurb}: MatchingCard) => {
+    setError(null);
+    if (!displayName.trim() || !contact.trim()) {
+      setError({message: 'Add your name and contact above. They stay hidden until you both approve.'});
+      return;
+    }
+    try {
+      const card = await api.publishCard({alias, offers, seeks, interests, availability, approvedBlurb});
+      await api.putIdentity(displayName.trim(), contact.trim());
+      setCard(card);
+      router.push('/matches');
+    } catch (err) {
+      if (err instanceof ApiFailure && err.code === 'CARD_FROZEN') return router.push('/matches');
+      setError({
+        message: err instanceof Error ? err.message : 'Could not publish your card.',
+        join: err instanceof ApiFailure && err.status === 401,
+      });
+    }
+  };
+
+  return (
+    <section>
+      <p className="eyebrow">STEP 01 / YOUR TERMS</p>
+      <h1>
+        A little context.<br />
+        <em>Your choice to share.</em>
+      </h1>
+      <p className="lead">
+        Two separate things: what you keep to yourself, and the card you explicitly approve for
+        matching. One never becomes the other automatically.
+      </p>
+      <article>
+        <span className="badge">REVEALED ONLY AFTER YOU BOTH SAY YES</span>
+        <div className="grid" style={{margin: '12px 0 0'}}>
+          <label>
+            Your name
+            <input required maxLength={80} value={displayName} onChange={e => setDisplayName(e.target.value)} />
+          </label>
+          <label>
+            How to reach you
+            <input required maxLength={200} value={contact} onChange={e => setContact(e.target.value)} placeholder="Email, LinkedIn or phone" />
+          </label>
+        </div>
+        <p className="muted">Stored separately from your card. Nobody sees it until an introduction is approved by both of you.</p>
+      </article>
+      <div className="grid">
+        <PrivateIntake />
+        <CardEditor eventId="demo" onPublish={publish} />
+      </div>
+      {error && (
+        <p className="muted" role="alert">
+          {error.message}
+          {error.join && <> <Link href="/join">Join the event first →</Link></>}
+        </p>
+      )}
+    </section>
+  );
+}
