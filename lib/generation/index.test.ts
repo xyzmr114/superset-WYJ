@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { proposeOpportunity, sanitizeOpportunity, buildPitchMarkdown } from './index';
+import { proposeOpportunity, sanitizeOpportunity, buildPitchMarkdown, INTRO_STEP } from './index';
 import type { Evidence, Opportunity } from '../contracts';
 import { founderA, founderB, distractors } from '../../fixtures/profiles';
 import { evidenceFixture } from '../../fixtures/evidence';
@@ -98,4 +98,28 @@ test('template maps free-text cards onto the domain and keeps typed text for dis
   assert.ok(o.whyThisPair.some(w => w.includes('Signal offers BD, which Builder is looking for')), o.whyThisPair.join(' / '));
   const md = buildPitchMarkdown({ founders: [a, b] }, o, []);
   assert.match(md, /Builder: offers Rust and Golang; seeks Account Exec/);
+});
+
+test('a travel and agents pair gets the agent travel hypothesis, an intro call and a 48-hour experiment', () => {
+  const a = { ...founderA, offers: ['engineering'], seeks: ['product'], interests: ['travel', 'AI agents'] };
+  const b = { ...founderB, offers: ['product', 'sales'], seeks: ['engineering'], interests: ['agent infrastructure', 'trip planning'] };
+  const o = proposeOpportunity(a, b, evidenceFixture.travel);
+  assert.equal(o.title, 'Agent travel booking discovery');
+  assert.match(o.targetUser, /agents/);
+  assert.ok(o.nextExperiment.startsWith(INTRO_STEP));
+  assert.match(o.nextExperiment, /15-minute introduction.*within 48 hours, interview five developers building agents/);
+  assert.ok(o.whyThisPair.some(w => w.includes('travel and ai-agents as problem areas')), o.whyThisPair.join(' / '));
+});
+
+test('the pitch keeps the 48-hour experiment but drops the intro call, which has already happened', () => {
+  const o = proposeOpportunity(founderA, founderB, evidence);
+  const md = buildPitchMarkdown({ founders: [founderA, founderB] }, o, evidence);
+  assert.ok(!md.includes('15-minute introduction'));
+  assert.match(md, /## First 48-hour experiment\nWithin 48 hours, interview five/);
+});
+
+test('travel alone and agents alone each get their own domain', () => {
+  const only = (interests: string[]) => proposeOpportunity({ ...founderA, interests }, { ...founderB, interests }).title;
+  assert.equal(only(['travel']), 'Travel operations discovery');
+  assert.equal(only(['ai-agents']), 'Agent reliability discovery');
 });
