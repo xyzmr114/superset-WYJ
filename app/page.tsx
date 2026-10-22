@@ -1,4 +1,4 @@
-import {Hanken_Grotesk, Instrument_Serif} from 'next/font/google';
+import {DM_Mono, Fraunces, Libre_Franklin} from 'next/font/google';
 import Elevation from './Elevation';
 import WhoSeesWhat from './WhoSeesWhat';
 import SkydiveScene from './SkydiveScene';
@@ -6,8 +6,9 @@ import {Landed, Plane} from './SkydiveArt';
 import styles from './landing.module.css';
 
 // Self-hosted by next/font at build time: the page makes no font requests to Google.
-const display = Instrument_Serif({subsets: ['latin'], weight: '400', style: ['normal', 'italic'], variable: '--jump-display'});
-const body = Hanken_Grotesk({subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--jump-body'});
+const display = Fraunces({subsets: ['latin'], style: ['normal', 'italic'], axes: ['opsz', 'SOFT', 'WONK'], variable: '--jump-display'});
+const body = Libre_Franklin({subsets: ['latin'], variable: '--jump-body'});
+const mono = DM_Mono({subsets: ['latin'], weight: ['400', '500'], variable: '--jump-mono'});
 
 const STEPS = [
   {title: 'A private brief, on your device', body: 'Write your idea and, if you like, paste your background. Skill suggestions run in your own browser, and your background never leaves it. You approve the exact brief, word for word.'},
@@ -32,7 +33,7 @@ function Clouds({className}: {className: string}) {
 
 export default function Home() {
   return (
-    <div className={`${styles.page} ${display.variable} ${body.variable}`} data-skydive>
+    <div className={`${styles.page} ${display.variable} ${body.variable} ${mono.variable}`} data-skydive>
       <Elevation />
       <SkydiveScene />
 
