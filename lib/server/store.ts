@@ -10,6 +10,7 @@ export type Identity = { displayName: string; contact: string };
 export type Match = {
   id: string; eventId: string; a: string; b: string; score: number;
   opportunity: Opportunity; evidence: Evidence[];
+  aCard?:MatchingCard; bCard?:MatchingCard;
   introConsents?: Record<string,{identity:Identity;briefVersion:number;approvedAt:string}>;
   approvals: Set<string>; declinedBy: string | null;
 };

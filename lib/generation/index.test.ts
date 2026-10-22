@@ -93,7 +93,7 @@ test('template maps free-text cards onto the domain and keeps typed text for dis
   const a = { ...founderA, offers: ['Rust', 'Golang'], seeks: ['Account Exec'], interests: ['DevTools'] };
   const b = { ...founderB, offers: ['BD', 'Product'], seeks: ['Backend'], interests: ['developer tools'] };
   const o = proposeOpportunity(a, b);
-  assert.equal(o.title, 'Developer workflow discovery');
+  assert.equal(o.title, 'Shared idea discovery');
   assert.ok(o.whyThisPair.some(w => w.includes('Builder offers Rust and Golang, which Signal is looking for')), o.whyThisPair.join(' / '));
   assert.ok(o.whyThisPair.some(w => w.includes('Signal offers BD, which Builder is looking for')), o.whyThisPair.join(' / '));
   const md = buildPitchMarkdown({ founders: [a, b] }, o, []);
@@ -101,8 +101,8 @@ test('template maps free-text cards onto the domain and keeps typed text for dis
 });
 
 test('a travel and agents pair gets the agent travel hypothesis, an intro call and a 48-hour experiment', () => {
-  const a = { ...founderA, offers: ['engineering'], seeks: ['product'], interests: ['travel', 'AI agents'] };
-  const b = { ...founderB, offers: ['product', 'sales'], seeks: ['engineering'], interests: ['agent infrastructure', 'trip planning'] };
+  const a = { ...founderA, approvedBlurb: '', offers: ['engineering'], seeks: ['product'], interests: ['travel', 'AI agents'] };
+  const b = { ...founderB, approvedBlurb: '', offers: ['product', 'sales'], seeks: ['engineering'], interests: ['agent infrastructure', 'trip planning'] };
   const o = proposeOpportunity(a, b, evidenceFixture.travel);
   assert.equal(o.title, 'Agent travel booking discovery');
   assert.match(o.targetUser, /agents/);
@@ -115,11 +115,33 @@ test('the pitch keeps the 48-hour experiment but drops the intro call, which has
   const o = proposeOpportunity(founderA, founderB, evidence);
   const md = buildPitchMarkdown({ founders: [founderA, founderB] }, o, evidence);
   assert.ok(!md.includes('15-minute introduction'));
-  assert.match(md, /## First 48-hour experiment\nWithin 48 hours, interview five/);
+  assert.match(md, /## First 48-hour experiment\nWithin 48 hours, agree on one overlap/);
 });
 
 test('travel alone and agents alone each get their own domain', () => {
-  const only = (interests: string[]) => proposeOpportunity({ ...founderA, interests }, { ...founderB, interests }).title;
+  const only = (interests: string[]) => proposeOpportunity({ ...founderA, interests, approvedBlurb: '' }, { ...founderB, interests, approvedBlurb: '' }).title;
   assert.equal(only(['travel']), 'Travel operations discovery');
   assert.equal(only(['ai-agents']), 'Agent reliability discovery');
+});
+
+test('travel ideas remain the proposed product even when the shared tag is developer-tools', () => {
+  const a = { ...founderA, alias: 'Pine', approvedBlurb: 'Build an Expedia-style booking layer for travel agents.' };
+  const b = { ...founderB, alias: 'Cedar', approvedBlurb: 'Help travel agents compare and book trips through one API.' };
+  const opportunity = proposeOpportunity(a, b);
+  const markdown = buildPitchMarkdown({ founders: [a, b] }, opportunity, []);
+  assert.ok(opportunity.problemHypothesis.includes(a.approvedBlurb));
+  assert.ok(opportunity.problemHypothesis.includes(b.approvedBlurb));
+  assert.ok(markdown.includes(a.approvedBlurb));
+  assert.ok(markdown.includes(b.approvedBlurb));
+  assert.doesNotMatch(markdown, /customer-reported issues|issue gets re-explained/);
+  assert.match(opportunity.nextExperiment, /two approved ideas/);
+});
+
+test('joint draft explains explicit partner strengths without private fields', () => {
+  const a = { ...founderA, preferences: { techStack: ['Python'], strengths: ['technical depth'], partnerStrengths: ['communication'], workStyles: [] }, rawProfile: 'PRIVATE-PROFILE', privateGoal: 'PRIVATE-GOAL' };
+  const b = { ...founderB, preferences: { techStack: ['Python'], strengths: ['communication'], partnerStrengths: ['technical depth'], workStyles: [] } };
+  const o = proposeOpportunity(a, b);
+  assert.ok(o.whyThisPair.some(reason => reason.includes('communication') && reason.includes('wants in a partner')));
+  const md = buildPitchMarkdown({ founders: [a, b] }, o, []);
+  assert.doesNotMatch(md, /PRIVATE-PROFILE|PRIVATE-GOAL/);
 });

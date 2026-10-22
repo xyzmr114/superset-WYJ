@@ -36,5 +36,5 @@ export function toView(p: Pitch, m: Match, me: string): PitchView {
 /** Draft built only from matching cards (aliases), opportunity and evidence. No names or contacts. */
 export function draftMarkdown(m: Match): string {
   // Cards exist for both sides of any match and are frozen once matched.
-  return buildPitchMarkdown({ founders: [db.cards.get(m.a)!, db.cards.get(m.b)!] }, m.opportunity, m.evidence);
+  return buildPitchMarkdown({ founders: [m.aCard??db.cards.get(m.a)!, m.bCard??db.cards.get(m.b)!] }, m.opportunity, m.evidence);
 }

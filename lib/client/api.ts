@@ -10,6 +10,7 @@ export type CardInput = Omit<MatchingCard,'id'|'eventId'|'version'>;
 export const api={
  createSession:(eventCode:string)=>call<{participantId:string;eventId:string}>('POST','/api/session',{eventCode}),
  putIdentity:(displayName:string,contact:string)=>call<{saved:true}>('PUT','/api/me/identity',{displayName,contact}),
+ publishIdea:(card:CardInput)=>call<MatchingCard>('POST','/api/me/ideas',{...card,publishConsent:true}),
  publishCard:(card:CardInput)=>call<MatchingCard>('PUT','/api/me/card',{...card,publishConsent:true}),
  generateMatches:()=>call<{matches:MatchView[]}>('POST','/api/matches/generate',{}),
  consent:(id:string,decision:'approve'|'decline'|'withdraw',identity?:IntroductionIdentity)=>call<MatchView>('POST',`/api/matches/${encodeURIComponent(id)}/consent`,{decision,...(decision==='approve'?{identity}:{})}),
