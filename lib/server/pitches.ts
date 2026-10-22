@@ -1,4 +1,5 @@
-import type { MatchingCard, PitchView } from '@/lib/contracts';
+import type { PitchView } from '@/lib/contracts';
+import { buildPitchMarkdown } from '@/lib/generation';
 import { db, type Match, type Pitch } from './store';
 import { HttpError, notFound } from './http';
 
@@ -31,25 +32,8 @@ export function toView(p: Pitch, m: Match, me: string): PitchView {
   };
 }
 
-const list = (xs: string[]) => (xs.length ? xs.join(', ') : 'n/a');
-const bullets = (xs: string[]) => (xs.length ? xs.map((x) => `- ${x}`).join('\n') : '- None yet.');
-const who = (c: MatchingCard | undefined) =>
-  c ? `- **${c.alias}** offers ${list(c.offers)}; interested in ${list(c.interests)}.${c.approvedBlurb ? ` "${c.approvedBlurb}"` : ''}` : '- (card unavailable)';
-
-/** Draft built only from matching cards, opportunity and evidence. No names or contacts. */
+/** Draft built only from matching cards (aliases), opportunity and evidence. No names or contacts. */
 export function draftMarkdown(m: Match): string {
-  const o = m.opportunity;
-  const ev = m.evidence.length
-    ? m.evidence.map((e) => `- [${e.title}](${e.url}) (fetched ${e.fetchedAt.slice(0, 10)})`).join('\n')
-    : 'No live public evidence attached (template mode).';
-  return [
-    `# ${o.title}`,
-    `## Problem hypothesis\n${o.problemHypothesis}`,
-    `## Target user\n${o.targetUser}`,
-    `## Team complementarity\n${who(db.cards.get(m.a))}\n${who(db.cards.get(m.b))}\n${bullets(o.whyThisPair)}`,
-    `## Public evidence\n${ev}`,
-    `## First validation experiment\n${o.nextExperiment}`,
-    `## super{set} fit\n**Our hypothesis:** this suits the [super{set}](https://superset.com/) studio model of co-founding companies around a validated insight. See the [portfolio](https://superset.com/portfolio) for comparable bets.`,
-    `## Unanswered questions\n${bullets(o.unknowns)}`,
-  ].join('\n\n') + '\n';
+  // Cards exist for both sides of any match and are frozen once matched.
+  return buildPitchMarkdown({ founders: [db.cards.get(m.a)!, db.cards.get(m.b)!] }, m.opportunity, m.evidence);
 }
