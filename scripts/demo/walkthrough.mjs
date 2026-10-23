@@ -78,6 +78,8 @@ try {
   console.error(error.message); process.exitCode = 1;
 } finally {
   const video = page.video();
-  await context.close(); await browser.close();
-  if (video) { await video.saveAs(path.join(out, 'WYJ-Protein-Pilot.webm')); console.log(`Recording: ${path.join(out, 'WYJ-Protein-Pilot.webm')}`); }
+  await context.close();
+  try {
+    if (video) { await video.saveAs(path.join(out, 'WYJ-Protein-Pilot.webm')); console.log(`Recording: ${path.join(out, 'WYJ-Protein-Pilot.webm')}`); }
+  } finally { await browser.close(); }
 }
