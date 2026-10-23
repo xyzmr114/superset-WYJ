@@ -108,3 +108,9 @@ On a fresh suggested match, open **Live privacy evidence · inspect server respo
 - 85–90s: "Develop the idea. Find someone worth building with. Decide what to share."
 
 Warm the presentation browser in advance. Have a completed, genuine DeepSeek result ready if a live provider call is slow; identify it as an earlier result rather than pretending it just generated. Never describe the scripted demo response as genuine human interest.
+
+## Repeated fixed demo founders or stalled demo replies
+
+`BASE_URL=http://localhost:3002 pnpm exec tsx scripts/demo/repair.ts` reconnects only exact built-in fictional fixtures (expected demo name, example.com contact, alias, complete skill/topic sets, availability and blurb). It preserves an existing pending pair where possible, restores a lost fixture session, and unpublishes redundant fixture briefs. Prior revealed contacts and receipts remain. It does not copy any human approval between pairs. The seed script now reuses those exact existing fixtures before creating anything new, including across a lost local session file.
+
+The founder list shows one card per participant, prioritizing a pending introduction, with the matched idea labelled. Select a particular idea to inspect its pairing. Display grouping never merges contact fields or consent across records.

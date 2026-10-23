@@ -17,6 +17,7 @@ export default function MatchCard({match,checklist,onRequestIntro,onDecline,onWi
  async function copyAgenda(){await navigator.clipboard.writeText(`A 15-minute founder introduction\n\n1. What are we each trying to build?\n2. Where do our skills complement each other?\n3. What can we try together in 48 hours?\n\nSuggested experiment: ${opportunity.nextExperiment}`);setCopied(true);}
  return <article className={styles.matchCard}>
   <div className={styles.cardHeader}><span className="badge">{title}</span><span className="muted">Founder match</span></div>
+  {match.myBrief&&<p className="muted" style={{padding:"0 22px",fontSize:12}}>For your idea: {match.myBrief.alias}</p>}
   <FounderProfile profile={candidate} flat/>
   <div className={styles.profileActions}><div className={styles.block}><h4>Why you might click</h4><ul className={styles.list}>{opportunity.whyThisPair.slice(0,2).map((reason,i)=><li key={i}>{reason}</li>)}</ul>{opportunity.whyThisPair.length>2&&<details className={styles.extraFit}><summary>More about your fit</summary><ul className={styles.list}>{opportunity.whyThisPair.slice(2).map((reason,i)=><li key={i}>{reason}</li>)}</ul></details>}</div>
   <ol className={styles.consentSteps} aria-label="Introduction consent status"><li>✓ Brief shared</li><li>{match.myIntroApproval?'✓':'○'} Your approval</li><li>{match.theirIntroApproval?'✓':'○'} Their approval</li></ol>
