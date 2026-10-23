@@ -17,3 +17,5 @@ A separate Chromium window types the Protein Pilot idea, publishes its approved 
 Recordings, screenshots and the exported pitch are saved to `.wyj-demo/recordings/`. Override with `WALKTHROUGH_OUTPUT=/absolute/path`. Set `BASE_URL` for a different port. Add `--skip-premium` to record just the introduction, trial and joint pitch.
 
 If Chromium is missing, run `pnpm exec playwright install chromium` once. The app and responder must remain running. A failed step saves a screenshot and exits with an error rather than claiming success.
+
+To repeat continuously, run `pnpm demo:loop`. Each cycle opens a fresh browser session and retains the latest three recordings. Ctrl+C stops the loop.

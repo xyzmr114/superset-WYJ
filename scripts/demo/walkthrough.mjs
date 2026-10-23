@@ -9,10 +9,10 @@ await mkdir(out, { recursive: true });
 const browser = await chromium.launch({ headless: false, slowMo: 180 });
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, recordVideo: { dir: out, size: { width: 1440, height: 1000 } }, acceptDownloads: true });
 const page = await context.newPage();
-page.setDefaultTimeout(90000);
+page.setDefaultTimeout(30000);
 const pause = () => page.waitForTimeout(900);
 async function click(locator) { console.log('Click:', String(locator)); await locator.scrollIntoViewIfNeeded(); await pause(); await locator.click(); }
-async function type(locator, text) { await locator.scrollIntoViewIfNeeded(); await locator.fill(''); await locator.pressSequentially(text, { delay: 32 }); await pause(); }
+async function type(locator, text) { console.log('Type:', String(locator)); await locator.scrollIntoViewIfNeeded(); await locator.fill(''); await locator.pressSequentially(text, { delay: 32 }); await pause(); }
 async function enabled(locator) { await locator.waitFor(); await page.waitForFunction(() => [...document.querySelectorAll('button')].some(b => b.textContent.trim() === 'Copy draft' && !b.disabled), { timeout: 90000 }); }
 try {
   console.log('Opening WYJ. Recording the real app flow.');
@@ -40,10 +40,10 @@ try {
   await pause();
   await click(card.getByText('Plan your first project together →', { exact: true }));
   await click(card.getByRole('button', { name: 'Propose a 48-hour working trial →', exact: true }));
-  await type(card.getByLabel('Shared goal', { exact: true }), 'Test an AI-personalized high-protein meal delivery service.');
-  await type(card.getByLabel('Concrete deliverable', { exact: true }), 'One seven-day menu prototype and feedback from three gym-goers.');
-  await type(card.getByLabel('My contribution', { exact: true }), 'Build the AI menu and ordering prototype.');
-  await type(card.getByLabel('Their proposed contribution', { exact: true }), 'Validate kitchen prep, ingredient costs and delivery operations.');
+  await type(card.getByRole('textbox', { name: /Shared goal/ }), 'Test an AI-personalized high-protein meal delivery service.');
+  await type(card.getByRole('textbox', { name: /Concrete deliverable/ }), 'One seven-day menu prototype and feedback from three gym-goers.');
+  await type(card.getByRole('textbox', { name: /My contribution/ }), 'Build the AI menu and ordering prototype.');
+  await type(card.getByRole('textbox', { name: /Their proposed contribution/ }), 'Validate kitchen prep, ingredient costs and delivery operations.');
   await card.getByRole('checkbox', { name: /Share this exact proposal/ }).check();
   await click(card.getByRole('button', { name: 'Share trial proposal', exact: true }));
   await card.getByRole('checkbox', { name: /I approve this exact trial/ }).check();
