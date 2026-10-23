@@ -93,3 +93,18 @@ The seed creates 12 reusable founders and saves only their session cookies in ig
 DeepSeek can pre-generate fictional examples from fixed topic/skill combinations at startup; user-derived inputs are never sent by the helper. Missing combinations use local templates. Do not use `--all` casually: it also creates counterparts for existing ideas in the configured database. The current app uses shared Supabase even though the website and model assets are served locally.
 
 Verified locally: Rider Rival → complementary Maya → user approval → delayed demo-side approval → mutual reveal. This is demonstration automation, not evidence of genuine founder interest.
+
+## Live server-response proof and revised 90-second story
+
+On a fresh suggested match, open **Live privacy evidence · inspect server response** before approving. Leave the match under **For you** so it stays mounted through the reveal. The inspector performs an authenticated, no-store GET to `/api/matches/:id` and captures actual complete parsed JSON for each observed stage. After one approval, `myIntroApproval: true`, `theirIntroApproval: false`, and `revealedContact` is absent. After the second approval, both are true and `revealedContact` contains the counterpart's selected snapshot. Stage buttons compare earlier timestamped observations; they do not change consent. Reload clears evidence history. DevTools Network can independently inspect the same GET. The demo-mode notice must be visible before consent when fictional responders are active (`NEXT_PUBLIC_DEMO_MODE=true` at build time).
+
+90-second narrative:
+
+- 0–10s: "Your next cofounder could be in this room. WYJ helps you develop the idea and find a complementary person while controlling what you share. Our counterpart for this run is fictional and responds automatically."
+- 10–25s: Show local intake assistance, edit the result, inspect the brief and approve publication. "Private background is processed locally. This exact brief is what I choose to share."
+- 25–50s: Show the Premium exact-send preview and a real DeepSeek idea enhancement: target customer, risky assumptions, first product and validation experiment. Show public research sources if time permits. "With separate approval, DeepSeek develops this published brief into a working plan. It never receives my pasted background or local questionnaire answers. Research has its own query approval."
+- 50–75s: Open live evidence before the introduction. Approve one side, show omitted `revealedContact`, then show actual second-side approval and the now-present selected contact. "Publication and identity release are different permissions. The server enforces this; the UI isn't just hiding a field."
+- 75–85s: Show the working-trial editor. "Once introduced, agree on a concrete experiment and each person's contribution. The trial activates only when both approve the same version."
+- 85–90s: "Develop the idea. Find someone worth building with. Decide what to share."
+
+Warm the presentation browser in advance. Have a completed, genuine DeepSeek result ready if a live provider call is slow; identify it as an earlier result rather than pretending it just generated. Never describe the scripted demo response as genuine human interest.

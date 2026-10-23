@@ -5,6 +5,7 @@ import type {MatchView,IntroductionIdentity} from '@/lib/contracts';
 import type {CheckItem} from '@/lib/client/private-profile';
 import FounderProfile from '@/components/founders/FounderProfile';
 import WorkingTrial from './WorkingTrial';
+import PrivacyProof from './PrivacyProof';
 import EvidenceList from './EvidenceList';
 import styles from './matches.module.css';
 
@@ -19,6 +20,7 @@ export default function MatchCard({match,checklist,onRequestIntro,onDecline,onWi
   <FounderProfile profile={candidate} flat/>
   <div className={styles.profileActions}><div className={styles.block}><h4>Why you might click</h4><ul className={styles.list}>{opportunity.whyThisPair.slice(0,2).map((reason,i)=><li key={i}>{reason}</li>)}</ul>{opportunity.whyThisPair.length>2&&<details className={styles.extraFit}><summary>More about your fit</summary><ul className={styles.list}>{opportunity.whyThisPair.slice(2).map((reason,i)=><li key={i}>{reason}</li>)}</ul></details>}</div>
   <ol className={styles.consentSteps} aria-label="Introduction consent status"><li>✓ Brief shared</li><li>{match.myIntroApproval?'✓':'○'} Your approval</li><li>{match.theirIntroApproval?'✓':'○'} Their approval</li></ol>
+  <PrivacyProof match={match}/>
   {status!=='revealed'&&status!=='declined'&&<p className="muted">You’ll exchange contact details only if you both agree.</p>}
   {status==='pending'&&!match.myIntroApproval&&<p className={styles.waiting}>They would like to meet you. You decide whether to share your details for this introduction.</p>}
   {(status==='suggested'||status==='pending'&&!match.myIntroApproval)&&!review&&<div className={styles.cardActions}><button disabled={busy} onClick={()=>setReview(true)}>Interested · connect →</button><button disabled={busy} className={styles.declineBtn} onClick={onDecline}>Pass</button></div>}
