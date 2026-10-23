@@ -76,3 +76,43 @@ In `/premium`, select a currently published owned brief. DeepSeek enhancement re
 Show public web search links and, when available, the first source read through DeepSeek Fetch. Broad recognized categories also query GitHub. Custom niches can return web results without a GitHub category. Display live/cached/saved-snapshot provenance honestly; unavailable web search yields a warning and no invented results. Existing repositories are leads, not evidence of customer demand. No background, identity/contact or local questionnaire text is sent by either feature. The legacy `/api/agent` remains disabled by default and is not the research entry point.
 
 Apply migrations through `006_idea_publication.sql` before rehearsal. Migration 006 has been applied to the shared Supabase database; each other deployment must run `pnpm db:migrate` too.
+
+## Local fictional-founder demonstration (`feat/demo-founders`)
+
+The demo helpers use fictional counterpart accounts, not actual founder responses. Their revealed names end in `(demo)` and contacts use `example.com`. Normal human accounts still require their own independent approval.
+
+Run the app on port 3002, then from the repository root:
+
+```sh
+BASE_URL=http://localhost:3002 pnpm exec tsx scripts/demo/seed.ts
+BASE_URL=http://localhost:3002 pnpm exec tsx scripts/demo/adjacent.ts
+```
+
+The seed creates 12 reusable founders and saves only their session cookies in ignored `.wyj-demo/sessions.json` (private file permissions). The adjacent helper watches new published ideas, creates a complementary fictional counterpart, generates a match and answers introduction requests after a short delay. Custom approved niches and soft skills are supported locally. It never approves for a human participant. No real messages or meetings are sent.
+
+DeepSeek can pre-generate fictional examples from fixed topic/skill combinations at startup; user-derived inputs are never sent by the helper. Missing combinations use local templates. Do not use `--all` casually: it also creates counterparts for existing ideas in the configured database. The current app uses shared Supabase even though the website and model assets are served locally.
+
+Verified locally: Rider Rival → complementary Maya → user approval → delayed demo-side approval → mutual reveal. This is demonstration automation, not evidence of genuine founder interest.
+
+## Live server-response proof and revised 90-second story
+
+On a fresh suggested match, open **Privacy check → Technical proof · view server response** before approving. Leave the match under **For you** so it stays mounted through the reveal. The inspector performs an authenticated, no-store GET to `/api/matches/:id` and captures actual complete parsed JSON for each observed stage. After one approval, `myIntroApproval: true`, `theirIntroApproval: false`, and `revealedContact` is absent. After the second approval, both are true and `revealedContact` contains the counterpart's selected snapshot. Stage buttons compare earlier timestamped observations; they do not change consent. Reload clears evidence history. DevTools Network can independently inspect the same GET. The demo-mode notice must be visible before consent when fictional responders are active (`NEXT_PUBLIC_DEMO_MODE=true` at build time).
+
+90-second narrative:
+
+- 0–10s: "Your next cofounder could be in this room. WYJ helps you develop the idea and find a complementary person while controlling what you share. Our counterpart for this run is fictional and responds automatically."
+- 10–25s: Show local intake assistance, edit the result, inspect the brief and approve publication. "Private background is processed locally. This exact brief is what I choose to share."
+- 25–50s: Show the Premium exact-send preview and a real DeepSeek idea enhancement: target customer, risky assumptions, first product and validation experiment. Show public research sources if time permits. "With separate approval, DeepSeek develops this published brief into a working plan. It never receives my pasted background or local questionnaire answers. Research has its own query approval."
+- 50–75s: Open live evidence before the introduction. Approve one side, show omitted `revealedContact`, then show actual second-side approval and the now-present selected contact. "Publication and identity release are different permissions. The server enforces this; the UI isn't just hiding a field."
+- 75–85s: Show the working-trial editor. "Once introduced, agree on a concrete experiment and each person's contribution. The trial activates only when both approve the same version."
+- 85–90s: "Develop the idea. Find someone worth building with. Decide what to share."
+
+Warm the presentation browser in advance. Have a completed, genuine DeepSeek result ready if a live provider call is slow; identify it as an earlier result rather than pretending it just generated. Never describe the scripted demo response as genuine human interest.
+
+## Repeated fixed demo founders or stalled demo replies
+
+`BASE_URL=http://localhost:3002 pnpm exec tsx scripts/demo/repair.ts` reconnects only exact built-in fictional fixtures (expected demo name, example.com contact, alias, complete skill/topic sets, availability and blurb). It preserves an existing pending pair where possible, restores a lost fixture session, and unpublishes redundant fixture briefs. Prior revealed contacts and receipts remain. It does not copy any human approval between pairs. The seed script now reuses those exact existing fixtures before creating anything new, including across a lost local session file.
+
+The founder list shows one card per participant, prioritizing a pending introduction, with the matched idea labelled. Select a particular idea to inspect its pairing. Display grouping never merges contact fields or consent across records.
+
+The normal Privacy check shows plain approval and sharing status. Full endpoint details and JSON are collapsed under Technical proof. Opening the check after reveal records only the two-approval state; it does not fabricate earlier responses.

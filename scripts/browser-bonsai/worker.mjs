@@ -20,12 +20,28 @@ env.fetch=self.fetch;
 let loading, generator, generating=false;
 const subscribers=new Set();
 const notify=message=>{for(const id of subscribers)self.postMessage({id,type:'progress',message});};
+async function weights(){
+ const url=new URL('/models/bonsai/Bonsai-1.7B-ONNX/onnx/model_q1.onnx_data',self.location.origin).href;
+ const cache=await self.caches?.open('wyj-bonsai-q1-v1').catch(()=>null);
+ let response=await cache?.match(url);
+ if(!response){
+  notify('Downloading Bonsai weights (291 MB)…');
+  response=await self.fetch(url,{signal:AbortSignal.timeout(180000)});
+  if(!response.ok){const error=new Error('Model asset unavailable');error.code=response.status===403?'ASSET_BLOCKED':'ASSET_UNAVAILABLE';throw error;}
+ }
+ const data=new Uint8Array(await response.arrayBuffer());
+ if(!data.length)throw new Error('Empty model weights');
+ void cache?.put(url,new Response(data)).catch(()=>{});
+ return data;
+}
 async function load(){
  if(generator)return generator;
  if(!loading)loading=(async()=>{
    const adapter=await navigator.gpu?.requestAdapter();if(!adapter){const error=new Error('WebGPU unavailable');error.code='NO_WEBGPU';throw error;}
    notify('Loading Bonsai on your device…');
-   const pipe=await pipeline('text-generation','Bonsai-1.7B-ONNX',{device:'webgpu',dtype:'q1',local_files_only:true,progress_callback:info=>{if(info.status==='progress_total'||info.status==='progress'){const loaded=Math.round(Number(info.loaded||0)/1000000);const total=Math.round(Number(info.total||0)/1000000);notify(`Preparing local idea model${total?`: ${loaded} / ${total} MB`:''}…`);}}});
+   // The library's async external-data Promise can remain pending after a failed download.
+   const data=await weights();
+   const pipe=await pipeline('text-generation','Bonsai-1.7B-ONNX',{device:'webgpu',dtype:'q1',local_files_only:true,use_external_data_format:false,session_options:{externalData:[{path:'model_q1.onnx_data',data}]},progress_callback:info=>{if(info.status==='progress_total'||info.status==='progress'){const loaded=Math.round(Number(info.loaded||0)/1000000);const total=Math.round(Number(info.total||0)/1000000);notify(`Preparing local idea model${total?`: ${loaded} / ${total} MB`:''}…`);}}});
    notify('Preparing 1-bit inference on your GPU…');
    const inputs=pipe.tokenizer('Ready');await pipe.model.generate({...inputs,max_new_tokens:1});
    generator=pipe;return generator;
@@ -65,6 +81,6 @@ self.onmessage=async({data})=>{
    }
    if(!text)throw new Error('No concise product draft');
    self.postMessage({id,type:'result',text});
- }catch(error){self.postMessage({id,type:'error',code:error?.code==='NO_WEBGPU'?'NO_WEBGPU':'MODEL_FAILED'});}
+ }catch(error){self.postMessage({id,type:'error',code:['NO_WEBGPU','ASSET_BLOCKED','ASSET_UNAVAILABLE'].includes(error?.code)?error.code:'MODEL_FAILED'});}
  finally{if(ownsGeneration)generating=false;subscribers.delete(id);}
 };

@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {ideasFor,publishIdea,planFor,choosePlan} from './ideas';
+import {ideasFor,publishIdea,planFor,choosePlan,otherIdeasInEvent,setIdeaPublished} from './ideas';
 import {q,matchRow,type Participant} from './store';
 import {Card} from './brief-schema';
 import {getMyMatch,toView} from './matches';
@@ -172,4 +172,17 @@ test('unpublishing cannot erase contacts already mutually revealed or shared pit
  assert.equal(after.status,'revealed');
  assert.deepEqual(after.revealedContact,before.revealedContact);
  assert.equal((await q('select markdown from pitches where match_id=$1',[row.id]))[0].markdown,'Existing shared work');
+});
+
+
+test('bulk candidates exclude unpublished collections without resurrecting legacy cards',async()=>{
+ const me=await participant('bulk-active'),other=await participant('bulk-active');
+ const inactive=await publishIdea(other,brief('Withdrawn'));
+ const active=await publishIdea(other,brief('Published'));
+ await setIdeaPublished(other,inactive.ideaId!,false);
+ let candidates=await otherIdeasInEvent(me.id,me.eventId);
+ assert.deepEqual(candidates.map(c=>c.ideaId),[active.ideaId]);
+ await setIdeaPublished(other,active.ideaId!,false);
+ candidates=await otherIdeasInEvent(me.id,me.eventId);
+ assert.equal(candidates.length,0);
 });

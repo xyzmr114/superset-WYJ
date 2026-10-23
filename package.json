@@ -22,7 +22,9 @@
     "browser:prepare": "sh scripts/browser-laya/setup.sh",
     "bonsai:prepare": "node scripts/browser-bonsai/prepare.mjs",
     "models:manifest": "node scripts/model-assets/manifest.mjs",
-    "models:upload": "node --env-file-if-exists=.env.local scripts/model-assets/upload.mjs"
+    "models:upload": "node --env-file-if-exists=.env.local scripts/model-assets/upload.mjs",
+    "demo:walkthrough": "node scripts/demo/walkthrough.mjs",
+    "demo:loop": "node scripts/demo/loop.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.85",

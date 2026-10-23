@@ -1,18 +1,17 @@
 import { NextResponse } from 'next/server';
-import { q,transaction } from '@/lib/server/store';
+import { transaction } from '@/lib/server/store';
 import { HttpError, assertSameOrigin, newId, requireSession, route } from '@/lib/server/http';
 import { evidenceFor, myMatches, pairKey, views } from '@/lib/server/matches';
 import { rankCandidates,scorePair,hasPartnerFit } from '@/lib/matching';
 import { proposeOpportunity } from '@/lib/generation';
-import {ideasFor,isIdeaPublished} from '@/lib/server/ideas';
+import {ideasFor,isIdeaPublished,otherIdeasInEvent} from '@/lib/server/ideas';
 import type {MatchingCard} from '@/lib/contracts';
 
 export const POST = route(async (req) => {
  assertSameOrigin(req);
  const me=await requireSession(req),mine=await ideasFor(me.id);
  if(!mine.length)throw new HttpError(409,'NO_CARD','Publish your approved idea first.');
- const participants=await q('select id from participants where id<>$1 and event_id=$2 and token_hash is not null',[me.id,me.eventId]);
- const otherIdeas=(await Promise.all(participants.map(p=>ideasFor(p.id)))).flat();
+ const otherIdeas=await otherIdeasInEvent(me.id,me.eventId); // one query, not one per participant
  const previous=await myMatches(me.id);
  const known=new Set(previous.map(m=>JSON.stringify([m.a,m.b,m.aCard?.ideaId??'legacy',m.bCard?.ideaId??'legacy'])));
  for(const idea of mine){
@@ -24,12 +23,16 @@ export const POST = route(async (req) => {
    const prev=best.get(card.id),previous=prev?scorePair(idea,prev):null;
    if(!previous||scored.score>previous.score||(scored.score===previous.score&&scored.preferenceScore>previous.preferenceScore))best.set(card.id,card);
   }
-  for(const {candidate,score,sharedInterests} of rankCandidates(idea,[...best.values()],{requireSharedInterest:true,requirePartnerFit:true,limit:Infinity})){
-   const [a,b]=pairKey(me.id,candidate.id),aCard=a===me.id?idea:candidate,bCard=b===me.id?idea:candidate;
+  const fresh=rankCandidates(idea,[...best.values()],{requireSharedInterest:true,requirePartnerFit:true,limit:Infinity}).map(r=>{
+   const [a,b]=pairKey(me.id,r.candidate.id),aCard=a===me.id?idea:r.candidate,bCard=b===me.id?idea:r.candidate;
+   return {...r,a,b,aCard,bCard,key:JSON.stringify([a,b,aCard.ideaId??'legacy',bCard.ideaId??'legacy'])};
+  }).filter(r=>!known.has(r.key));
+  // Evidence for all new pairs at once instead of one GitHub lookup after another.
+  const evidenceByPair=await Promise.all(fresh.map(r=>evidenceFor(r.sharedInterests)));
+  for(const [i,{candidate,score,a,b,aCard,bCard,key}] of fresh.entries()){
    const aIdea=aCard.ideaId??'legacy',bIdea=bCard.ideaId??'legacy';
-   const key=JSON.stringify([a,b,aIdea,bIdea]);
    if(known.has(key))continue;
-   const evidence=await evidenceFor(sharedInterests);
+   const evidence=evidenceByPair[i];
    const opportunity=proposeOpportunity(idea,candidate,evidence);
    await transaction(async query=>{
     await query('select id from participants where id=any($1) order by id for update',[[a,b]]);

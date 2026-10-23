@@ -38,7 +38,10 @@ export async function toView(m: Match, me: string): Promise<MatchView> {
   const card = (id: string) => (id === m.a ? m.aCard : m.bCard) ?? cardRow(cards.find(r => r.participant_id === id));
   const candidate = card(other);
   const revealed = mutuallyApproved(m);
+  // Only a boolean fixture marker is returned; identity values remain behind mutual consent.
+  const sample=await q("select 1 from identities where participant_id=$1 and display_name like '% (demo)' and contact like '%@example.com'",[other]);
   const view: MatchView = {
+    ...(sample.length?{candidateIsSample:true}:{}),
     id: m.id, myBrief: card(me), candidate, score: m.score, opportunity: m.opportunity, evidence: m.evidence,
     status: m.declinedBy ? 'declined' : revealed ? 'revealed' : m.approvals.size > 0 ? 'pending' : 'suggested',
     myIntroApproval: !!m.introConsents?.[me] && m.approvals.has(me),
