@@ -51,7 +51,7 @@ export default function Home() {
           <a className={styles.primary} href="/agent">Build my profile <span aria-hidden="true">→</span></a>
           <a className={styles.scroll} href="#problem">Scroll</a>
         </div>
-        <p className={styles.byline}>Built at super&#123;set&#125; · October 2026 · 3 min read</p>
+        <p className={styles.byline}>Find the person you could build with</p>
       </section>
 
       {/* HOW IT WORKS */}

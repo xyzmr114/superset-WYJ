@@ -16,6 +16,7 @@ import { mapTags } from '../../lib/matching';
 import { tagSet } from '../../lib/matching/tags';
 import { connect } from '../../lib/server/store';
 import { EVENT_CODE, api, loadSessions, saveSessions } from './client';
+import {progressSampleAgreements} from './progress';
 
 const KEY = process.env.DEEPSEEK_API_KEY;
 const MODEL = process.env.PREMIUM_DEEPSEEK_MODEL || 'deepseek-flash';
@@ -159,6 +160,7 @@ async function main() {
   process.on('SIGINT', () => { void db.end().finally(() => process.exit(0)); });
   // Answer intro requests on their own loop: ONE query finds requests waiting on a demo founder, so the
   // server isn't polled once per founder. The founder approves after DELAY_MS so judges see "waiting" first.
+  const agreementSeen=new Map<string,number>();
   const seenAt = new Map<string, number>(), DELAY = Number(process.env.DELAY_MS ?? 4000);
   void (async () => { for (;;) {
     const bySide = new Map(loadSessions().map((s) => [s.participantId, s]));
@@ -172,6 +174,7 @@ async function main() {
       const a = await api('POST', `/api/matches/${encodeURIComponent(w.id)}/consent`, { decision: 'approve', identity: { displayName: s.displayName, contact: s.contact } }, s.cookie);
       console.log(`${new Date().toLocaleTimeString()}  ${s.alias} approved an intro -> ${a.status === 200 ? a.data?.status : `error ${a.status}`}`);
     }
+    await progressSampleAgreements(db,agreementSeen,DELAY).catch(error=>console.log('Sample agreement retry:',error.message));
     await new Promise((res) => setTimeout(res, 1000));
   } })();
   for (;;) {
