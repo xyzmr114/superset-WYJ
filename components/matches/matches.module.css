@@ -143,6 +143,6 @@
 @media (max-width: 560px) { .trialPlan { grid-template-columns: 1fr; gap: 5px; } .trialPlan dd { margin-bottom: 12px; } }
 
 /* Give the live response inspector enough room for judging on a laptop. */
-.matchCard:has([data-privacy-proof][open]){grid-column:1/-1;max-width:none}
+.matchCard:has([data-privacy-response][open]){grid-column:1/-1;max-width:none}
 
 .demoNotice{padding:14px 18px;margin:18px 0;border:1px solid #d1b97b;border-radius:10px;background:#fff8e4;color:#59420e}.demoNotice p{margin:5px 0 0;font-size:14px;line-height:1.5}

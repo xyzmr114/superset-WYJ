@@ -25,12 +25,18 @@ export default function PrivacyProof({match}:{match:MatchView}){
  const hasContact=!!active&&Object.hasOwn(active.body,'revealedContact');
  const both=!!active&&active.body.myIntroApproval===true&&active.body.theirIntroApproval===true;
  const valid=!active||hasContact===both;
- return <details data-privacy-proof className={styles.proof} onToggle={event=>setOpen(event.currentTarget.open)}><summary>Live privacy evidence · inspect server response</summary>
-  <p>This reads the actual authenticated match endpoint. Open before approving to capture each stage. Responses stay in this tab’s memory and are not uploaded or saved.</p>
-  <p><strong>Brief:</strong> your approved brief is shared for matching. <strong>Identity:</strong> the server stores chosen introduction details; your counterpart receives them only after mutual approval.</p>
-  <code>GET {endpoint}</code>
-  <div className={styles.actions}>{snapshots.map(s=><button type="button" key={s.stage} aria-pressed={selected===s.stage} onClick={()=>setSelected(s.stage)}>{s.stage}</button>)}<button type="button" disabled={loading} onClick={()=>setRefresh(n=>n+1)}>{loading?'Reading response…':'Fetch live response'}</button></div>
+ return <details data-privacy-proof className={styles.proof} onToggle={event=>setOpen(event.currentTarget.open)}><summary>Privacy check</summary>
+  <p>Your brief is shared for matching. Contact details are shared with each other only after you both approve.</p>
   {error&&<p role="alert">{error}</p>}
-  {active&&<><div className={`${styles.result} ${!valid?styles.failure:''}`} role="status"><strong>{!valid?'Unexpected disclosure state — inspect response':hasContact?'Two approvals: counterpart contact is present':'Counterpart contact is absent from this response'}</strong><span>HTTP {active.status} · {new Date(active.at).toLocaleTimeString()} · revealedContact: {hasContact?'present':'omitted'}</span></div><p>{active.stage==='One approval'?'One person approved; this response still contains no revealedContact field.':active.stage==='Two approvals'?'Both approved; the response now includes the counterpart’s selected name and contact.':'No introduction approval has been given; contact is omitted.'}</p><pre aria-label={`Actual API response: ${active.stage}`}>{JSON.stringify(active.body,null,2)}</pre><p className={styles.note}>The JSON above is the complete parsed response, with no fields hidden by this panel. You can verify the same GET in browser DevTools → Network. Earlier captures are observations, not current access permissions. Reloading clears them.</p></>}
+  {active&&<>
+   <div className={styles.approvals}><span>{active.body.myIntroApproval===true?'✓ You approved':'○ Your approval needed'}</span><span>{active.body.theirIntroApproval===true?'✓ They approved':'○ Their approval needed'}</span></div>
+   <div className={`${styles.result} ${!valid?styles.failure:''}`} role="status"><strong>{!valid?'This check needs attention':hasContact?'Contact shared after mutual approval':'Contact details are hidden from each other'}</strong><span>Checked at {new Date(active.at).toLocaleTimeString()}</span></div>
+   {snapshots.length===1&&both&&<p className={styles.note}>This check started after both approvals. No earlier response was recorded.</p>}
+  </>}
+  <div className={styles.actions}>{snapshots.length>1&&snapshots.map(s=><button type="button" key={s.stage} aria-pressed={selected===s.stage} onClick={()=>setSelected(s.stage)}>{s.stage}</button>)}<button type="button" disabled={loading} onClick={()=>setRefresh(n=>n+1)}>{loading?'Checking…':'Check again'}</button></div>
+  {active&&<details data-privacy-response className={styles.technical}><summary>Technical proof · view server response</summary>
+   <code>GET {endpoint}</code><p>HTTP {active.status} · revealedContact: {hasContact?'present':'omitted'}. The server stores your chosen introduction details; this response shows what this browser receives.</p>
+   <pre aria-label={`Actual API response: ${active.stage}`}>{JSON.stringify(active.body,null,2)}</pre><p className={styles.note}>Complete parsed response, with no fields filtered by this panel. Verify the same GET in DevTools → Network. Earlier captures are timestamped observations, not current permissions. They stay in this tab’s memory; reloading clears them.</p>
+  </details>}
  </details>;
 }
